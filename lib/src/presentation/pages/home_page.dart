@@ -14,6 +14,7 @@ import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/pages/chat_page.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_management_panel.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/gpu_acceleration_toggle.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -47,6 +48,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   );
   late BielikModel _selectedModel = widget.models.first;
   bool _chatOpen = false;
+  bool _gpuAccelerationSelected = false;
 
   @override
   void initState() {
@@ -93,6 +95,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             workspace: _chatWorkspace,
             statisticSeries: widget.statisticSeries,
             statisticsController: _statistics,
+            gpuAccelerationSelected: _gpuAccelerationSelected,
           ),
         ),
       );
@@ -150,6 +153,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                   _resources.resources.availableRamGb,
                               totalRamGb: _resources.resources.totalRamGb,
                               onResourcesChanged: _resources.refresh,
+                              modelOptions: GpuAccelerationToggle(
+                                selected: _gpuAccelerationSelected,
+                                onChanged: _chatOpen
+                                    ? null
+                                    : (value) => setState(
+                                        () => _gpuAccelerationSelected = value,
+                                      ),
+                              ),
                             ),
                           ),
                         ),

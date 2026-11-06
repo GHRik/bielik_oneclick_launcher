@@ -18,6 +18,7 @@ class ModelManagementPanel extends StatefulWidget {
     this.availableRamGb,
     this.totalRamGb,
     this.onResourcesChanged,
+    this.modelOptions,
   });
 
   final List<BielikModel> models;
@@ -27,6 +28,7 @@ class ModelManagementPanel extends StatefulWidget {
   final double? availableRamGb;
   final double? totalRamGb;
   final Future<void> Function()? onResourcesChanged;
+  final Widget? modelOptions;
 
   @override
   State<ModelManagementPanel> createState() => _ModelManagementPanelState();
@@ -143,6 +145,10 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
                 ? null
                 : _selectModel,
           ),
+          if (widget.modelOptions != null) ...[
+            const SizedBox(height: 8),
+            widget.modelOptions!,
+          ],
           const SizedBox(height: 16),
           Row(
             children: [
