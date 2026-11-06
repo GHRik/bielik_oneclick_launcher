@@ -1,11 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 
-import 'package:bielik_oneclick_launcher/src/presentation/controllers/download_preview_controller.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/controllers/model_download_controller.dart';
 
 class DownloadProgressCard extends StatelessWidget {
-  const DownloadProgressCard({super.key, required this.preview});
+  const DownloadProgressCard({super.key, required this.download});
 
-  final DownloadPreviewController preview;
+  final ModelDownloadController download;
 
   @override
   Widget build(BuildContext context) {
@@ -16,31 +16,33 @@ class DownloadProgressCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              preview.complete
-                  ? 'Symulacja zakończona · 100%'
-                  : 'Symulacja pobierania · ${preview.percent}%',
+              download.complete
+                  ? 'Pobieranie zakończone · 100%'
+                  : download.verifying
+                  ? 'Sprawdzanie poprawności pliku…'
+                  : 'Pobieranie · ${download.percent}%',
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 12),
             LinearProgressIndicator(
-              value: preview.progress,
-              semanticsLabel: 'Postęp symulacji pobierania',
-              semanticsValue: '${preview.percent}%',
+              value: download.verifying ? null : download.progress,
+              semanticsLabel: 'Postęp pobierania',
+              semanticsValue: '${download.percent}%',
             ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: [
-                Text('Prędkość: ${preview.speed} MB/s'),
-                Text('Pozostało (ETA): ${preview.remainingTime}'),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const Text('Podgląd interfejsu — bez pobierania plików.'),
-            if (preview.isRunning)
+            if (!download.complete && !download.verifying) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                children: [
+                  Text('Prędkość: ${download.speed} MB/s'),
+                  Text('Pozostało (ETA): ${download.remainingTime}'),
+                ],
+              ),
+            ],
+            if (download.isRunning)
               TextButton(
-                onPressed: preview.reset,
+                onPressed: download.cancel,
                 child: const Text('Anuluj pobieranie'),
               ),
           ],

@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/pages/chat_page.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_management_panel.dart';
@@ -13,11 +14,13 @@ class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
     required this.models,
+    required this.modelFilesRepository,
     required this.chatRepository,
     required this.statisticSeries,
   });
 
   final ChatRepository chatRepository;
+  final ModelFilesRepository modelFilesRepository;
   final List<BielikModel> models;
   final List<StatisticSeries> statisticSeries;
 
@@ -74,13 +77,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   padding: const EdgeInsets.all(24),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      minHeight: (constraints.maxHeight - 48)
-                          .clamp(0.0, double.infinity),
+                      minHeight: (constraints.maxHeight - 48).clamp(
+                        0.0,
+                        double.infinity,
+                      ),
                     ),
                     child: Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 480),
-                        child: ModelManagementPanel(models: widget.models),
+                        child: ModelManagementPanel(
+                          models: widget.models,
+                          repository: widget.modelFilesRepository,
+                        ),
                       ),
                     ),
                   ),

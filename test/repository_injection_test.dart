@@ -8,6 +8,7 @@ import 'package:bielik_oneclick_launcher/src/domain/repositories/model_catalog_r
 import 'package:bielik_oneclick_launcher/src/domain/repositories/statistics_repository.dart';
 
 import 'support/in_memory_chat_repository.dart';
+import 'support/in_memory_model_files_repository.dart';
 
 class _ModelRepository implements ModelCatalogRepository {
   const _ModelRepository();
@@ -40,13 +41,17 @@ class _StatisticsRepository implements StatisticsRepository {
 }
 
 void main() {
-  testWidgets('Views receive models and charts through repository contracts',
-      (tester) async {
-    await tester.pumpWidget(MyApp(
-      chatRepository: InMemoryChatRepository(),
-      modelRepository: _ModelRepository(),
-      statisticsRepository: _StatisticsRepository(),
-    ));
+  testWidgets('Views receive models and charts through repository contracts', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MyApp(
+        modelFilesRepository: InMemoryModelFilesRepository(),
+        chatRepository: InMemoryChatRepository(),
+        modelRepository: _ModelRepository(),
+        statisticsRepository: _StatisticsRepository(),
+      ),
+    );
     expect(find.text('Testowy model'), findsOneWidget);
     await tester.tap(find.text('Otwórz czat'));
     await tester.pumpAndSettle();
