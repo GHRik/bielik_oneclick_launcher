@@ -33,6 +33,7 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
             ? null
             : number('appRamBytes')! / 1000000000,
         number('appCpuPercent'),
+        number('cpuTemperature'),
       ],
     ));
     _samples.removeWhere(
@@ -60,6 +61,12 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
         '%',
         100.0,
         'Udział aplikacji w łącznej mocy wszystkich dostępnych rdzeni CPU.',
+      ),
+      (
+        'Temperatura CPU',
+        '°C',
+        80.0,
+        'Brak danych oznacza, że Android nie udostępnia odczytu tej aplikacji.',
       ),
     ];
     return List.generate(definitions.length, (i) {

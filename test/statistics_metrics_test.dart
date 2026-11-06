@@ -32,4 +32,13 @@ void main() {
         .single;
     expect(value, 25);
   });
+  test('Measures Temperatura CPU through the statistics adapter', () async {
+    final repository = LocalStatisticsRepository(_Source());
+    final series = await repository.sample();
+    final value = series
+        .singleWhere((item) => item.title == 'Temperatura CPU')
+        .values
+        .single;
+    expect(value, 48.5);
+  });
 }
