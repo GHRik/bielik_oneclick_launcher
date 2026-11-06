@@ -83,7 +83,8 @@ void main() {
     await tester.tap(find.text('Otwórz czat'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Czat'), findsOneWidget);
+    expect(find.text('Bielik 1.5B v3.0 · Q8'), findsOneWidget);
+    expect(find.text('CPU · niezaładowany'), findsOneWidget);
     expect(find.byType(TextField), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'Cześć Bielik!');
