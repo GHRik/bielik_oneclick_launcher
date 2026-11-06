@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_update.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/conversation.dart';
@@ -14,11 +15,24 @@ import 'package:bielik_oneclick_launcher/src/presentation/controllers/conversati
 
 class ChatWorkspace extends ChangeNotifier {
   ChatWorkspace(this.repository, {LlmRepository? llmRepository})
-      : _chatService = ChatService(repository, llmRepository: llmRepository);
+    : _chatService = ChatService(repository, llmRepository: llmRepository);
 
   final ChatRepository repository;
   final ChatService _chatService;
   BielikModel? _model;
+  LlmComputeMode _computeMode = LlmComputeMode.cpu;
+  LlmRuntimeInfo? _runtimeInfo;
+  LlmRuntimeInfo? get runtimeInfo => _runtimeInfo;
+  String get computeStatus {
+    final runtime = _runtimeInfo;
+    if (runtime != null) {
+      return runtime.mode == LlmComputeMode.gpu
+          ? 'GPU · ${runtime.backend} · ${runtime.gpuLayers} warstw'
+          : 'CPU';
+    }
+    return '${_computeMode == LlmComputeMode.gpu ? 'GPU' : 'CPU'} · niezaładowany';
+  }
+
   ConversationController? _generationTarget;
   Future<void>? _generationTask;
   Future<void>? _releaseTask;
@@ -28,12 +42,19 @@ class ChatWorkspace extends ChangeNotifier {
   String? get modelName => _model?.name;
   String get generationStatus => _stopRequested
       ? 'Zatrzymywanie…'
-      : _stage == LlmStage.loading ? 'Ładowanie modelu…' : 'Bielik pisze…';
+      : _stage == LlmStage.loading
+      ? 'Ładowanie modelu…'
+      : 'Bielik pisze…';
   String? get generatingTitle => _generationTarget?.title;
 
-  void useModel(BielikModel model) {
+  void useModel(
+    BielikModel model, {
+    LlmComputeMode computeMode = LlmComputeMode.cpu,
+  }) {
     if (_sending || _releasing) throw StateError('Model jest zajęty.');
     _model = model;
+    _computeMode = LlmComputeMode.cpu;
+    _runtimeInfo = null;
     _notify();
   }
 
@@ -53,6 +74,7 @@ class ChatWorkspace extends ChangeNotifier {
       try {
         await stopGeneration();
         await _chatService.unload();
+        _runtimeInfo = null;
       } catch (error) {
         _error = 'Nie udało się zwolnić modelu: $error';
       } finally {
@@ -64,6 +86,7 @@ class ChatWorkspace extends ChangeNotifier {
     _releaseTask = task;
     return task;
   }
+
   final List<ConversationController> _conversations = [];
   ConversationController? _selected;
   Future<void> _pending = Future.value();
@@ -74,7 +97,8 @@ class ChatWorkspace extends ChangeNotifier {
   bool _sending = false;
   String? _error;
 
-  List<ConversationController> get conversations => List.unmodifiable(_conversations);
+  List<ConversationController> get conversations =>
+      List.unmodifiable(_conversations);
   ConversationController get selected => _selected!;
   bool get ready => _selected != null;
   bool get loading => _loading;
@@ -111,16 +135,16 @@ class ChatWorkspace extends ChangeNotifier {
     Future<void> Function() action, {
     required String errorMessage,
   }) => _enqueue(() async {
-        _busy = true;
-        _error = null;
-        _notify();
-        try {
-          await action();
-        } finally {
-          _busy = false;
-          _notify();
-        }
-      }, errorMessage: errorMessage);
+    _busy = true;
+    _error = null;
+    _notify();
+    try {
+      await action();
+    } finally {
+      _busy = false;
+      _notify();
+    }
+  }, errorMessage: errorMessage);
 
   ConversationController _controller(
     Conversation conversation,
@@ -131,11 +155,13 @@ class ChatWorkspace extends ChangeNotifier {
       conversation,
       messages: messages,
       onDraftChanged: (draft) {
-        unawaited(_enqueue(() async {
-          if (_conversations.contains(controller)) {
-            await _chatService.saveDraft(controller.id, draft);
-          }
-        }, errorMessage: 'Nie udało się zapisać szkicu wiadomości.'));
+        unawaited(
+          _enqueue(() async {
+            if (_conversations.contains(controller)) {
+              await _chatService.saveDraft(controller.id, draft);
+            }
+          }, errorMessage: 'Nie udało się zapisać szkicu wiadomości.'),
+        );
       },
     );
     return controller;
@@ -151,7 +177,9 @@ class ChatWorkspace extends ChangeNotifier {
           conversations = [await repository.createConversation()];
         }
         final messages = await Future.wait(
-          conversations.map((conversation) => repository.getMessages(conversation.id)),
+          conversations.map(
+            (conversation) => repository.getMessages(conversation.id),
+          ),
         );
         if (_disposed) return;
         for (var i = 0; i < conversations.length; i++) {
@@ -163,9 +191,11 @@ class ChatWorkspace extends ChangeNotifier {
       }
     }, errorMessage: 'Nie udało się wczytać rozmów. Spróbuj ponownie.');
     _initialization = task;
-    unawaited(task.then((_) {
-      if (!ready) _initialization = null;
-    }));
+    unawaited(
+      task.then((_) {
+        if (!ready) _initialization = null;
+      }),
+    );
     return task;
   }
 
@@ -188,31 +218,41 @@ class ChatWorkspace extends ChangeNotifier {
   Future<void> deleteConversation(ConversationController conversation) async {
     if (!_conversations.contains(conversation) || _disposed) return;
     if (_generationTarget == conversation) await stopGeneration();
-    return _runAction(() async {
-      if (!_conversations.contains(conversation)) return;
-      await repository.deleteConversation(conversation.id);
-      if (_disposed) return;
-      _conversations.remove(conversation);
-      if (_conversations.isEmpty) {
-        _selected = null;
-        _initialization = null;
-        _notify();
-        WidgetsBinding.instance.addPostFrameCallback((_) => conversation.dispose());
-        final replacement = await repository.createConversation();
+    return _runAction(
+      () async {
+        if (!_conversations.contains(conversation)) return;
+        await repository.deleteConversation(conversation.id);
         if (_disposed) return;
-        _selected = _controller(replacement, []);
-        _conversations.add(_selected!);
-      } else {
-        if (_selected == conversation) _selected = _conversations.first;
-        _notify();
-        WidgetsBinding.instance.addPostFrameCallback((_) => conversation.dispose());
-      }
-    }, errorMessage: 'Nie udało się zakończyć usuwania rozmowy. Spróbuj ponownie.');
+        _conversations.remove(conversation);
+        if (_conversations.isEmpty) {
+          _selected = null;
+          _initialization = null;
+          _notify();
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => conversation.dispose(),
+          );
+          final replacement = await repository.createConversation();
+          if (_disposed) return;
+          _selected = _controller(replacement, []);
+          _conversations.add(_selected!);
+        } else {
+          if (_selected == conversation) _selected = _conversations.first;
+          _notify();
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => conversation.dispose(),
+          );
+        }
+      },
+      errorMessage:
+          'Nie udało się zakończyć usuwania rozmowy. Spróbuj ponownie.',
+    );
   }
 
   Future<void> sendMessage(String text) {
     final message = text.trim();
-    if (message.isEmpty || !ready || _disposed || _sending || _releasing) return Future.value();
+    if (message.isEmpty || !ready || _disposed || _sending || _releasing) {
+      return Future.value();
+    }
     if (_chatService.hasLlm && _model?.file == null) {
       _error = 'Wybierz model na ekranie głównym.';
       _notify();
@@ -232,24 +272,38 @@ class ChatWorkspace extends ChangeNotifier {
   }
 
   Future<void> _sendAndGenerate(
-    ConversationController target, String message, int revision,
+    ConversationController target,
+    String message,
+    int revision,
   ) async {
     try {
       await flush();
-      if (_disposed || _stopRequested || !_conversations.contains(target)) return;
+      if (_disposed || _stopRequested || !_conversations.contains(target)) {
+        return;
+      }
       await _chatService.send(
         conversationId: target.id,
         text: message,
         history: target.messages,
         model: _model?.file,
-        onStage: (stage) { _stage = stage; _notify(); },
+        computeMode: _computeMode,
+        onLoaded: (runtime) {
+          _runtimeInfo = runtime;
+          _notify();
+        },
+        onStage: (stage) {
+          _stage = stage;
+          _notify();
+        },
         onUpdate: (update) async {
           if (_disposed) return;
           switch (update) {
             case ChatMessageSaved():
               await target.addMessage(
                 update.message,
-                submittedDraftRevision: update.message.role == ChatRole.user ? revision : null,
+                submittedDraftRevision: update.message.role == ChatRole.user
+                    ? revision
+                    : null,
                 title: update.title,
               );
             case ChatMessageUpdated():
@@ -258,13 +312,16 @@ class ChatWorkspace extends ChangeNotifier {
         },
       );
     } on UserMessageSaveFailure {
-      _error = 'Nie udało się zapisać wiadomości. Tekst pozostał w polu wpisywania.';
+      _error =
+          'Nie udało się zapisać wiadomości. Tekst pozostał w polu wpisywania.';
     } on ChatContextTooLong {
       _error = 'Wiadomość jest za długa. Skróć ją i spróbuj ponownie.';
     } on EmptyModelReply {
       if (!_stopRequested) _error = 'Model nie zwrócił odpowiedzi.';
     } catch (error) {
-      if (!_stopRequested) _error = 'Nie udało się wygenerować odpowiedzi: $error';
+      if (!_stopRequested) {
+        _error = 'Nie udało się wygenerować odpowiedzi: $error';
+      }
     } finally {
       _sending = false;
       _generationTarget = null;

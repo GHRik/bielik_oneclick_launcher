@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
+import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/configured_model_catalog_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/device_resources_repository.dart';
@@ -16,6 +18,7 @@ class MyApp extends StatelessWidget {
     required this.chatRepository,
     required this.modelFilesRepository,
     this.llmRepository,
+    this.llmConfiguration = defaultLlmConfiguration,
     this.deviceResourcesRepository,
     this.modelRepository = const ConfiguredModelCatalogRepository(bielikModels),
     this.statisticsRepository,
@@ -25,6 +28,7 @@ class MyApp extends StatelessWidget {
   final ChatRepository chatRepository;
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
+  final LlmConfiguration llmConfiguration;
   final ModelCatalogRepository modelRepository;
   final StatisticsRepository? statisticsRepository;
 
@@ -38,6 +42,7 @@ class MyApp extends StatelessWidget {
         chatRepository: chatRepository,
         modelFilesRepository: modelFilesRepository,
         llmRepository: llmRepository,
+        llmConfiguration: llmConfiguration,
         models: modelRepository.getModels(),
         statisticSeries: statisticsRepository?.getSeries() ?? const [],
         statisticsRepository: statisticsRepository,

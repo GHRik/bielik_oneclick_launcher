@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
 
@@ -21,6 +22,8 @@ class _Llm implements LlmRepository {
     ModelFile model,
     List<ChatMessage> history, {
     required void Function(LlmStage) onStage,
+    LlmComputeMode? computeMode,
+    void Function(LlmRuntimeInfo)? onLoaded,
   }) {
     inputs.add(history);
     final stream = StreamController<String>();

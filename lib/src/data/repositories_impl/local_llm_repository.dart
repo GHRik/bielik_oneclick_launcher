@@ -4,21 +4,34 @@ import 'package:bielik_oneclick_launcher/src/data/datasources/local/model_file_d
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_configuration.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/generation_metrics.dart';
+
+typedef LlmEngineLoader = Future<LlamaEngine> Function(
+  String path,
+  ModelParams params,
+);
 
 class LocalLlmRepository implements LlmRepository {
   LocalLlmRepository(
     this._files, {
     required this.configurationFor,
     this.metrics,
-  });
+    LlmEngineLoader? loadEngine,
+  }) : _loadEngine = loadEngine ?? _loadNativeEngine;
 
   final ModelFileDataSource _files;
   final GenerationMetrics? metrics;
   final LlmConfiguration Function(ModelFile) configurationFor;
+  final LlmEngineLoader _loadEngine;
   LlmConfiguration? _loadedConfiguration;
+
+  static Future<LlamaEngine> _loadNativeEngine(
+    String path,
+    ModelParams params,
+  ) => LlamaEngine.load(LlamaModel(ModelSource.path(path)), params: params);
   LlamaEngine? _engine;
   String? _loadedPath;
   bool _active = false;
@@ -41,6 +54,8 @@ class LocalLlmRepository implements LlmRepository {
     ModelFile model,
     List<ChatMessage> history, {
     required void Function(LlmStage) onStage,
+    LlmComputeMode? computeMode,
+    void Function(LlmRuntimeInfo)? onLoaded,
   }) async* {
     if (_active) throw StateError('Generowanie już trwa.');
     _active = true;
@@ -65,14 +80,13 @@ class LocalLlmRepository implements LlmRepository {
         _engine = null;
         _loadedPath = null;
         if (_stopped) return;
-        _engine = await LlamaEngine.load(
-          LlamaModel(ModelSource.path(file.path)),
-          params: ModelParams(
+        _engine = await _loadEngine(
+          file.path,
+          ModelParams(
             contextSize: contextPolicy.contextSize,
-            device: configuration.useGpu
-                ? ComputeDevice.gpu
-                : ComputeDevice.cpu,
-            gpuLayers: configuration.gpuLayers,
+            device: ComputeDevice.cpu,
+            preferredBackend: GpuBackend.cpu,
+            gpuLayers: 0,
             numberOfThreads: configuration.numberOfThreads,
             batchSize: configuration.batchSize,
           ),
@@ -92,6 +106,15 @@ class LocalLlmRepository implements LlmRepository {
         },
       );
       if (_stopped) return;
+      final backend = await engine.getBackendName();
+      if (_stopped) return;
+      onLoaded?.call(
+        LlmRuntimeInfo(
+          mode: LlmComputeMode.cpu,
+          backend: backend,
+          gpuLayers: 0,
+        ),
+      );
       onStage(LlmStage.generating);
       await for (final chunk in engine.create(
         _engineMessages(context),
@@ -118,6 +141,9 @@ class LocalLlmRepository implements LlmRepository {
           yield chunk.text;
         }
       }
+    } on LlamaException {
+      await _discardAfterFailure();
+      rethrow;
     } finally {
       _active = false;
     }
@@ -129,9 +155,19 @@ class LocalLlmRepository implements LlmRepository {
     _engine?.cancelGeneration();
   }
 
+  Future<void> _discardAfterFailure() async {
+    try {
+      await _discardEngine();
+    } catch (_) {}
+  }
+
   @override
   Future<void> unload() async {
     if (_active) throw StateError('Najpierw zatrzymaj generowanie.');
+    await _discardEngine();
+  }
+
+  Future<void> _discardEngine() async {
     final engine = _engine;
     _engine = null;
     _loadedPath = null;

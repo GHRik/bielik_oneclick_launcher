@@ -81,7 +81,7 @@ Pliki modeli pobiera użytkownik podczas działania aplikacji — nie są dołą
 Pliki edytowane przy dodawaniu modeli są w `lib/configuration/`, obok `main.dart`:
 
 - [bielik_models.dart](lib/configuration/bielik_models.dart) — lista modeli w interfejsie: nazwa, adres GGUF, nazwa pliku, dokładny rozmiar w bajtach, SHA-256 oraz wymagania RAM i miejsca.
-- [llm_configuration.dart](lib/configuration/llm_configuration.dart) — wspólne ustawienia silnika: wątki, kontekst, limit odpowiedzi, batch, GPU, temperatura i parametry losowania.
+- [llm_configuration.dart](lib/configuration/llm_configuration.dart) — wspólne ustawienia silnika: wątki CPU, kontekst, limit odpowiedzi, batch, temperatura i parametry losowania.
 
 Aby dodać model, dopisz `BielikModel` do `bielikModels`, z własną nazwą pliku GGUF i jego prawidłowymi metadanymi. Model musi być obsługiwany przez używany silnik llama.cpp. Lista na ekranie głównym korzysta bezpośrednio z tego katalogu.
 
@@ -94,7 +94,9 @@ final modelLlmConfigurations = <String, LlmConfiguration>{
 };
 ```
 
-Brak wpisu oznacza użycie `defaultLlmConfiguration`. Włączenie GPU w konfiguracji wymaga zarówno `useGpu: true`, jak i dodatniej liczby `gpuLayers`; nie zmienia to jeszcze działania wizualnego przełącznika GPU na ekranie głównym. Po zmianie konfiguracji uruchom aplikację ponownie. Domyślne parametry pozostają takie jak wcześniej: CPU, 4 wątki, kontekst 2048 i odpowiedź do 512 tokenów.
+Brak wpisu oznacza użycie `defaultLlmConfiguration`. Model działa wyłącznie na CPU: 4 wątki, kontekst 2048 i odpowiedź do 512 tokenów. Akceleracja GPU została wycofana z powodu niepoprawnych odpowiedzi na testowanym urządzeniu. APK dla Androida zawiera tylko backend CPU. Statystyki GPU pozostają niezależnymi odczytami telefonu.
+
+Zębatka na ekranie głównym otwiera podgląd konfiguracji LLM. Edycja formularza działa tylko w pamięci bieżącej sesji i nie zmienia ustawień silnika. Po zmianie pliku konfiguracji uruchom aplikację ponownie.
 
 ## Kolejne plany
 

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:llamadart/llamadart.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
@@ -17,6 +19,12 @@ import 'package:bielik_oneclick_launcher/src/data/repositories_impl/sqlite_chat_
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (kDebugMode) {
+    await LlamaLogging.configure(
+      level: LlamaLogLevel.info,
+      nativeLevel: LlamaLogLevel.info,
+    );
+  }
   await FlutterModelDownloadDataSource.initialize();
   final database = AppDatabase();
   final metrics = GenerationMetrics();

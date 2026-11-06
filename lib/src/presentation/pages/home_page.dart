@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/llm_configuration.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/statistics_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/statistics_controller.dart';
@@ -13,13 +15,15 @@ import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_rep
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/pages/chat_page.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/pages/llm_settings_page.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/controllers/llm_settings_draft.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_management_panel.dart';
-import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/gpu_acceleration_toggle.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
     required this.models,
+    required this.llmConfiguration,
     required this.modelFilesRepository,
     this.llmRepository,
     this.deviceResourcesRepository,
@@ -32,6 +36,7 @@ class HomePage extends StatefulWidget {
   final ChatRepository chatRepository;
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
+  final LlmConfiguration llmConfiguration;
   final List<BielikModel> models;
   final List<StatisticSeries> statisticSeries;
   final StatisticsRepository? statisticsRepository;
@@ -47,8 +52,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     widget.deviceResourcesRepository,
   );
   late BielikModel _selectedModel = widget.models.first;
+  late final _settingsDraft = LlmSettingsDraft(widget.llmConfiguration);
   bool _chatOpen = false;
-  bool _gpuAccelerationSelected = false;
 
   @override
   void initState() {
@@ -88,14 +93,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     try {
       await _chatWorkspace.releaseModel();
       if (!mounted) return;
-      _chatWorkspace.useModel(_selectedModel);
+      _chatWorkspace.useModel(_selectedModel, computeMode: LlmComputeMode.cpu);
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => ChatPage(
             workspace: _chatWorkspace,
             statisticSeries: widget.statisticSeries,
             statisticsController: _statistics,
-            gpuAccelerationSelected: _gpuAccelerationSelected,
           ),
         ),
       );
@@ -113,6 +117,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _statistics?.dispose();
     _resources.dispose();
+    _settingsDraft.dispose();
     _chatWorkspace.dispose();
     super.dispose();
   }
@@ -120,7 +125,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Bielik')),
+      appBar: AppBar(
+        title: const Text('Bielik'),
+        actions: [
+          IconButton(
+            tooltip: 'Konfiguracja LLM',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: _chatOpen
+                ? null
+                : () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => LlmSettingsPage(draft: _settingsDraft),
+                    ),
+                  ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -153,14 +173,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                   _resources.resources.availableRamGb,
                               totalRamGb: _resources.resources.totalRamGb,
                               onResourcesChanged: _resources.refresh,
-                              modelOptions: GpuAccelerationToggle(
-                                selected: _gpuAccelerationSelected,
-                                onChanged: _chatOpen
-                                    ? null
-                                    : (value) => setState(
-                                        () => _gpuAccelerationSelected = value,
-                                      ),
-                              ),
                             ),
                           ),
                         ),

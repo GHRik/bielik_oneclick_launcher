@@ -5,6 +5,7 @@ import 'package:characters/characters.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_update.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 
@@ -17,7 +18,7 @@ class EmptyModelReply implements Exception {}
 
 class ChatService {
   ChatService(this._repository, {LlmRepository? llmRepository})
-      : _llm = llmRepository;
+    : _llm = llmRepository;
 
   final ChatRepository _repository;
   final LlmRepository? _llm;
@@ -43,6 +44,8 @@ class ChatService {
     required FutureOr<void> Function(ChatUpdate) onUpdate,
     ModelFile? model,
     void Function(LlmStage)? onStage,
+    LlmComputeMode? computeMode,
+    void Function(LlmRuntimeInfo)? onLoaded,
   }) async {
     if (_active) throw StateError('A chat operation is already active.');
     final message = text.trim();
@@ -51,17 +54,23 @@ class ChatService {
     _stopped = false;
     try {
       final title = history.isEmpty
-          ? message.replaceAll(RegExp(r'\s+'), ' ').characters.take(40).toString()
+          ? message
+                .replaceAll(RegExp(r'\s+'), ' ')
+                .characters
+                .take(40)
+                .toString()
           : null;
       late ChatMessage saved;
       try {
-        saved = await _write(() => _repository.addMessage(
-          conversationId: conversationId,
-          authorId: ChatAuthors.user,
-          text: message,
-          conversationTitle: title,
-          clearDraft: true,
-        ));
+        saved = await _write(
+          () => _repository.addMessage(
+            conversationId: conversationId,
+            authorId: ChatAuthors.user,
+            text: message,
+            conversationTitle: title,
+            clearDraft: true,
+          ),
+        );
       } catch (error) {
         throw UserMessageSaveFailure(error);
       }
@@ -69,8 +78,13 @@ class ChatService {
       if (_stopped || _llm == null) return;
       if (model == null) throw StateError('No model selected.');
       await _reply(
-        conversationId, model, [...history, saved], onUpdate,
+        conversationId,
+        model,
+        [...history, saved],
+        onUpdate,
         onStage ?? (_) {},
+        computeMode,
+        onLoaded,
       );
     } finally {
       _active = false;
@@ -83,27 +97,39 @@ class ChatService {
     List<ChatMessage> history,
     FutureOr<void> Function(ChatUpdate) onUpdate,
     void Function(LlmStage) onStage,
+    LlmComputeMode? computeMode,
+    void Function(LlmRuntimeInfo)? onLoaded,
   ) async {
     final buffer = StringBuffer();
     String? responseId;
     final checkpoint = Stopwatch()..start();
     try {
-      await for (final fragment in _llm!.generate(model, history, onStage: onStage)) {
+      await for (final fragment in _llm!.generate(
+        model,
+        history,
+        onStage: onStage,
+        computeMode: computeMode,
+        onLoaded: onLoaded,
+      )) {
         if (_stopped) break;
         buffer.write(fragment);
         if (responseId == null) {
-          final saved = await _write(() => _repository.addMessage(
-            conversationId: conversationId,
-            authorId: ChatAuthors.assistant,
-            text: buffer.toString(),
-            clearDraft: false,
-          ));
+          final saved = await _write(
+            () => _repository.addMessage(
+              conversationId: conversationId,
+              authorId: ChatAuthors.assistant,
+              text: buffer.toString(),
+              clearDraft: false,
+            ),
+          );
           responseId = saved.id;
           await onUpdate(ChatMessageSaved(saved));
         } else {
           await onUpdate(ChatMessageUpdated(responseId, buffer.toString()));
           if (checkpoint.elapsedMilliseconds >= 500) {
-            await _write(() => _repository.updateMessage(responseId!, buffer.toString()));
+            await _write(
+              () => _repository.updateMessage(responseId!, buffer.toString()),
+            );
             checkpoint.reset();
           }
         }
@@ -112,7 +138,9 @@ class ChatService {
     } finally {
       _llm!.stop();
       if (responseId != null) {
-        await _write(() => _repository.updateMessage(responseId!, buffer.toString()));
+        await _write(
+          () => _repository.updateMessage(responseId!, buffer.toString()),
+        );
       }
     }
   }

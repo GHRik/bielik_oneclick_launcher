@@ -7,8 +7,6 @@ const defaultLlmConfiguration = LlmConfiguration(
   safetyTokens: 32,
   numberOfThreads: 4,
   batchSize: 128,
-  useGpu: false,
-  gpuLayers: 0,
   temperature: 0.8,
   topK: 40,
   topP: 0.9,

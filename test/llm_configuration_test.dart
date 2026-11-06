@@ -34,7 +34,6 @@ void main() {
         same(defaultLlmConfiguration),
       );
       expect(configuration.batchSize, defaultLlmConfiguration.batchSize);
-      expect(configuration.useGpu, defaultLlmConfiguration.useGpu);
       final policy = ChatContextPolicy(
         contextSize: configuration.contextSize,
         responseTokens: configuration.responseTokens,

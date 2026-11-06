@@ -31,6 +31,14 @@ dev_dependencies:
   sqflite_common_ffi: ^2.4.5
 
 
+hooks:
+  user_defines:
+    llamadart:
+      llamadart_native_backends:
+        platforms:
+          android-arm64: [cpu]
+          android-x64: [cpu]
+
 flutter:
 
   uses-material-design: true

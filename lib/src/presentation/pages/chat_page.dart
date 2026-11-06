@@ -15,13 +15,11 @@ class ChatPage extends StatefulWidget {
     required this.workspace,
     required this.statisticSeries,
     this.statisticsController,
-    this.gpuAccelerationSelected = false,
   });
 
   final ChatWorkspace workspace;
   final List<StatisticSeries> statisticSeries;
   final StatisticsController? statisticsController;
-  final bool gpuAccelerationSelected;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -101,9 +99,7 @@ class _ChatPageState extends State<ChatPage> {
                   const Text('Czat'),
                   if (widget.workspace.modelName != null)
                     Text(
-                      widget.gpuAccelerationSelected
-                          ? 'GPU (wybrane) · ${widget.workspace.modelName!}'
-                          : widget.workspace.modelName!,
+                      '${widget.workspace.computeStatus} · ${widget.workspace.modelName!}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelSmall,
