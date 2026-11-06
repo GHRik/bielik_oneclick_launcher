@@ -17,11 +17,23 @@ void main() {
     expect(find.text('Miejsce na dysku: około 1,7 GB'), findsOneWidget);
     await tester.tap(find.text('Pobierz'));
     await tester.pumpAndSettle();
-    expect(find.text('Pobieranie modeli będzie dostępne wkrótce.'), findsOneWidget);
+    expect(find.text('Symulacja pobierania · 0%'), findsOneWidget);
+    expect(find.text('Prędkość: 20.0 MB/s'), findsOneWidget);
+    expect(find.text('Pozostało (ETA): 1 min 25 s'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+    expect(find.text('Symulacja pobierania · 5%'), findsOneWidget);
+    expect(find.text('Pozostało (ETA): 1 min 20 s'), findsOneWidget);
+    await tester.ensureVisible(find.text('Anuluj pobieranie'));
+    await tester.tap(find.text('Anuluj pobieranie'));
+    await tester.pumpAndSettle();
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    await tester.ensureVisible(find.text('Usuń'));
     await tester.tap(find.text('Usuń'));
     await tester.pumpAndSettle();
     expect(find.text('Usuwanie modeli będzie dostępne wkrótce.'), findsOneWidget);
 
+    await tester.ensureVisible(find.byType(DropdownButtonFormField<BielikModel>));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(DropdownButtonFormField<BielikModel>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Bielik 4.5B v3.0 · Q8').last);

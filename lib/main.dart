@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
@@ -33,6 +35,49 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final _chatController = InMemoryChatController();
   BielikModel _selectedModel = bielikModels.first;
+  Timer? _downloadTimer;
+  double _downloadedMb = 0;
+  static const double _demoSpeedMb = 20;
+  bool _showDownload = false;
+  bool _downloadComplete = false;
+
+  bool get _isDownloading => _downloadTimer?.isActive ?? false;
+
+  double get _downloadProgress =>
+      (_downloadedMb / _selectedModel.downloadSizeMb).clamp(0.0, 1.0);
+
+  String get _remainingTime {
+    final seconds =
+        ((_selectedModel.downloadSizeMb - _downloadedMb) / _demoSpeedMb)
+            .ceil();
+    return '${seconds ~/ 60} min ${seconds % 60} s';
+  }
+
+  void _startDownloadPreview() {
+    setState(() {
+      _downloadedMb = 0;
+      _showDownload = true;
+      _downloadComplete = false;
+      _downloadTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        setState(() {
+          _downloadedMb = (_downloadedMb + _demoSpeedMb)
+              .clamp(0.0, _selectedModel.downloadSizeMb);
+          if (_downloadProgress >= 1) {
+            timer.cancel();
+            _downloadComplete = true;
+          }
+        });
+      });
+    });
+  }
+
+  void _cancelDownloadPreview() {
+    setState(() {
+      _downloadTimer?.cancel();
+      _showDownload = false;
+      _downloadedMb = 0;
+    });
+  }
 
   void _showPlannedAction(String action) {
     ScaffoldMessenger.of(context)
@@ -44,6 +89,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void dispose() {
+    _downloadTimer?.cancel();
     _chatController.dispose();
     super.dispose();
   }
@@ -91,9 +137,14 @@ class _MyHomePageState extends State<MyHomePage> {
                                     child: Text(model.name),
                                   ),
                               ],
-                              onChanged: (model) {
+                              onChanged: _isDownloading ? null : (model) {
                                 if (model != null) {
-                                  setState(() => _selectedModel = model);
+                                  setState(() {
+                                    _selectedModel = model;
+                                    _showDownload = false;
+                                    _downloadComplete = false;
+                                    _downloadedMb = 0;
+                                  });
                                 }
                               },
                             ),
@@ -102,23 +153,75 @@ class _MyHomePageState extends State<MyHomePage> {
                               children: [
                                 Expanded(
                                   child: FilledButton.icon(
-                                    onPressed: () =>
-                                        _showPlannedAction('Pobieranie modeli'),
+                                    onPressed: _isDownloading
+                                        ? null
+                                        : _startDownloadPreview,
                                     icon: const Icon(Icons.download),
-                                    label: const Text('Pobierz'),
+                                    label: Text(
+                                      _isDownloading
+                                          ? '${(_downloadProgress * 100).floor()}%'
+                                          : 'Pobierz',
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: OutlinedButton.icon(
-                                    onPressed: () =>
-                                        _showPlannedAction('Usuwanie modeli'),
+                                    onPressed: _isDownloading
+                                        ? null
+                                        : () => _showPlannedAction('Usuwanie modeli'),
                                     icon: const Icon(Icons.delete_outline),
                                     label: const Text('Usuń'),
                                   ),
                                 ),
                               ],
                             ),
+                            if (_showDownload) ...[
+                              const SizedBox(height: 16),
+                              Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      Text(
+                                        _downloadComplete
+                                            ? 'Symulacja zakończona · 100%'
+                                            : 'Symulacja pobierania · ${(_downloadProgress * 100).floor()}%',
+                                        style: Theme.of(context).textTheme.titleSmall,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      LinearProgressIndicator(
+                                        value: _downloadProgress,
+                                        semanticsLabel: 'Postęp symulacji pobierania',
+                                        semanticsValue:
+                                            '${(_downloadProgress * 100).floor()}%',
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Wrap(
+                                        spacing: 16,
+                                        runSpacing: 8,
+                                        children: [
+                                          Text(
+                                            'Prędkość: ${_isDownloading ? _demoSpeedMb.toStringAsFixed(1) : '0,0'} MB/s',
+                                          ),
+                                          Text('Pozostało (ETA): $_remainingTime'),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        'Podgląd interfejsu — bez pobierania plików.',
+                                      ),
+                                      if (_isDownloading)
+                                        TextButton(
+                                          onPressed: _cancelDownloadPreview,
+                                          child: const Text('Anuluj pobieranie'),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 24),
                             Card(
                               child: Padding(
