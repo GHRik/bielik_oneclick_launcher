@@ -8,11 +8,13 @@ class ConversationTile extends StatelessWidget {
     required this.conversation,
     required this.selected,
     required this.onTap,
+    required this.onDelete,
   });
 
   final Conversation conversation;
   final bool selected;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +31,11 @@ class ConversationTile extends StatelessWidget {
           conversation.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+        ),
+        trailing: IconButton(
+          tooltip: 'Usuń rozmowę: ${conversation.title}',
+          onPressed: onDelete,
+          icon: const Icon(Icons.delete_outline, size: 20),
         ),
         onTap: onTap,
       ),

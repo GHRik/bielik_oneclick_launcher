@@ -31,6 +31,7 @@ class ChatSidebar extends StatelessWidget {
                 conversations: workspace.conversations,
                 selected: workspace.selected,
                 onSelect: onSelect,
+                onDelete: workspace.deleteConversation,
               ),
             ),
           ],

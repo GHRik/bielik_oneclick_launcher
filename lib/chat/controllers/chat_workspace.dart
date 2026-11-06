@@ -27,6 +27,22 @@ class ChatWorkspace extends ChangeNotifier {
     notifyListeners();
   }
 
+  void deleteConversation(Conversation conversation) {
+    if (!_conversations.remove(conversation)) return;
+
+    if (_conversations.isEmpty) {
+      _selected = Conversation(_nextId++);
+      _conversations.add(_selected);
+    } else if (_selected == conversation) {
+      _selected = _conversations.first;
+    }
+
+    notifyListeners();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      conversation.dispose();
+    });
+  }
+
   void sendMessage(String text) {
     final message = text.trim();
     if (message.isEmpty) return;

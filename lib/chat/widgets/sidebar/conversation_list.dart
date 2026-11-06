@@ -9,11 +9,13 @@ class ConversationList extends StatelessWidget {
     required this.conversations,
     required this.selected,
     required this.onSelect,
+    required this.onDelete,
   });
 
   final List<Conversation> conversations;
   final Conversation selected;
   final ValueChanged<Conversation> onSelect;
+  final ValueChanged<Conversation> onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +29,7 @@ class ConversationList extends StatelessWidget {
           conversation: conversation,
           selected: conversation == selected,
           onTap: () => onSelect(conversation),
+          onDelete: () => onDelete(conversation),
         );
       },
     );
