@@ -36,8 +36,8 @@ hooks:
     llamadart:
       llamadart_native_backends:
         platforms:
-          android-arm64: [cpu]
-          android-x64: [cpu]
+          android-arm64: [cpu, vulkan, opencl]
+          android-x64: [cpu, vulkan, opencl]
 
 flutter:
 

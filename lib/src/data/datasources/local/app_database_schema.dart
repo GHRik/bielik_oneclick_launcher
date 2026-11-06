@@ -12,7 +12,7 @@ class AppDatabaseSchema {
   }
 
   static Future<void> _createSettings(Database database) => database.execute(
-    'CREATE TABLE settings (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL)',
+    'CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL)',
   );
 
   static Future<void> create(Database database, int version) async {

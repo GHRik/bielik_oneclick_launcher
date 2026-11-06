@@ -74,6 +74,61 @@ void main() {
   );
 
   test(
+    'Migrates v1 when settings already exists and preserves all data',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'existing-settings-test',
+      );
+      final file = path.join(directory.path, 'app.db');
+      addTearDown(() => directory.delete(recursive: true));
+      final old = await databaseFactoryFfi.openDatabase(
+        file,
+        options: OpenDatabaseOptions(
+          version: 1,
+          onCreate: AppDatabaseSchema.create,
+        ),
+      );
+      await old.insert('settings', {'key': 'llm', 'value': '{"seed":42}'});
+      final id = await old.insert('conversations', {
+        'title': 'Zachowaj rozmowę',
+        'draft': 'Mój szkic',
+        'created_at': 1,
+        'updated_at': 2,
+      });
+      await old.insert('messages', {
+        'id': 'saved-message',
+        'conversation_id': id,
+        'author_id': 'local-user',
+        'text': 'Zachowaj wiadomość',
+        'created_at': 1,
+      });
+      await old.close();
+
+      final database = AppDatabase(
+        factory: databaseFactoryFfi,
+        databasePath: file,
+      );
+      addTearDown(database.close);
+      for (var attempt = 0; attempt < 2; attempt++) {
+        final connection = await database.open();
+        expect(await connection.getVersion(), 2);
+        expect((await connection.query('settings')).single, {
+          'key': 'llm',
+          'value': '{"seed":42}',
+        });
+        final conversation = (await connection.query('conversations')).single;
+        expect(conversation['title'], 'Zachowaj rozmowę');
+        expect(conversation['draft'], 'Mój szkic');
+        expect(
+          (await connection.query('messages')).single['text'],
+          'Zachowaj wiadomość',
+        );
+        await database.close();
+      }
+    },
+  );
+
+  test(
     'Rejects invalid budgets, non-finite values and fractional thread counts',
     () {
       final draft = LlmSettingsDraft(defaultLlmConfiguration);

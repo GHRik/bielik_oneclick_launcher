@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/gpu_configuration.dart';
+
 import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
 import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_configuration.dart';
@@ -20,6 +22,7 @@ class MyApp extends StatelessWidget {
     this.llmRepository,
     this.llmConfiguration = defaultLlmConfiguration,
     this.onSaveLlmConfiguration,
+    this.onSaveGpuConfiguration,
     this.deviceResourcesRepository,
     this.modelRepository = const ConfiguredModelCatalogRepository(bielikModels),
     this.statisticsRepository,
@@ -30,6 +33,7 @@ class MyApp extends StatelessWidget {
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
   final LlmConfiguration llmConfiguration;
+  final ValueChanged<GpuConfiguration>? onSaveGpuConfiguration;
   final Future<void> Function(LlmConfiguration)? onSaveLlmConfiguration;
   final ModelCatalogRepository modelRepository;
   final StatisticsRepository? statisticsRepository;
@@ -46,6 +50,7 @@ class MyApp extends StatelessWidget {
         llmRepository: llmRepository,
         llmConfiguration: llmConfiguration,
         onSaveLlmConfiguration: onSaveLlmConfiguration,
+        onSaveGpuConfiguration: onSaveGpuConfiguration,
         models: modelRepository.getModels(),
         statisticSeries: statisticsRepository?.getSeries() ?? const [],
         statisticsRepository: statisticsRepository,

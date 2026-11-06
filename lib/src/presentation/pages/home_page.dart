@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/gpu_configuration.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
@@ -25,6 +27,7 @@ class HomePage extends StatefulWidget {
     required this.models,
     required this.llmConfiguration,
     this.onSaveLlmConfiguration,
+    this.onSaveGpuConfiguration,
     required this.modelFilesRepository,
     this.llmRepository,
     this.deviceResourcesRepository,
@@ -38,6 +41,7 @@ class HomePage extends StatefulWidget {
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
   final LlmConfiguration llmConfiguration;
+  final ValueChanged<GpuConfiguration>? onSaveGpuConfiguration;
   final Future<void> Function(LlmConfiguration)? onSaveLlmConfiguration;
   final List<BielikModel> models;
   final List<StatisticSeries> statisticSeries;
@@ -56,6 +60,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   late BielikModel _selectedModel = widget.models.first;
   late final _settingsDraft = LlmSettingsDraft(widget.llmConfiguration);
   bool _chatOpen = false;
+  GpuConfiguration _gpuConfiguration = const GpuConfiguration();
 
   @override
   void initState() {
@@ -95,7 +100,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     try {
       await _chatWorkspace.releaseModel();
       if (!mounted) return;
-      _chatWorkspace.useModel(_selectedModel, computeMode: LlmComputeMode.cpu);
+      _chatWorkspace.useModel(
+        _selectedModel,
+        computeMode: _gpuConfiguration.enabled
+            ? LlmComputeMode.gpu
+            : LlmComputeMode.cpu,
+      );
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => ChatPage(
@@ -140,6 +150,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       builder: (_) => LlmSettingsPage(
                         draft: _settingsDraft,
                         onSave: widget.onSaveLlmConfiguration,
+                        gpuConfiguration: _gpuConfiguration,
+                        onSaveGpu: (configuration) {
+                          widget.onSaveGpuConfiguration?.call(configuration);
+                          _gpuConfiguration = configuration;
+                        },
                       ),
                     ),
                   ),

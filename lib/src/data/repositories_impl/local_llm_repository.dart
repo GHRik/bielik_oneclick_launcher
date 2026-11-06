@@ -1,5 +1,7 @@
 import 'package:llamadart/llamadart.dart';
 
+import 'package:bielik_oneclick_launcher/src/data/datasources/llm_runtime_adapter.dart';
+
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/model_file_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
@@ -20,12 +22,14 @@ class LocalLlmRepository implements LlmRepository {
     required this.configurationFor,
     this.metrics,
     this.systemPrompt = '',
+    this.runtimeAdapter = const CpuRuntimeAdapter(),
     LlmEngineLoader? loadEngine,
   }) : _loadEngine = loadEngine ?? _loadNativeEngine;
 
   final ModelFileDataSource _files;
   final GenerationMetrics? metrics;
   final String systemPrompt;
+  final LlmRuntimeAdapter runtimeAdapter;
   final LlmConfiguration Function(ModelFile) configurationFor;
   final LlmEngineLoader _loadEngine;
   LlmConfiguration? _loadedConfiguration;
@@ -40,18 +44,18 @@ class LocalLlmRepository implements LlmRepository {
   bool _stopped = false;
 
   List<LlamaChatMessage> _engineMessages(List<ContextMessage> messages) => [
-        if (systemPrompt.trim().isNotEmpty)
-          LlamaChatMessage.fromText(role: LlamaChatRole.system, text: systemPrompt),
-        ...messages
-          .map(
-            (message) => LlamaChatMessage.fromText(
-              role: message.role == ChatRole.user
-                  ? LlamaChatRole.user
-                  : LlamaChatRole.assistant,
-              text: message.text,
-            ),
+    if (systemPrompt.trim().isNotEmpty)
+      LlamaChatMessage.fromText(role: LlamaChatRole.system, text: systemPrompt),
+    ...messages
+        .map(
+          (message) => LlamaChatMessage.fromText(
+            role: message.role == ChatRole.user
+                ? LlamaChatRole.user
+                : LlamaChatRole.assistant,
+            text: message.text,
           ),
-      ];
+        ),
+  ];
 
   @override
   Stream<String> generate(
@@ -86,14 +90,7 @@ class LocalLlmRepository implements LlmRepository {
         if (_stopped) return;
         _engine = await _loadEngine(
           file.path,
-          ModelParams(
-            contextSize: contextPolicy.contextSize,
-            device: ComputeDevice.cpu,
-            preferredBackend: GpuBackend.cpu,
-            gpuLayers: 0,
-            numberOfThreads: configuration.numberOfThreads,
-            batchSize: configuration.batchSize,
-          ),
+          runtimeAdapter.parameters(configuration),
         );
         _loadedPath = file.path;
         _loadedConfiguration = configuration;
@@ -110,15 +107,9 @@ class LocalLlmRepository implements LlmRepository {
         },
       );
       if (_stopped) return;
-      final backend = await engine.getBackendName();
+      final runtime = await runtimeAdapter.inspect(engine);
       if (_stopped) return;
-      onLoaded?.call(
-        LlmRuntimeInfo(
-          mode: LlmComputeMode.cpu,
-          backend: backend,
-          gpuLayers: 0,
-        ),
-      );
+      onLoaded?.call(runtime);
       onStage(LlmStage.generating);
       await for (final chunk in engine.create(
         _engineMessages(context),
@@ -145,6 +136,9 @@ class LocalLlmRepository implements LlmRepository {
           yield chunk.text;
         }
       }
+    } on GpuAccelerationFailure {
+      await _discardAfterFailure();
+      rethrow;
     } on LlamaException {
       await _discardAfterFailure();
       rethrow;

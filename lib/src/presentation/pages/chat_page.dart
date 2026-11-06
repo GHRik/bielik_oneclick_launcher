@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/chat_model_header.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/statistics_controller.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
@@ -93,19 +95,12 @@ class _ChatPageState extends State<ChatPage> {
                         ),
                       ],
                     ),
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Czat'),
-                  if (widget.workspace.modelName != null)
-                    Text(
-                      '${widget.workspace.computeStatus} · ${widget.workspace.modelName!}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelSmall,
+              title: widget.workspace.modelName == null
+                  ? const Text('Czat')
+                  : ChatModelHeader(
+                      status: widget.workspace.computeStatus,
+                      modelName: widget.workspace.modelName!,
                     ),
-                ],
-              ),
               actions: [
                 IconButton(
                   tooltip: 'Statystyki',

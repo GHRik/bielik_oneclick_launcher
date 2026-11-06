@@ -2,6 +2,10 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:llamadart/llamadart.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/gpu_configuration.dart';
+import 'package:bielik_oneclick_launcher/src/data/datasources/gpu_inference_adapter.dart';
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/compute_routing_llm_repository.dart';
+
 import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/configuration/system_prompt.dart';
 import 'package:bielik_oneclick_launcher/src/app.dart';
@@ -32,9 +36,12 @@ Future<void> main() async {
   final database = AppDatabase();
   final settings = SqliteLlmSettingsRepository(LlmSettingsDataSource(database));
   var activeConfiguration = await settings.load();
+  var gpuConfiguration = const GpuConfiguration();
   final metrics = GenerationMetrics();
   runApp(
     MyApp(
+      onSaveGpuConfiguration: (configuration) =>
+          gpuConfiguration = configuration,
       llmConfiguration: activeConfiguration ?? defaultLlmConfiguration,
       onSaveLlmConfiguration: (configuration) async {
         await settings.save(configuration);
@@ -45,12 +52,22 @@ Future<void> main() async {
       ),
       chatRepository: SqliteChatRepository(SqliteChatDataSource(database)),
       modelFilesRepository: LocalModelFilesRepository(ModelFileDataSource()),
-      llmRepository: LocalLlmRepository(
-        ModelFileDataSource(),
-        metrics: metrics,
-        systemPrompt: bielikSystemPrompt,
-        configurationFor: (model) =>
-            activeConfiguration ?? llmConfigurationFor(model),
+      llmRepository: ComputeRoutingLlmRepository(
+        createGpu: () => LocalLlmRepository(
+          ModelFileDataSource(),
+          metrics: metrics,
+          systemPrompt: bielikSystemPrompt,
+          runtimeAdapter: GpuInferenceAdapter(gpuConfiguration),
+          configurationFor: (model) =>
+              activeConfiguration ?? llmConfigurationFor(model),
+        ),
+        cpu: LocalLlmRepository(
+          ModelFileDataSource(),
+          metrics: metrics,
+          systemPrompt: bielikSystemPrompt,
+          configurationFor: (model) =>
+              activeConfiguration ?? llmConfigurationFor(model),
+        ),
       ),
       statisticsRepository: LocalStatisticsRepository(
         const StatisticsDataSource(),

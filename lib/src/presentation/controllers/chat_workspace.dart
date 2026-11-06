@@ -27,7 +27,7 @@ class ChatWorkspace extends ChangeNotifier {
     final runtime = _runtimeInfo;
     if (runtime != null) {
       return runtime.mode == LlmComputeMode.gpu
-          ? 'GPU · ${runtime.backend} · ${runtime.gpuLayers} warstw'
+          ? 'GPU · ${runtime.backend}'
           : 'CPU';
     }
     return '${_computeMode == LlmComputeMode.gpu ? 'GPU' : 'CPU'} · niezaładowany';
@@ -53,7 +53,7 @@ class ChatWorkspace extends ChangeNotifier {
   }) {
     if (_sending || _releasing) throw StateError('Model jest zajęty.');
     _model = model;
-    _computeMode = LlmComputeMode.cpu;
+    _computeMode = computeMode;
     _runtimeInfo = null;
     _notify();
   }
@@ -314,6 +314,12 @@ class ChatWorkspace extends ChangeNotifier {
     } on UserMessageSaveFailure {
       _error =
           'Nie udało się zapisać wiadomości. Tekst pozostał w polu wpisywania.';
+    } on GpuAccelerationFailure catch (error) {
+      _runtimeInfo = null;
+      if (!_stopRequested) {
+        _error =
+            'Błąd akceleracji GPU. Wyłącz GPU w konfiguracji, aby użyć CPU. ${error.reason}';
+      }
     } on ChatContextTooLong {
       _error = 'Wiadomość jest za długa. Skróć ją i spróbuj ponownie.';
     } on EmptyModelReply {

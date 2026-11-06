@@ -1,13 +1,25 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/gpu_configuration.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/controllers/gpu_settings_draft.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/gpu_settings_panel.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_configuration.dart';
 
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/llm_settings_draft.dart';
 
 class LlmSettingsPage extends StatefulWidget {
-  const LlmSettingsPage({super.key, required this.draft, this.onSave});
+  const LlmSettingsPage({
+    super.key,
+    required this.draft,
+    this.onSave,
+    this.gpuConfiguration = const GpuConfiguration(),
+    this.onSaveGpu,
+  });
 
   final LlmSettingsDraft draft;
+  final GpuConfiguration gpuConfiguration;
+  final ValueChanged<GpuConfiguration>? onSaveGpu;
   final Future<void> Function(LlmConfiguration)? onSave;
 
   @override
@@ -16,6 +28,7 @@ class LlmSettingsPage extends StatefulWidget {
 
 class _LlmSettingsPageState extends State<LlmSettingsPage> {
   LlmSettingsDraft get draft => widget.draft;
+  late final _gpuDraft = GpuSettingsDraft(widget.gpuConfiguration);
   bool _saving = false;
   String? _error;
 
@@ -26,7 +39,9 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
     });
     try {
       final configuration = draft.configuration();
+      final gpu = _gpuDraft.configuration(configuration.batchSize);
       await widget.onSave?.call(configuration);
+      widget.onSaveGpu?.call(gpu);
       if (!mounted) return;
       draft.save();
       Navigator.of(context).pop();
@@ -47,6 +62,12 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
   void initState() {
     super.initState();
     draft.restoreSaved();
+  }
+
+  @override
+  void dispose() {
+    _gpuDraft.dispose();
+    super.dispose();
   }
 
   Widget _section(String title, List<Widget> children) => Card(
@@ -102,7 +123,7 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
               children: [
                 const Text(
                   'Ustawienia wspólne dla modeli. Zapisz zmiany, aby użyć ich '
-                  'przy następnym otwarciu czatu. Obliczenia działają na CPU.',
+                  'przy następnym otwarciu czatu.',
                 ),
                 if (_error != null)
                   Padding(
@@ -124,6 +145,7 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
                   _field('numberOfThreads'),
                   _field('batchSize'),
                 ]),
+                GpuSettingsPanel(draft: _gpuDraft),
                 _section('Generowanie tekstu', [
                   _field('temperature'),
                   _field('topK'),
@@ -134,7 +156,12 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
                 ]),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
-                  onPressed: () => setState(draft.reset),
+                  onPressed: _saving
+                      ? null
+                      : () => setState(() {
+                          draft.reset();
+                          _gpuDraft.reset();
+                        }),
                   icon: const Icon(Icons.restore),
                   label: const Text('Przywróć domyślne ustawienia'),
                 ),
