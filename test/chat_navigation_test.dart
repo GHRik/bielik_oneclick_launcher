@@ -73,11 +73,26 @@ void main() {
     expect(tester.widget<TextField>(find.byType(TextField)).controller!.text, '');
     await tester.tap(find.byTooltip('Usuń rozmowę: Pierwsza rozmowa'));
     await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(ListTile), findsNWidgets(3));
+    await tester.tap(find.text('Anuluj'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(ListTile), findsNWidgets(3));
+
+    await tester.tap(find.byTooltip('Usuń rozmowę: Pierwsza rozmowa'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Usuń'));
+    await tester.pumpAndSettle();
     expect(find.byType(ListTile), findsNWidgets(2));
     expect(find.text('Pierwsza rozmowa'), findsNothing);
     expect(find.text('W czym mogę pomóc?'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Usuń rozmowę: Nowa rozmowa'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Usuń'));
     await tester.pumpAndSettle();
     expect(find.byType(ListTile), findsOneWidget);
     expect(find.text('Druga rozmowa'), findsNWidgets(2));
@@ -85,6 +100,9 @@ void main() {
         'Szkic drugiej rozmowy');
 
     await tester.tap(find.byTooltip('Usuń rozmowę: Druga rozmowa'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Usuń'));
     await tester.pumpAndSettle();
     expect(find.byType(ListTile), findsOneWidget);
     expect(find.text('Druga rozmowa'), findsNothing);

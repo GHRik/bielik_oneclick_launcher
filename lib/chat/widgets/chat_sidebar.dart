@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/chat/controllers/chat_workspace.dart';
 import 'package:bielik_oneclick_launcher/chat/models/conversation.dart';
 import 'package:bielik_oneclick_launcher/chat/widgets/sidebar/conversation_list.dart';
+import 'package:bielik_oneclick_launcher/chat/widgets/sidebar/delete_conversation_dialog.dart';
 import 'package:bielik_oneclick_launcher/chat/widgets/sidebar/sidebar_header.dart';
 
 class ChatSidebar extends StatelessWidget {
@@ -16,6 +17,21 @@ class ChatSidebar extends StatelessWidget {
   final ChatWorkspace workspace;
   final VoidCallback onNewChat;
   final ValueChanged<Conversation> onSelect;
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    Conversation conversation,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => DeleteConversationDialog(
+        conversationTitle: conversation.title,
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      workspace.deleteConversation(conversation);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +47,7 @@ class ChatSidebar extends StatelessWidget {
                 conversations: workspace.conversations,
                 selected: workspace.selected,
                 onSelect: onSelect,
-                onDelete: workspace.deleteConversation,
+                onDelete: (conversation) => _confirmDelete(context, conversation),
               ),
             ),
           ],
