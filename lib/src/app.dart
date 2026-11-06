@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
-import 'package:bielik_oneclick_launcher/src/data/repositories_impl/preview_model_catalog_repository.dart';
+import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/configured_model_catalog_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/device_resources_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_catalog_repository.dart';
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
     required this.modelFilesRepository,
     this.llmRepository,
     this.deviceResourcesRepository,
-    this.modelRepository = const PreviewModelCatalogRepository(),
+    this.modelRepository = const ConfiguredModelCatalogRepository(bielikModels),
     this.statisticsRepository,
   });
 

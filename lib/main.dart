@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/app.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/statistics_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_statistics_repository.dart';
@@ -29,6 +30,7 @@ Future<void> main() async {
       llmRepository: LocalLlmRepository(
         ModelFileDataSource(),
         metrics: metrics,
+        configurationFor: llmConfigurationFor,
       ),
       statisticsRepository: LocalStatisticsRepository(
         const StatisticsDataSource(),

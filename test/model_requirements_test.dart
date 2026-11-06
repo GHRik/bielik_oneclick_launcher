@@ -2,7 +2,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
-import 'package:bielik_oneclick_launcher/src/data/datasources/preview_model_datasource.dart';
+import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_management_panel.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_requirements_card.dart';

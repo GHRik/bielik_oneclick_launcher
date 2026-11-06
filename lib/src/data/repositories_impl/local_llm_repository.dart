@@ -3,6 +3,7 @@ import 'package:llamadart/llamadart.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/model_file_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/generation_metrics.dart';
@@ -10,13 +11,14 @@ import 'package:bielik_oneclick_launcher/src/domain/services/generation_metrics.
 class LocalLlmRepository implements LlmRepository {
   LocalLlmRepository(
     this._files, {
-    this.contextPolicy = const ChatContextPolicy(),
+    required this.configurationFor,
     this.metrics,
   });
 
   final ModelFileDataSource _files;
   final GenerationMetrics? metrics;
-  final ChatContextPolicy contextPolicy;
+  final LlmConfiguration Function(ModelFile) configurationFor;
+  LlmConfiguration? _loadedConfiguration;
   LlamaEngine? _engine;
   String? _loadedPath;
   bool _active = false;
@@ -45,11 +47,19 @@ class LocalLlmRepository implements LlmRepository {
     _stopped = false;
     metrics?.begin();
     try {
+      final configuration = configurationFor(model);
+      final contextPolicy = ChatContextPolicy(
+        contextSize: configuration.contextSize,
+        responseTokens: configuration.responseTokens,
+        safetyTokens: configuration.safetyTokens,
+      );
       final file = await _files.file(model);
       if (!await file.exists() || await file.length() != model.sizeBytes) {
         throw StateError('Najpierw pobierz wybrany model na ekranie głównym.');
       }
-      if (_loadedPath != file.path || _engine == null) {
+      if (_loadedPath != file.path ||
+          _engine == null ||
+          _loadedConfiguration != configuration) {
         onStage(LlmStage.loading);
         await _engine?.dispose();
         _engine = null;
@@ -59,13 +69,16 @@ class LocalLlmRepository implements LlmRepository {
           LlamaModel(ModelSource.path(file.path)),
           params: ModelParams(
             contextSize: contextPolicy.contextSize,
-            device: ComputeDevice.cpu,
-            gpuLayers: 0,
-            numberOfThreads: 4,
-            batchSize: 128,
+            device: configuration.useGpu
+                ? ComputeDevice.gpu
+                : ComputeDevice.cpu,
+            gpuLayers: configuration.gpuLayers,
+            numberOfThreads: configuration.numberOfThreads,
+            batchSize: configuration.batchSize,
           ),
         );
         _loadedPath = file.path;
+        _loadedConfiguration = configuration;
       }
       if (_stopped) return;
       final engine = _engine!;
@@ -82,7 +95,15 @@ class LocalLlmRepository implements LlmRepository {
       onStage(LlmStage.generating);
       await for (final chunk in engine.create(
         _engineMessages(context),
-        params: GenerationParams(maxTokens: contextPolicy.responseTokens),
+        params: GenerationParams(
+          maxTokens: configuration.responseTokens,
+          temp: configuration.temperature,
+          topK: configuration.topK,
+          topP: configuration.topP,
+          minP: configuration.minP,
+          penalty: configuration.repeatPenalty,
+          seed: configuration.seed,
+        ),
       )) {
         final usage = chunk.usage;
         if (usage != null) {
@@ -114,6 +135,7 @@ class LocalLlmRepository implements LlmRepository {
     final engine = _engine;
     _engine = null;
     _loadedPath = null;
+    _loadedConfiguration = null;
     await engine?.dispose();
   }
 }

@@ -31,9 +31,3 @@ const bielikModels = [
     requiredFreeRamGb: 8,
   ),
 ];
-
-class PreviewModelDataSource {
-  const PreviewModelDataSource();
-
-  List<BielikModel> getModels() => bielikModels;
-}

@@ -1,6 +1,6 @@
 # Architektura aplikacji
 
-Kod aplikacji znajduje się w `lib/src/`. `lib/main.dart` uruchamia aplikację.
+Kod aplikacji znajduje się w `lib/src/`. `lib/main.dart` uruchamia aplikację, a widoczne pliki ustawień są w `lib/configuration/`: `bielik_models.dart` zawiera katalog modeli, `llm_configuration.dart` domyślne parametry LLM i nadpisania według nazwy pliku GGUF. Konfiguracja jest przekazywana przez punkt składania aplikacji; warstwy domeny, danych i widoku nie importują tego katalogu.
 
 ```text
 lib/src/
@@ -28,7 +28,7 @@ lib/src/
 
 ## Obecne źródła danych
 
-`PreviewModelCatalogRepository` dostarcza lokalny katalog modeli. Dane `PreviewStatisticsRepository` są zachowane do podglądów i testów; produkcja wstrzykuje `LocalStatisticsRepository`.
+`ConfiguredModelCatalogRepository` otrzymuje katalog z `configuration/bielik_models.dart` i udostępnia go przez kontrakt domeny. Dane `PreviewStatisticsRepository` są zachowane do podglądów i testów; produkcja wstrzykuje `LocalStatisticsRepository`.
 
 `Conversation` jest modelem domenowym. `ConversationController` przechowuje kontroler biblioteki czatu, szkic wiadomości i stan widoku. `ChatWorkspace` zarządza wyborem i cyklem życia rozmów.
 
@@ -45,6 +45,10 @@ lib/src/
 Androidowy `DeviceStatisticsReader` działa w kolejce tła istniejącego kanału platformowego. Zwraca PSS procesu (RAM aplikacji), CPU procesu z różnicy liczników czasu (procent łącznej mocy rdzeni), temperaturę baterii i temperaturę CPU, jeśli system na to pozwala. Odmowa dostępu do temperatury CPU daje brak danych, a nie temperaturę baterii pod inną nazwą.
 
 `LocalLlmRepository` rejestruje czas do pierwszego tekstu od rozpoczęcia żądania LLM, razem z ładowaniem. Liczbę tokenów oraz średnią prędkość tokeny / czas żądania pobiera z końcowego raportu silnika, bez utożsamiania fragmentów tekstu z tokenami. Te dwie metryki opisują ostatnie zakończone żądanie i sumę raportowanych tokenów sesji. Przerwane żądanie bez raportu nie zwiększa licznika.
+
+## Konfiguracja modeli
+
+`LlmConfiguration` w domenie jest niemutowalnym zestawem parametrów. `main.dart` wstrzykuje do `LocalLlmRepository` funkcję `llmConfigurationFor`, która wybiera nadpisanie z `modelLlmConfigurations` lub wartości domyślne. Repozytorium mapuje ustawienia na natywne `ModelParams` i `GenerationParams`; ta sama konfiguracja wyznacza budżet `ChatContextPolicy`. Zmiana wybranego zestawu parametrów powoduje ponowne załadowanie silnika. Domyślne wartości zachowują dotychczasowe działanie. Przełącznik GPU w UI nadal służy wyłącznie do wyboru wizualnego.
 
 ## Lokalny LLM w czacie
 

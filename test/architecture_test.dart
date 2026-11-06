@@ -6,11 +6,16 @@ void main() {
   test('Layers respect their dependency boundaries', () {
     const package = 'package:bielik_oneclick_launcher/src/';
     const domainLibraries = {
-      'dart:async', 'dart:collection', 'dart:convert', 'dart:math',
+      'dart:async',
+      'dart:collection',
+      'dart:convert',
+      'dart:math',
       'package:characters/characters.dart',
     };
     const uiPackages = [
-      'package:material_ui/', 'package:flutter_chat_ui/', 'package:flutter_chat_core/',
+      'package:material_ui/',
+      'package:flutter_chat_ui/',
+      'package:flutter_chat_core/',
     ];
     for (final layer in ['domain', 'data', 'presentation']) {
       final files = Directory('lib/src/$layer')
@@ -27,7 +32,8 @@ void main() {
           final uri = match.group(1)!;
           if (layer == 'domain') {
             expect(
-              domainLibraries.contains(uri) || uri.startsWith('${package}domain/'),
+              domainLibraries.contains(uri) ||
+                  uri.startsWith('${package}domain/'),
               isTrue,
               reason: 'Domain must be pure Dart: ${file.path} imports $uri',
             );
@@ -39,12 +45,23 @@ void main() {
               reason: 'Invalid dependency in ${file.path}: $uri',
             );
           }
+          expect(
+            uri.startsWith('package:bielik_oneclick_launcher/configuration/'),
+            isFalse,
+            reason: 'Configuration must be injected into $layer: ${file.path}',
+          );
           if (layer == 'data') {
-            expect(uiPackages.any(uri.startsWith), isFalse,
-                reason: 'Data imports UI: ${file.path} imports $uri');
+            expect(
+              uiPackages.any(uri.startsWith),
+              isFalse,
+              reason: 'Data imports UI: ${file.path} imports $uri',
+            );
             if (uri.startsWith('package:flutter/')) {
               expect(
-                {'package:flutter/services.dart', 'package:flutter/foundation.dart'}.contains(uri),
+                {
+                  'package:flutter/services.dart',
+                  'package:flutter/foundation.dart',
+                }.contains(uri),
                 isTrue,
                 reason: 'Data imports Flutter UI: ${file.path} imports $uri',
               );

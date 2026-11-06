@@ -76,6 +76,26 @@ flutter run -d <identyfikator-telefonu>
 
 Pliki modeli pobiera użytkownik podczas działania aplikacji — nie są dołączone do APK. Wariant 1.5B zajmuje około 1,7 GB, a 4.5B około 5,06 GB; pamięć potrzebna do uruchomienia jest większa od samego pliku. Dotychczasowy test generowania dotyczy wyłącznie wariantu 1.5B.
 
+## Modele i ustawienia LLM
+
+Pliki edytowane przy dodawaniu modeli są w `lib/configuration/`, obok `main.dart`:
+
+- [bielik_models.dart](lib/configuration/bielik_models.dart) — lista modeli w interfejsie: nazwa, adres GGUF, nazwa pliku, dokładny rozmiar w bajtach, SHA-256 oraz wymagania RAM i miejsca.
+- [llm_configuration.dart](lib/configuration/llm_configuration.dart) — wspólne ustawienia silnika: wątki, kontekst, limit odpowiedzi, batch, GPU, temperatura i parametry losowania.
+
+Aby dodać model, dopisz `BielikModel` do `bielikModels`, z własną nazwą pliku GGUF i jego prawidłowymi metadanymi. Model musi być obsługiwany przez używany silnik llama.cpp. Lista na ekranie głównym korzysta bezpośrednio z tego katalogu.
+
+Jeśli model wymaga innych parametrów, dodaj wpis do `modelLlmConfigurations` w pliku konfiguracji LLM. Kluczem jest dokładna wartość `ModelFile.name`, np.:
+
+```dart
+final modelLlmConfigurations = <String, LlmConfiguration>{
+  'Bielik-4.5B-v3.0-Instruct.Q8_0.gguf':
+      defaultLlmConfiguration.copyWith(numberOfThreads: 4, contextSize: 2048),
+};
+```
+
+Brak wpisu oznacza użycie `defaultLlmConfiguration`. Włączenie GPU w konfiguracji wymaga zarówno `useGpu: true`, jak i dodatniej liczby `gpuLayers`; nie zmienia to jeszcze działania wizualnego przełącznika GPU na ekranie głównym. Po zmianie konfiguracji uruchom aplikację ponownie. Domyślne parametry pozostają takie jak wcześniej: CPU, 4 wątki, kontekst 2048 i odpowiedź do 512 tokenów.
+
 ## Kolejne plany
 
 1. Sprawdzić generowanie dla Bielika 4.5B i dobrać parametry do możliwości telefonu.
@@ -88,6 +108,9 @@ Pliki modeli pobiera użytkownik podczas działania aplikacji — nie są dołą
 ```text
 lib/
 ├── main.dart                     # Inicjalizacja i wstrzykiwanie repozytoriów
+├── configuration/
+│   ├── bielik_models.dart         # Katalog modeli do pobrania
+│   └── llm_configuration.dart     # Domyślne i indywidualne parametry LLM
 └── src/
     ├── app.dart                  # Konfiguracja aplikacji
     ├── presentation/
