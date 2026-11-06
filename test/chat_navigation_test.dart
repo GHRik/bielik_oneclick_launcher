@@ -50,6 +50,19 @@ void main() {
     expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
         'Szkic drugiej rozmowy');
 
+    expect(find.byTooltip('New chat'), findsNothing);
+    await tester.tap(find.byTooltip('Statystyki'));
+    await tester.pumpAndSettle();
+    expect(find.text('Statystyki'), findsOneWidget);
+    expect(find.text('Wydajność modelu'), findsOneWidget);
+    expect(find.text('Prędkość generowania'), findsOneWidget);
+    expect(find.text('Zużycie RAM'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Szkic drugiej rozmowy');
+
     tester.view.physicalSize = const Size(1100, 844);
     await tester.pumpAndSettle();
     expect(find.text('New chat').hitTestable(), findsOneWidget);

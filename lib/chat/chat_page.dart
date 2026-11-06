@@ -4,6 +4,7 @@ import 'package:bielik_oneclick_launcher/chat/controllers/chat_workspace.dart';
 import 'package:bielik_oneclick_launcher/chat/models/conversation.dart';
 import 'package:bielik_oneclick_launcher/chat/widgets/chat_sidebar.dart';
 import 'package:bielik_oneclick_launcher/chat/widgets/conversation_view.dart';
+import 'package:bielik_oneclick_launcher/statistics/statistics_page.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key, required this.workspace});
@@ -27,6 +28,15 @@ class _ChatPageState extends State<ChatPage> {
   void _newChat() {
     _closeSidebar();
     widget.workspace.newChat();
+  }
+
+  void _openStatistics() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const StatisticsPage(),
+      ),
+    );
   }
 
   void _selectConversation(Conversation conversation) {
@@ -63,9 +73,9 @@ class _ChatPageState extends State<ChatPage> {
               title: const Text('Czat'),
               actions: [
                 IconButton(
-                  tooltip: 'New chat',
-                  onPressed: _newChat,
-                  icon: const Icon(Icons.edit_square),
+                  tooltip: 'Statystyki',
+                  onPressed: _openStatistics,
+                  icon: const Icon(Icons.bar_chart),
                 ),
                 const SizedBox(width: 8),
               ],
