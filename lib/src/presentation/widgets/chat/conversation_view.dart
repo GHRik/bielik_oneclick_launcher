@@ -24,8 +24,19 @@ class ConversationView extends StatelessWidget {
       chatController: conversation.controller,
       currentUserId: ChatAuthors.user,
       onMessageSend: onMessageSend,
-      resolveUser: (id) async => User(id: id, name: id == ChatAuthors.user ? 'Ty' : 'Bielik'),
+      resolveUser: (id) async =>
+          User(id: id, name: id == ChatAuthors.user ? 'Ty' : 'Bielik'),
       builders: Builders(
+        textMessageBuilder:
+            (
+              context,
+              message,
+              index, {
+              required bool isSentByMe,
+              MessageGroupStatus? groupStatus,
+            }) => SelectionArea(
+              child: SimpleTextMessage(message: message, index: index),
+            ),
         emptyChatListBuilder: (context) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
