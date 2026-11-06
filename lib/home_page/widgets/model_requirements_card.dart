@@ -1,11 +1,19 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/home_page/models/bielik_model.dart';
+import 'package:bielik_oneclick_launcher/home_page/widgets/requirement_status_row.dart';
 
 class ModelRequirementsCard extends StatelessWidget {
-  const ModelRequirementsCard({super.key, required this.model});
+  const ModelRequirementsCard({
+    super.key,
+    required this.model,
+    this.availableStorageGb,
+    this.availableRamGb,
+  });
 
   final BielikModel model;
+  final double? availableStorageGb;
+  final double? availableRamGb;
 
   @override
   Widget build(BuildContext context) {
@@ -20,30 +28,18 @@ class ModelRequirementsCard extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text('Miejsce na dysku: ${model.diskSpace}'),
-                const Chip(
-                  avatar: Icon(Icons.storage, size: 18),
-                  label: Text('Wolne miejsce u Ciebie: — GB'),
-                ),
-              ],
+            RequirementStatusRow(
+              requirement: 'Miejsce na dysku: ${model.diskSpace}',
+              availableLabel: 'Wolne miejsce u Ciebie',
+              requiredGb: model.downloadSizeMb / 1000,
+              availableGb: availableStorageGb,
             ),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text('RAM (szacunkowo): ${model.ram}'),
-                const Chip(
-                  avatar: Icon(Icons.memory, size: 18),
-                  label: Text('RAM Twojego telefonu: — GB'),
-                ),
-              ],
+            RequirementStatusRow(
+              requirement: 'RAM (szacunkowo): ${model.ram}',
+              availableLabel: 'Dostępny RAM u Ciebie',
+              requiredGb: model.requiredFreeRamGb,
+              availableGb: availableRamGb,
             ),
             const SizedBox(height: 12),
             const Text(

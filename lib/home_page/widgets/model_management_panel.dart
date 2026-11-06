@@ -6,7 +6,14 @@ import 'package:bielik_oneclick_launcher/home_page/widgets/download_progress_car
 import 'package:bielik_oneclick_launcher/home_page/widgets/model_requirements_card.dart';
 
 class ModelManagementPanel extends StatefulWidget {
-  const ModelManagementPanel({super.key});
+  const ModelManagementPanel({
+    super.key,
+    this.availableStorageGb,
+    this.availableRamGb,
+  });
+
+  final double? availableStorageGb;
+  final double? availableRamGb;
 
   @override
   State<ModelManagementPanel> createState() => _ModelManagementPanelState();
@@ -94,7 +101,11 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
             DownloadProgressCard(preview: _download),
           ],
           const SizedBox(height: 24),
-          ModelRequirementsCard(model: _selectedModel),
+          ModelRequirementsCard(
+            model: _selectedModel,
+            availableStorageGb: widget.availableStorageGb,
+            availableRamGb: widget.availableRamGb,
+          ),
         ],
       ),
     );
