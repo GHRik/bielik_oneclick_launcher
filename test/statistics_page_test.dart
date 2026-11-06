@@ -17,9 +17,9 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: StatisticsPage(series: statisticsPreviewData)),
     );
-    expect(find.byType(StatisticLineChart), findsNWidgets(7));
+    expect(find.byType(StatisticLineChart), findsNWidgets(5));
     expect(find.textContaining('Ostatnie 60 sekund'), findsOneWidget);
-    expect(find.text('-60 s'), findsNWidgets(7));
+    expect(find.text('-60 s'), findsNWidgets(5));
 
     final graph = find.descendant(
       of: find.byType(StatisticLineChart).first,
@@ -35,20 +35,12 @@ void main() {
     await tester.ensureVisible(find.text('Temperatura CPU'));
     await tester.pumpAndSettle();
     expect(find.text('Temperatura CPU').hitTestable(), findsOneWidget);
-    expect(find.text('°C'), findsNWidgets(2));
-    expect(find.text('Użycie GPU'), findsOneWidget);
-    expect(find.text('Temperatura GPU'), findsOneWidget);
-    for (final title in ['Użycie GPU', 'Temperatura GPU']) {
-      final reading = tester.widget<Text>(
-        find.byKey(ValueKey('chart-reading-$title')),
-      );
-      expect(reading.data, 'Brak danych');
-    }
+    expect(find.text('°C'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     tester.view.physicalSize = const Size(1100, 844);
     await tester.pumpAndSettle();
-    expect(find.byType(StatisticLineChart), findsNWidgets(7));
+    expect(find.byType(StatisticLineChart), findsNWidgets(5));
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });

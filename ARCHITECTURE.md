@@ -44,6 +44,10 @@ lib/src/
 
 Androidowy `DeviceStatisticsReader` działa w kolejce tła istniejącego kanału platformowego. Zwraca PSS procesu (RAM aplikacji), CPU procesu z różnicy liczników czasu (procent łącznej mocy rdzeni), temperaturę baterii i temperaturę CPU, jeśli system na to pozwala. Odmowa dostępu do temperatury CPU daje brak danych, a nie temperaturę baterii pod inną nazwą.
 
+`GpuStatisticsReader` rozszerza ten sam adapter o temperaturę GPU z `HardwarePropertiesManager` i odczyty `GpuSysfsReader`. Źródła sysfs są tylko odczytywane: Adreno KGSL (`gpu_busy_percentage`, `gpubusy`), liczniki `utilisation` urządzeń GPU/Mali w devfreq i strefy thermal oznaczone jako GPU. Temperatura stref thermal jest przeliczana z milistopni Celsjusza. Nie odczytujemy temperatury baterii jako temperatury GPU i nie wyliczamy obciążenia z częstotliwości zegara. Brak pliku, odmowa dostępu, niepoprawna wartość lub brak sensownego mianownika daje brak danych. Pomiar użycia dotyczy całego GPU, a nie procesu aplikacji. Repozytorium przechowuje obie metryki w tej samej historii, a ekran wyświetla je z danych zamiast dodawać puste karty.
+
+Android ogranicza dostęp do [HardwarePropertiesManager](https://developer.android.com/reference/android/os/HardwarePropertiesManager). Formaty liczników są zgodne ze źródłami [KGSL](https://android.googlesource.com/kernel/msm/+/730cf84987cc34f1f0e53cbdd4153a2227563dc7/drivers/gpu/msm/kgsl_pwrctrl.c) i [Mali](https://nest-open-source.googlesource.com/manifest_repos/mali-driver/+/268e43036ceb1097d004fa09786438f2319a2a0e/midgard/r13p0/kernel/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_devfreq.c). Dostępność tych ścieżek zależy od telefonu.
+
 `LocalLlmRepository` rejestruje czas do pierwszego tekstu od rozpoczęcia żądania LLM, razem z ładowaniem. Liczbę tokenów oraz średnią prędkość tokeny / czas żądania pobiera z końcowego raportu silnika, bez utożsamiania fragmentów tekstu z tokenami. Te dwie metryki opisują ostatnie zakończone żądanie i sumę raportowanych tokenów sesji. Przerwane żądanie bez raportu nie zwiększa licznika.
 
 ## Konfiguracja modeli

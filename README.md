@@ -15,7 +15,7 @@ Aplikacja Flutter na Androida do pobierania modeli Bielik i uruchamiania ich lok
 - Wybrany na ekranie głównym model jest ładowany przy pierwszej wiadomości. Wyjście z czatu lub przejście aplikacji do tła zatrzymuje generowanie i zwalnia model.
 - Częściowa odpowiedź jest zapisywana także po zatrzymaniu generowania.
 
-RAM i wolne miejsce są odczytywane z Androida i porównywane z wymaganiami modelu. Statystyki zbierają historię ostatnich 60 sekund: RAM i CPU aplikacji, temperatury dostępne w systemie oraz rzeczywiste metryki LLM. Prędkość i liczba tokenów aktualizują się po raporcie silnika na końcu odpowiedzi. Temperatura CPU może być niedostępna; temperatura baterii jest pokazywana osobno. Pomiary pozostają tylko w pamięci bieżącej sesji.
+RAM i wolne miejsce są odczytywane z Androida i porównywane z wymaganiami modelu. Statystyki zbierają historię ostatnich 60 sekund: RAM i CPU aplikacji, użycie całego GPU telefonu, temperatury CPU/GPU/baterii dostępne w systemie oraz rzeczywiste metryki LLM. Odczyty GPU zależą od sterownika i uprawnień Androida; brak dostępu jest pokazywany jako „Brak danych”. Prędkość i liczba tokenów aktualizują się po raporcie silnika na końcu odpowiedzi. Temperatura CPU może być niedostępna; temperatura baterii jest pokazywana osobno. Pomiary pozostają tylko w pamięci bieżącej sesji.
 
 ## Archiwalny etap: jedna odpowiedź
 

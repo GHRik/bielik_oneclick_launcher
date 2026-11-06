@@ -23,6 +23,58 @@ class FakeStatisticsSource extends StatisticsDataSource {
 }
 
 void main() {
+  testWidgets('GPU readings travel through the adapter into one chart each', (
+    tester,
+  ) async {
+    final source = FakeStatisticsSource()
+      ..values = {'gpuUsagePercent': 37.5, 'gpuTemperature': 56.25};
+    final repository = LocalStatisticsRepository(source, GenerationMetrics());
+    final controller = StatisticsController(repository);
+    await controller.refresh();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: StatisticsPage(series: const [], controller: controller),
+      ),
+    );
+    expect(find.byType(StatisticLineChart), findsNWidgets(9));
+    for (final title in ['Użycie GPU', 'Temperatura GPU']) {
+      expect(find.text(title), findsOneWidget);
+    }
+    final gpu = find
+        .byType(StatisticLineChart)
+        .evaluate()
+        .map((element) => element.widget as StatisticLineChart)
+        .singleWhere((widget) => widget.series.title == 'Użycie GPU');
+    expect(gpu.series.values, [37.5]);
+    expect(
+      controller.series.singleWhere((s) => s.title == 'Temperatura GPU').values,
+      [56.25],
+    );
+    source.values = {'gpuUsagePercent': 0, 'gpuTemperature': 0};
+    await controller.refresh();
+    await tester.pump();
+    expect(
+      controller.series.singleWhere((s) => s.title == 'Użycie GPU').values.last,
+      0,
+    );
+    source.values = {'gpuUsagePercent': 101, 'gpuTemperature': double.nan};
+    await controller.refresh();
+    await tester.pump();
+    expect(
+      controller.series.singleWhere((s) => s.title == 'Użycie GPU').values.last,
+      isNull,
+    );
+    expect(
+      controller.series
+          .singleWhere((s) => s.title == 'Temperatura GPU')
+          .values
+          .last,
+      isNull,
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    controller.dispose();
+  });
+
   test(
     'Uses measured values, engine token counts and actual sample times',
     () async {

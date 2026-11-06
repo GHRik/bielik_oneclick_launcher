@@ -30,6 +30,11 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
           : null;
     }
 
+    double? boundedNumber(String key, double maximum) {
+      final value = number(key);
+      return value != null && value <= maximum ? value : null;
+    }
+
     final now = _now();
     _samples.add((
       time: now,
@@ -43,6 +48,8 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
         number('cpuTemperature'),
         number('batteryTemperature'),
         number('appCpuPercent'),
+        boundedNumber('gpuUsagePercent', 100),
+        boundedNumber('gpuTemperature', 200),
       ],
     ));
     _samples.removeWhere(
@@ -100,6 +107,18 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
         '%',
         100.0,
         'Udział aplikacji w łącznej mocy wszystkich dostępnych rdzeni CPU.',
+      ),
+      (
+        'Użycie GPU',
+        '%',
+        100.0,
+        'Obciążenie całego GPU telefonu. Brak danych oznacza, że sterownik nie udostępnia licznika aplikacji.',
+      ),
+      (
+        'Temperatura GPU',
+        '°C',
+        100.0,
+        'Odczyt czujnika GPU, jeśli system udostępnia go aplikacji.',
       ),
     ];
     return List.generate(definitions.length, (i) {

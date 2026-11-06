@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 final class DeviceStatisticsReader {
+    private final GpuStatisticsReader gpu = new GpuStatisticsReader();
     private long previousWall = -1;
     private long previousCpu = -1;
 
@@ -58,6 +59,7 @@ final class DeviceStatisticsReader {
             } catch (RuntimeException ignored) {
             }
         }
+        gpu.read(context, values);
         return values;
     }
 }
