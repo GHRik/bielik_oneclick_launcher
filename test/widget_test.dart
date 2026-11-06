@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
-import 'package:bielik_oneclick_launcher/app.dart';
-import 'package:bielik_oneclick_launcher/home_page/models/bielik_model.dart';
+import 'package:bielik_oneclick_launcher/src/app.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 
 void main() {
   testWidgets('Selects a model and keeps chat below requirements on small screens',

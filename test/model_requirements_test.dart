@@ -1,9 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
-import 'package:bielik_oneclick_launcher/home_page/models/bielik_model.dart';
-import 'package:bielik_oneclick_launcher/home_page/widgets/model_management_panel.dart';
-import 'package:bielik_oneclick_launcher/home_page/widgets/model_requirements_card.dart';
+import 'package:bielik_oneclick_launcher/src/data/datasources/preview_model_datasource.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_management_panel.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_requirements_card.dart';
 
 void main() {
   testWidgets('Marks missing, insufficient and sufficient resources independently',
@@ -45,6 +46,7 @@ void main() {
       home: Scaffold(
         body: SingleChildScrollView(
           child: ModelManagementPanel(
+            models: bielikModels,
             availableStorageGb: 4,
             availableRamGb: 6,
           ),

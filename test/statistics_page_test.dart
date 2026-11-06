@@ -1,8 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
-import 'package:bielik_oneclick_launcher/statistics/statistics_page.dart';
-import 'package:bielik_oneclick_launcher/statistics/widgets/statistic_line_chart.dart';
+import 'package:bielik_oneclick_launcher/src/data/datasources/preview_statistics_datasource.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/pages/statistics_page.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/statistics/statistic_line_chart.dart';
 
 void main() {
   testWidgets('Shows historical charts, CPU temperature and selected samples',
@@ -12,7 +13,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MaterialApp(home: StatisticsPage()));
+    await tester.pumpWidget(const MaterialApp(home: StatisticsPage(series: statisticsPreviewData)));
     expect(find.byType(StatisticLineChart), findsNWidgets(5));
     expect(find.textContaining('Dane przykładowe'), findsOneWidget);
     expect(find.text('-60 s'), findsNWidgets(5));

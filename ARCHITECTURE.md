@@ -1,0 +1,40 @@
+# Architektura aplikacji
+
+Kod aplikacji znajduje się w `lib/src/`. `lib/main.dart` uruchamia aplikację.
+
+```text
+lib/src/
+├── app.dart
+├── presentation/
+│   ├── pages/
+│   ├── widgets/
+│   ├── controllers/
+│   └── sidebars/
+├── domain/
+│   ├── models/
+│   └── repositories/
+└── data/
+    ├── datasources/
+    └── repositories_impl/
+```
+
+## Zależności
+
+- `domain` zawiera czyste modele Dart, ocenę wymagań zasobów i kontrakty repozytoriów. Nie zależy od Fluttera, widoków ani źródeł danych.
+- `presentation` zawiera ekrany, widgety, panele boczne i kontrolery stanu UI. Zależy od domeny, ale nie importuje warstwy danych.
+- `data` implementuje kontrakty domeny i dostarcza dane ze źródeł. Nie zależy od widoków.
+- `app.dart` składa aplikację: wybiera implementacje repozytoriów i przekazuje dane do ekranów. Testy mogą wstrzyknąć własne implementacje.
+
+## Obecne źródła danych
+
+Repozytoria `PreviewModelCatalogRepository` i `PreviewStatisticsRepository` dostarczają lokalny katalog modeli i przykładowe serie wykresów. Nie wykonują operacji sieciowych, odczytów parametrów telefonu ani inferencji AI.
+
+`Conversation` jest modelem domenowym. `ConversationController` przechowuje kontroler biblioteki czatu, szkic wiadomości i stan widoku. `ChatWorkspace` zarządza wyborem i cyklem życia rozmów.
+
+Symulacja pobierania pozostaje kontrolerem prezentacji. Ocena RAM i miejsca jest wspólną regułą domenową wykorzystywaną przez oznaczenia wymagań oraz potwierdzenie pobierania.
+
+## Weryfikacja
+
+`flutter analyze --no-pub` oraz `flutter test --no-pub`.
+
+Test architektury pilnuje kierunków zależności. Test wstrzykiwania repozytoriów sprawdza, czy ekrany faktycznie korzystają z przekazanych implementacji.
