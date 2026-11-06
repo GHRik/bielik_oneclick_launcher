@@ -70,4 +70,15 @@ void main() {
       expect(value, greaterThanOrEqualTo(0));
     },
   );
+  test('Measures Wygenerowane tokeny through the statistics adapter', () async {
+    final metrics = GenerationMetrics();
+    metrics.complete(tokens: 100, duration: const Duration(seconds: 10));
+    final repository = LocalStatisticsRepository(_Source(), metrics);
+    final series = await repository.sample();
+    final value = series
+        .singleWhere((item) => item.title == 'Wygenerowane tokeny')
+        .values
+        .single;
+    expect(value, 100);
+  });
 }

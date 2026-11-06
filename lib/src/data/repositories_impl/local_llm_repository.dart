@@ -84,6 +84,13 @@ class LocalLlmRepository implements LlmRepository {
         _engineMessages(context),
         params: GenerationParams(maxTokens: contextPolicy.responseTokens),
       )) {
+        final usage = chunk.usage;
+        if (usage != null) {
+          metrics?.complete(
+            tokens: usage.completionTokens,
+            duration: usage.duration,
+          );
+        }
         if (_stopped) break;
         if (chunk.text.isNotEmpty) {
           metrics?.firstText();

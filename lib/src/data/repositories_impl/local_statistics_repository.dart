@@ -41,6 +41,7 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
         number('cpuTemperature'),
         number('batteryTemperature'),
         _generation.firstResponseSeconds,
+        _generation.completedTokens?.toDouble(),
       ],
     ));
     _samples.removeWhere(
@@ -86,6 +87,12 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
         's',
         10.0,
         'Od rozpoczęcia żądania LLM do pierwszego tekstu, łącznie z ładowaniem modelu. Ostatnia odpowiedź.',
+      ),
+      (
+        'Wygenerowane tokeny',
+        'tokeny',
+        512.0,
+        'Suma tokenów raportowanych przez silnik w tej sesji aplikacji. Aktualizacja po zakończeniu odpowiedzi; przerwane bez raportu są pomijane.',
       ),
     ];
     return List.generate(definitions.length, (i) {
