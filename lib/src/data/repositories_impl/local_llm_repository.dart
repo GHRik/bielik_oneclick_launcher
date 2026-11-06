@@ -19,11 +19,13 @@ class LocalLlmRepository implements LlmRepository {
     this._files, {
     required this.configurationFor,
     this.metrics,
+    this.systemPrompt = '',
     LlmEngineLoader? loadEngine,
   }) : _loadEngine = loadEngine ?? _loadNativeEngine;
 
   final ModelFileDataSource _files;
   final GenerationMetrics? metrics;
+  final String systemPrompt;
   final LlmConfiguration Function(ModelFile) configurationFor;
   final LlmEngineLoader _loadEngine;
   LlmConfiguration? _loadedConfiguration;
@@ -37,8 +39,10 @@ class LocalLlmRepository implements LlmRepository {
   bool _active = false;
   bool _stopped = false;
 
-  List<LlamaChatMessage> _engineMessages(List<ContextMessage> messages) =>
-      messages
+  List<LlamaChatMessage> _engineMessages(List<ContextMessage> messages) => [
+        if (systemPrompt.trim().isNotEmpty)
+          LlamaChatMessage.fromText(role: LlamaChatRole.system, text: systemPrompt),
+        ...messages
           .map(
             (message) => LlamaChatMessage.fromText(
               role: message.role == ChatRole.user
@@ -46,8 +50,8 @@ class LocalLlmRepository implements LlmRepository {
                   : LlamaChatRole.assistant,
               text: message.text,
             ),
-          )
-          .toList();
+          ),
+      ];
 
   @override
   Stream<String> generate(

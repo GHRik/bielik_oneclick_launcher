@@ -3,6 +3,7 @@ import 'package:llamadart/llamadart.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
+import 'package:bielik_oneclick_launcher/configuration/system_prompt.dart';
 import 'package:bielik_oneclick_launcher/src/app.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/llm_settings_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/sqlite_llm_settings_repository.dart';
@@ -47,6 +48,7 @@ Future<void> main() async {
       llmRepository: LocalLlmRepository(
         ModelFileDataSource(),
         metrics: metrics,
+        systemPrompt: bielikSystemPrompt,
         configurationFor: (model) =>
             activeConfiguration ?? llmConfigurationFor(model),
       ),
