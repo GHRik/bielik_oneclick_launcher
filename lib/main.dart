@@ -1,10 +1,9 @@
 import 'dart:async';
-
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter_chat_core/flutter_chat_core.dart';
-import 'package:flutter_chat_ui/flutter_chat_ui.dart';
+
 
 import 'bielik_models.dart';
+import 'chat_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,7 +32,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final _chatController = InMemoryChatController();
+  final _chatWorkspace = ChatWorkspace();
   BielikModel _selectedModel = bielikModels.first;
   Timer? _downloadTimer;
   double _downloadedMb = 0;
@@ -90,7 +89,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void dispose() {
     _downloadTimer?.cancel();
-    _chatController.dispose();
+    _chatWorkspace.dispose();
     super.dispose();
   }
 
@@ -288,7 +287,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => ChatPage(chatController: _chatController),
+                        builder: (_) => ChatPage(workspace: _chatWorkspace),
                       ),
                     );
                   },
@@ -298,54 +297,6 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class ChatPage extends StatefulWidget {
-  const ChatPage({super.key, required this.chatController});
-
-  final InMemoryChatController chatController;
-
-  @override
-  State<ChatPage> createState() => _ChatPageState();
-}
-
-class _ChatPageState extends State<ChatPage> {
-  static const _userId = 'local-user';
-  int _messageSequence = 0;
-
-  void _sendMessage(String text) {
-    final message = text.trim();
-    if (message.isEmpty) return;
-
-    widget.chatController.insertMessage(
-      TextMessage(
-        id: '${DateTime.now().microsecondsSinceEpoch}-${_messageSequence++}',
-        authorId: _userId,
-        createdAt: DateTime.now().toUtc(),
-        text: message,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Czat')),
-      body: Chat(
-        chatController: widget.chatController,
-        currentUserId: _userId,
-        onMessageSend: _sendMessage,
-        resolveUser: (id) async => User(id: id, name: 'Ty'),
-        builders: Builders(
-          composerBuilder: (context) => const Composer(
-            hintText: 'Napisz wiadomość…',
-            attachmentIcon: null,
-            sendIcon: Icon(Icons.send, semanticLabel: 'Wyślij wiadomość'),
-          ),
         ),
       ),
     );
