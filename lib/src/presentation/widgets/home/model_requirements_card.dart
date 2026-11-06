@@ -10,16 +10,20 @@ class ModelRequirementsCard extends StatelessWidget {
     required this.model,
     this.availableStorageGb,
     this.availableRamGb,
+    this.totalRamGb,
   });
 
   final BielikModel model;
   final double? availableStorageGb;
   final double? availableRamGb;
+  final double? totalRamGb;
 
   @override
   Widget build(BuildContext context) {
     final requirements = ModelRequirements.evaluate(
-      model, availableStorageGb: availableStorageGb, availableRamGb: availableRamGb,
+      model,
+      availableStorageGb: availableStorageGb,
+      availableRamGb: availableRamGb,
     );
     return Card(
       child: Padding(
@@ -45,10 +49,12 @@ class ModelRequirementsCard extends StatelessWidget {
               requiredGb: requirements.ram.requiredGb,
               availableGb: availableRamGb,
             ),
+            if (totalRamGb != null)
+              Text(
+                'Całkowity RAM: ${totalRamGb!.toStringAsFixed(2).replaceAll('.', ',')} GB',
+              ),
             const SizedBox(height: 12),
-            const Text(
-              'Zużycie RAM zależy od długości rozmowy i silnika AI.',
-            ),
+            const Text('Zużycie RAM zależy od długości rozmowy i silnika AI.'),
           ],
         ),
       ),

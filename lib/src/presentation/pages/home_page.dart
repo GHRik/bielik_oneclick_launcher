@@ -5,6 +5,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/device_resources_repository.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/controllers/device_resources_controller.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
@@ -17,10 +19,12 @@ class HomePage extends StatefulWidget {
     required this.models,
     required this.modelFilesRepository,
     this.llmRepository,
+    this.deviceResourcesRepository,
     required this.chatRepository,
     required this.statisticSeries,
   });
 
+  final DeviceResourcesRepository? deviceResourcesRepository;
   final ChatRepository chatRepository;
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
@@ -33,19 +37,29 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   late final ChatWorkspace _chatWorkspace;
+  late final _resources = DeviceResourcesController(
+    widget.deviceResourcesRepository,
+  );
   late BielikModel _selectedModel = widget.models.first;
   bool _chatOpen = false;
 
   @override
   void initState() {
     super.initState();
-    _chatWorkspace = ChatWorkspace(widget.chatRepository, llmRepository: widget.llmRepository);
+    _chatWorkspace = ChatWorkspace(
+      widget.chatRepository,
+      llmRepository: widget.llmRepository,
+    );
     WidgetsBinding.instance.addObserver(this);
     unawaited(_chatWorkspace.initialize());
+    unawaited(_resources.refresh());
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_resources.refresh());
+    }
     if (state == AppLifecycleState.paused) {
       unawaited(_chatWorkspace.releaseModel());
     }
@@ -62,22 +76,26 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       if (!mounted) return;
       _chatWorkspace.useModel(_selectedModel);
       await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ChatPage(
-          workspace: _chatWorkspace,
-          statisticSeries: widget.statisticSeries,
+        MaterialPageRoute<void>(
+          builder: (_) => ChatPage(
+            workspace: _chatWorkspace,
+            statisticSeries: widget.statisticSeries,
+          ),
         ),
-      ),
       );
     } finally {
       await _chatWorkspace.releaseModel();
-      if (mounted) setState(() => _chatOpen = false);
+      if (mounted) {
+        setState(() => _chatOpen = false);
+        unawaited(_resources.refresh());
+      }
     }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _resources.dispose();
     _chatWorkspace.dispose();
     super.dispose();
   }
@@ -105,10 +123,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         constraints: const BoxConstraints(maxWidth: 480),
                         child: AbsorbPointer(
                           absorbing: _chatOpen,
-                          child: ModelManagementPanel(
-                            models: widget.models,
-                            repository: widget.modelFilesRepository,
-                            onModelSelected: (model) => _selectedModel = model,
+                          child: ListenableBuilder(
+                            listenable: _resources,
+                            builder: (context, _) => ModelManagementPanel(
+                              models: widget.models,
+                              repository: widget.modelFilesRepository,
+                              onModelSelected: (model) =>
+                                  _selectedModel = model,
+                              availableStorageGb:
+                                  _resources.resources.freeStorageGb,
+                              availableRamGb:
+                                  _resources.resources.availableRamGb,
+                              totalRamGb: _resources.resources.totalRamGb,
+                              onResourcesChanged: _resources.refresh,
+                            ),
                           ),
                         ),
                       ),

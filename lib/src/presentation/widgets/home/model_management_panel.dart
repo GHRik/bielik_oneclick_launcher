@@ -16,6 +16,8 @@ class ModelManagementPanel extends StatefulWidget {
     this.onModelSelected,
     this.availableStorageGb,
     this.availableRamGb,
+    this.totalRamGb,
+    this.onResourcesChanged,
   });
 
   final List<BielikModel> models;
@@ -23,6 +25,8 @@ class ModelManagementPanel extends StatefulWidget {
   final ValueChanged<BielikModel>? onModelSelected;
   final double? availableStorageGb;
   final double? availableRamGb;
+  final double? totalRamGb;
+  final Future<void> Function()? onResourcesChanged;
 
   @override
   State<ModelManagementPanel> createState() => _ModelManagementPanelState();
@@ -67,6 +71,7 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
       if (!mounted || confirmed != true) return;
     }
     await _download.start(model);
+    await widget.onResourcesChanged?.call();
   }
 
   void _selectModel(BielikModel? model) {
@@ -99,6 +104,7 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
     );
     if (!mounted || confirmed != true) return;
     await _download.delete(model);
+    await widget.onResourcesChanged?.call();
   }
 
   @override
@@ -196,6 +202,7 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
             model: _selectedModel,
             availableStorageGb: widget.availableStorageGb,
             availableRamGb: widget.availableRamGb,
+            totalRamGb: widget.totalRamGb,
           ),
         ],
       ),

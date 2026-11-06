@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/preview_model_catalog_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/preview_statistics_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/device_resources_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_catalog_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
@@ -15,10 +16,12 @@ class MyApp extends StatelessWidget {
     required this.chatRepository,
     required this.modelFilesRepository,
     this.llmRepository,
+    this.deviceResourcesRepository,
     this.modelRepository = const PreviewModelCatalogRepository(),
     this.statisticsRepository = const PreviewStatisticsRepository(),
   });
 
+  final DeviceResourcesRepository? deviceResourcesRepository;
   final ChatRepository chatRepository;
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
@@ -31,6 +34,7 @@ class MyApp extends StatelessWidget {
       title: 'Bielik',
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
       home: HomePage(
+        deviceResourcesRepository: deviceResourcesRepository,
         chatRepository: chatRepository,
         modelFilesRepository: modelFilesRepository,
         llmRepository: llmRepository,
