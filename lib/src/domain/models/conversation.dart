@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Conversation {
   const Conversation({
     required this.id,
@@ -12,6 +14,8 @@ class Conversation {
   final String draft;
   final DateTime createdAt;
   final DateTime updatedAt;
+
+  int get contentSizeBytes => utf8.encode(title).length + utf8.encode(draft).length;
 
   Conversation copyWith({String? title, String? draft, DateTime? updatedAt}) =>
       Conversation(

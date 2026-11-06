@@ -86,9 +86,11 @@ void main() {
       final firstId = workspace.selected.id;
       workspace.selected.draft.text = 'Trwała wiadomość';
       await workspace.sendMessage('Trwała wiadomość');
+      final firstSize = workspace.selected.contentSizeBytes;
       await workspace.newChat();
       final secondId = workspace.selected.id;
       workspace.selected.draft.text = 'Szkic drugiej rozmowy';
+      final secondSize = workspace.selected.contentSizeBytes;
       workspace.dispose();
       await workspace.flush();
       await reopen();
@@ -98,12 +100,14 @@ void main() {
       expect(restored.error, isNull);
       expect(restored.conversations.map((chat) => chat.id), [secondId, firstId]);
       expect(restored.selected.draft.text, 'Szkic drugiej rozmowy');
+      expect(restored.selected.contentSizeBytes, secondSize);
       restored.selectConversation(restored.conversations.last);
       expect(
         restored.selected.controller.messages.whereType<TextMessage>().map((item) => item.text),
         ['Trwała wiadomość'],
       );
       expect(restored.selected.title, 'Trwała wiadomość');
+      expect(restored.selected.contentSizeBytes, firstSize);
       restored.selected.draft.text = 'Po restarcie';
       await restored.sendMessage('Po restarcie');
       expect(restored.selected.draft.text, '');

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class ChatMessage {
   const ChatMessage({
     required this.id,
@@ -12,4 +14,6 @@ class ChatMessage {
   final String authorId;
   final String text;
   final DateTime createdAt;
+
+  int get contentSizeBytes => utf8.encode(text).length;
 }
