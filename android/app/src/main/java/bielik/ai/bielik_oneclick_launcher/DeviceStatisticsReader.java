@@ -1,6 +1,9 @@
 package bielik.ai.bielik_oneclick_launcher;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Debug;
 import android.os.HardwarePropertiesManager;
@@ -29,6 +32,13 @@ final class DeviceStatisticsReader {
         }
         previousWall = wall;
         previousCpu = cpu;
+        try {
+            Intent battery = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+            if (battery != null && battery.hasExtra(BatteryManager.EXTRA_TEMPERATURE)) {
+                values.put("batteryTemperature", battery.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) / 10.0);
+            }
+        } catch (RuntimeException ignored) {
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             try {
                 HardwarePropertiesManager manager = (HardwarePropertiesManager)

@@ -34,6 +34,7 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
             : number('appRamBytes')! / 1000000000,
         number('appCpuPercent'),
         number('cpuTemperature'),
+        number('batteryTemperature'),
       ],
     ));
     _samples.removeWhere(
@@ -67,6 +68,12 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
         '°C',
         80.0,
         'Brak danych oznacza, że Android nie udostępnia odczytu tej aplikacji.',
+      ),
+      (
+        'Temperatura baterii',
+        '°C',
+        60.0,
+        'Temperatura baterii; jest osobnym pomiarem od temperatury CPU.',
       ),
     ];
     return List.generate(definitions.length, (i) {

@@ -41,4 +41,13 @@ void main() {
         .single;
     expect(value, 48.5);
   });
+  test('Measures Temperatura baterii through the statistics adapter', () async {
+    final repository = LocalStatisticsRepository(_Source());
+    final series = await repository.sample();
+    final value = series
+        .singleWhere((item) => item.title == 'Temperatura baterii')
+        .values
+        .single;
+    expect(value, 36.5);
+  });
 }
