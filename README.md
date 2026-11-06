@@ -4,6 +4,12 @@ Aplikacja Flutter na Androida do pobierania modeli Bielik i uruchamiania ich lok
 
 **[Pobierz APK na telefon](https://github.com/GHRik/bielik_oneclick_launcher/releases)**, zainstaluj i uruchom. Bez Fluttera i Android Studio.
 
+## Demo
+
+Nagranie działania próby Bielika 1.5B na telefonie:
+
+[▶ Obejrzyj demo (MP4)](VID_20261106_194358.mp4)
+
 ## Co już działa
 
 - Wybór Bielika 1.5B lub 4.5B v3.0 Instruct w formacie GGUF Q8.
