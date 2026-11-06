@@ -50,7 +50,25 @@ class StatisticsPage extends StatelessWidget {
                         spacing: 12,
                         runSpacing: 12,
                         children: [
-                          for (final statistic in series)
+                          for (final statistic in [
+                            ...series,
+                            const StatisticSeries(
+                              title: 'Użycie GPU',
+                              unit: '%',
+                              minimum: 0,
+                              maximum: 100,
+                              values: [],
+                              description: 'Pomiar niedostępny.',
+                            ),
+                            const StatisticSeries(
+                              title: 'Temperatura GPU',
+                              unit: '°C',
+                              minimum: 0,
+                              maximum: 100,
+                              values: [],
+                              description: 'Pomiar niedostępny.',
+                            ),
+                          ])
                             SizedBox(
                               width: cardWidth,
                               child: StatisticCard(series: statistic),

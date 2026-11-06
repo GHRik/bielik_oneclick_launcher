@@ -7,6 +7,7 @@ import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart
 import 'package:bielik_oneclick_launcher/src/domain/services/generation_metrics.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/statistics_controller.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/pages/statistics_page.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/statistics/statistic_line_chart.dart';
 
 class FakeStatisticsSource extends StatisticsDataSource {
   Map<String, dynamic> values = {};
@@ -118,9 +119,19 @@ void main() {
             ),
           );
       await show([], []);
-      expect(find.text('Brak danych'), findsOneWidget);
+      expect(
+        tester
+            .widget<Text>(find.byKey(const ValueKey('chart-reading-Pomiar')))
+            .data,
+        'Brak danych',
+      );
       await show([2], [0]);
-      await tester.tap(find.byType(CustomPaint).last);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(StatisticLineChart).first,
+          matching: find.byType(GestureDetector),
+        ),
+      );
       await tester.pump();
       expect(tester.takeException(), isNull);
       await show([null, 2, null], [-3, -1, 0]);
