@@ -132,12 +132,34 @@ class _MyHomePageState extends State<MyHomePage> {
                                           .textTheme.titleMedium,
                                     ),
                                     const SizedBox(height: 12),
-                                    Text(
-                                      'Miejsce na dysku: ${_selectedModel.diskSpace}',
+                                    Wrap(
+                                      spacing: 12,
+                                      runSpacing: 8,
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Miejsce na dysku: ${_selectedModel.diskSpace}',
+                                        ),
+                                        const Chip(
+                                          avatar: Icon(Icons.storage, size: 18),
+                                          label: Text('Wolne miejsce u Ciebie: — GB'),
+                                        ),
+                                      ],
                                     ),
                                     const SizedBox(height: 8),
-                                    Text(
-                                      'RAM (szacunkowo): ${_selectedModel.ram}',
+                                    Wrap(
+                                      spacing: 12,
+                                      runSpacing: 8,
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        Text(
+                                          'RAM (szacunkowo): ${_selectedModel.ram}',
+                                        ),
+                                        const Chip(
+                                          avatar: Icon(Icons.memory, size: 18),
+                                          label: Text('RAM Twojego telefonu: — GB'),
+                                        ),
+                                      ],
                                     ),
                                     const SizedBox(height: 12),
                                     const Text(
