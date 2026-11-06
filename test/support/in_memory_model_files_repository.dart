@@ -14,6 +14,9 @@ class InMemoryModelFilesRepository implements ModelFilesRepository {
       downloaded.contains(model.name);
 
   @override
+  Future<bool> hasPendingDownload(ModelFile model) async => false;
+
+  @override
   Future<void> download(
     ModelFile model,
     void Function(ModelDownloadProgress) onProgress,

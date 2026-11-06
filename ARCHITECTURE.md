@@ -31,7 +31,9 @@ Repozytoria `PreviewModelCatalogRepository` i `PreviewStatisticsRepository` dost
 
 `Conversation` jest modelem domenowym. `ConversationController` przechowuje kontroler biblioteki czatu, szkic wiadomości i stan widoku. `ChatWorkspace` zarządza wyborem i cyklem życia rozmów.
 
-Symulacja pobierania pozostaje kontrolerem prezentacji. Ocena RAM i miejsca jest wspólną regułą domenową wykorzystywaną przez oznaczenia wymagań oraz potwierdzenie pobierania.
+`ModelFilesRepository` definiuje pobieranie i usuwanie modeli. `FlutterModelDownloadDataSource` przekazuje transfer do `flutter_downloader`, który zapisuje zadania i wykonuje je na Androidzie przez WorkManager. `main.dart` inicjalizuje plugin przed uruchomieniem widoków. `LocalModelFilesRepository` odczytuje stan zapisanych zadań, mierzy przyrost pliku dla prędkości i ETA oraz weryfikuje rozmiar i SHA-256 przed zmianą nazwy `.part` na docelową. Zamknięcie widoku nie anuluje zadania. Po ponownym wyborze modelu kontroler dołącza do istniejącego zadania, również gdy transfer zakończył się podczas nieobecności aplikacji; weryfikacja odbywa się wtedy po jej otwarciu. Gotowe pliki pozostają w prywatnym katalogu aplikacji. Usuwanie kasuje również powiązane zadania pluginu.
+
+Ocena RAM i miejsca jest wspólną regułą domenową wykorzystywaną przez oznaczenia wymagań oraz potwierdzenie pobierania.
 
 ## SQLite — trwała historia rozmów
 

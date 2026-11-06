@@ -33,7 +33,8 @@ class ModelDownloadController extends ChangeNotifier {
   }
 
   Future<void> select(BielikModel model) async {
-    if (busy) return;
+    if (busy || _disposed) return;
+    var pending = false;
     checking = true;
     complete = false;
     visible = false;
@@ -43,12 +44,16 @@ class ModelDownloadController extends ChangeNotifier {
     try {
       complete =
           model.file != null && await _repository.isDownloaded(model.file!);
+      if (!complete && model.file != null) {
+        pending = await _repository.hasPendingDownload(model.file!);
+      }
     } catch (_) {
       error = 'Nie udało się sprawdzić pobranych modeli.';
     } finally {
       checking = false;
       _notify();
     }
+    if (pending && !_disposed) await start(model);
   }
 
   Future<void> start(BielikModel model) async {
@@ -109,7 +114,6 @@ class ModelDownloadController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
-    _repository.cancelDownload();
     super.dispose();
   }
 }
