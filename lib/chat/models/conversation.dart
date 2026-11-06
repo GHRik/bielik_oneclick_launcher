@@ -1,5 +1,5 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart';
+import 'package:material_ui/material_ui.dart';
 
 class Conversation {
   Conversation(this.id);

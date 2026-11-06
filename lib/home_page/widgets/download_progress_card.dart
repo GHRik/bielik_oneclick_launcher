@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../controllers/download_preview_controller.dart';
+import 'package:bielik_oneclick_launcher/home_page/controllers/download_preview_controller.dart';
 
 class DownloadProgressCard extends StatelessWidget {
   const DownloadProgressCard({super.key, required this.preview});

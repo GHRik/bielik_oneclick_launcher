@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../../models/conversation.dart';
+import 'package:bielik_oneclick_launcher/chat/models/conversation.dart';
 
 class ConversationTile extends StatelessWidget {
   const ConversationTile({

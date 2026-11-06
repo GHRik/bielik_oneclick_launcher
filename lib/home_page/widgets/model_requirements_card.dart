@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../models/bielik_model.dart';
+import 'package:bielik_oneclick_launcher/home_page/models/bielik_model.dart';
 
 class ModelRequirementsCard extends StatelessWidget {
   const ModelRequirementsCard({super.key, required this.model});

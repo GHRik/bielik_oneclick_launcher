@@ -1,9 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 
-import 'controllers/chat_workspace.dart';
-import 'models/conversation.dart';
-import 'widgets/chat_sidebar.dart';
-import 'widgets/conversation_view.dart';
+import 'package:bielik_oneclick_launcher/chat/controllers/chat_workspace.dart';
+import 'package:bielik_oneclick_launcher/chat/models/conversation.dart';
+import 'package:bielik_oneclick_launcher/chat/widgets/chat_sidebar.dart';
+import 'package:bielik_oneclick_launcher/chat/widgets/conversation_view.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key, required this.workspace});

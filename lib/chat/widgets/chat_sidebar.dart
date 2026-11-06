@@ -1,9 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../controllers/chat_workspace.dart';
-import '../models/conversation.dart';
-import 'sidebar/sidebar_header.dart';
-import 'sidebar/conversation_list.dart';
+import 'package:bielik_oneclick_launcher/chat/controllers/chat_workspace.dart';
+import 'package:bielik_oneclick_launcher/chat/models/conversation.dart';
+import 'package:bielik_oneclick_launcher/chat/widgets/sidebar/conversation_list.dart';
+import 'package:bielik_oneclick_launcher/chat/widgets/sidebar/sidebar_header.dart';
 
 class ChatSidebar extends StatelessWidget {
   const ChatSidebar({

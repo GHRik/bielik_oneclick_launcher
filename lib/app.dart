@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
-import 'home_page/home_page.dart';
+import 'package:bielik_oneclick_launcher/home_page/home_page.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

@@ -1,9 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../models/bielik_model.dart';
-import '../controllers/download_preview_controller.dart';
-import 'download_progress_card.dart';
-import 'model_requirements_card.dart';
+import 'package:bielik_oneclick_launcher/home_page/controllers/download_preview_controller.dart';
+import 'package:bielik_oneclick_launcher/home_page/models/bielik_model.dart';
+import 'package:bielik_oneclick_launcher/home_page/widgets/download_progress_card.dart';
+import 'package:bielik_oneclick_launcher/home_page/widgets/model_requirements_card.dart';
 
 class ModelManagementPanel extends StatefulWidget {
   const ModelManagementPanel({super.key});

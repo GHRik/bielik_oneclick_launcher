@@ -1,8 +1,8 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
+import 'package:material_ui/material_ui.dart';
 
-import '../models/conversation.dart';
+import 'package:bielik_oneclick_launcher/chat/models/conversation.dart';
 
 class ConversationView extends StatelessWidget {
   const ConversationView({

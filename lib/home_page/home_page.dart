@@ -1,8 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../chat/chat_page.dart';
-import '../chat/controllers/chat_workspace.dart';
-import 'widgets/model_management_panel.dart';
+import 'package:bielik_oneclick_launcher/chat/chat_page.dart';
+import 'package:bielik_oneclick_launcher/chat/controllers/chat_workspace.dart';
+import 'package:bielik_oneclick_launcher/home_page/widgets/model_management_panel.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
