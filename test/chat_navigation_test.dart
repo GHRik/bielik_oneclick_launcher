@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:bielik_oneclick_launcher/main.dart';
+import 'package:bielik_oneclick_launcher/app.dart';
 
 void main() {
   testWidgets('Creates separate chats and preserves messages and drafts',
