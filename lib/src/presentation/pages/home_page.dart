@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/pages/chat_page.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_management_panel.dart';
@@ -10,9 +13,11 @@ class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
     required this.models,
+    required this.chatRepository,
     required this.statisticSeries,
   });
 
+  final ChatRepository chatRepository;
   final List<BielikModel> models;
   final List<StatisticSeries> statisticSeries;
 
@@ -20,8 +25,23 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  final _chatWorkspace = ChatWorkspace();
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
+  late final ChatWorkspace _chatWorkspace;
+
+  @override
+  void initState() {
+    super.initState();
+    _chatWorkspace = ChatWorkspace(widget.chatRepository);
+    WidgetsBinding.instance.addObserver(this);
+    unawaited(_chatWorkspace.initialize());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      unawaited(_chatWorkspace.flush());
+    }
+  }
 
   void _openChat() {
     Navigator.of(context).push(
@@ -36,6 +56,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _chatWorkspace.dispose();
     super.dispose();
   }

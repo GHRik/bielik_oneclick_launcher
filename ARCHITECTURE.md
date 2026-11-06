@@ -33,13 +33,21 @@ Repozytoria `PreviewModelCatalogRepository` i `PreviewStatisticsRepository` dost
 
 Symulacja pobierania pozostaje kontrolerem prezentacji. Ocena RAM i miejsca jest wspólną regułą domenową wykorzystywaną przez oznaczenia wymagań oraz potwierdzenie pobierania.
 
-## SQLite — pierwszy etap
+## SQLite — trwała historia rozmów
 
-`AppDatabase` w `data/datasources/local/` otwiera prywatny plik `bielik.db` przed uruchomieniem interfejsu. Schemat w wersji 1 tworzy tabele `conversations` i `messages`, indeks wiadomości oraz klucz obcy z `ON DELETE CASCADE`. Rozmowa ma też miejsce na szkic wiadomości. Czas jest przechowywany jako liczba milisekund od epoki UTC.
+`AppDatabase` w `data/datasources/local/` otwiera prywatny plik `bielik.db` przy ładowaniu historii. Interfejs może pokazać błąd otwarcia bazy i pozwolić ponowić próbę. Schemat w wersji 1 tworzy tabele `conversations` i `messages`, indeks wiadomości oraz klucz obcy z `ON DELETE CASCADE`. Rozmowa ma też miejsce na szkic wiadomości. Czas jest przechowywany jako liczba milisekund od epoki UTC.
 
 Baza jest tworzona przy pierwszym otwarciu; kolejne otwarcia zachowują dane. Zmiany schematu będą wymagać zwiększenia wersji i dodania migracji.
 
-Ten etap nie podłącza jeszcze `ChatWorkspace` do SQLite: rozmowy widoczne w UI nadal pozostają w pamięci. Następny etap to kontrakt repozytorium rozmów, jego implementacja SQLite i odtwarzanie stanu widoku.
+Kontrakt `ChatRepository` jest w domenie. `SqliteChatRepository` mapuje rekordy SQLite na modele domenowe, a `SqliteChatDataSource` wykonuje zapytania. `main.dart` wstrzykuje repozytorium do aplikacji; prezentacja nie importuje SQLite.
+
+`ChatWorkspace` ładuje rozmowy, wiadomości i szkice z bazy. Przy pustej historii tworzy pierwszą rozmowę. Po restarcie domyślnie otwiera najnowszą utworzoną rozmowę; pozostałe są dostępne na liście.
+
+Wysłanie wiadomości, aktualizacja tytułu i wyczyszczenie zapisanego szkicu odbywają się w jednej transakcji. UI pokazuje wiadomość dopiero po zapisie. Identyfikatory wiadomości są generowane w SQLite, więc nie resetują się po uruchomieniu aplikacji.
+
+Zmiany szkiców i operacje rozmów są kolejkowane w kolejności wykonania. Nowszy szkic nie jest czyszczony przez kończący się zapis wcześniejszej wiadomości. Błędy odczytu i zapisu są pokazywane w czacie; nieudane wysłanie pozostawia tekst w polu wpisywania.
+
+Usunięcie rozmowy jest trwałe, wraz z jej wiadomościami. Po usunięciu ostatniej rozmowy tworzona jest nowa. Nie zmieniono wersji schematu ani nie usunięto istniejących danych.
 
 Testy używają `sqflite_common_ffi` z rzeczywistym tymczasowym plikiem SQLite. Produkcja na Androidzie korzysta z `sqflite`.
 

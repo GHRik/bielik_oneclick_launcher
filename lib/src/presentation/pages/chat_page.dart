@@ -5,6 +5,7 @@ import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_works
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/conversation_controller.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/pages/statistics_page.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/sidebars/chat_sidebar.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/chat_history_status.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/conversation_view.dart';
 
 class ChatPage extends StatefulWidget {
@@ -56,6 +57,16 @@ class _ChatPageState extends State<ChatPage> {
       listenable: widget.workspace,
       builder: (context, _) => LayoutBuilder(
         builder: (context, constraints) {
+          if (!widget.workspace.ready) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Czat')),
+              body: ChatHistoryStatus(
+                loading: widget.workspace.loading || widget.workspace.busy,
+                error: widget.workspace.error,
+                onRetry: widget.workspace.initialize,
+              ),
+            );
+          }
           final showSidebar = constraints.maxWidth >= 840;
           return Scaffold(
             key: _scaffoldKey,
@@ -104,9 +115,26 @@ class _ChatPageState extends State<ChatPage> {
                   const VerticalDivider(width: 1),
                 ],
                 Expanded(
-                  child: ConversationView(
-                    conversation: widget.workspace.selected,
-                    onMessageSend: widget.workspace.sendMessage,
+                  child: Column(
+                    children: [
+                      if (widget.workspace.error != null)
+                        MaterialBanner(
+                          content: Text(widget.workspace.error!),
+                          actions: [
+                            TextButton(
+                              onPressed: widget.workspace.dismissError,
+                              child: const Text('Zamknij'),
+                            ),
+                          ],
+                        ),
+                      Expanded(
+                        child: ConversationView(
+                          conversation: widget.workspace.selected,
+                          onMessageSend: widget.workspace.sendMessage,
+                          sending: widget.workspace.sending,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

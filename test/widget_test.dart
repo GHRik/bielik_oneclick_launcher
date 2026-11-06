@@ -4,6 +4,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/app.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 
+import 'support/in_memory_chat_repository.dart';
+
 void main() {
   testWidgets('Selects a model and keeps chat below requirements on small screens',
       (tester) async {
@@ -12,7 +14,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(MyApp(chatRepository: InMemoryChatRepository()));
     await tester.pumpAndSettle();
     expect(find.text('Miejsce na dysku: około 1,7 GB'), findsOneWidget);
     await tester.tap(find.text('Pobierz'));
@@ -58,7 +60,7 @@ void main() {
 
   testWidgets('Opens chat, sends a message and preserves it after returning',
       (tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(MyApp(chatRepository: InMemoryChatRepository()));
 
     await tester.tap(find.text('Otwórz czat'));
     await tester.pumpAndSettle();

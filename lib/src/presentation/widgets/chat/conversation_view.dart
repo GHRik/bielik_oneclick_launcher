@@ -9,10 +9,12 @@ class ConversationView extends StatelessWidget {
     super.key,
     required this.conversation,
     required this.onMessageSend,
+    this.sending = false,
   });
 
   final ConversationController conversation;
   final ValueChanged<String> onMessageSend;
+  final bool sending;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +51,8 @@ class ConversationView extends StatelessWidget {
           textEditingController: conversation.draft,
           hintText: 'Napisz wiadomość…',
           attachmentIcon: null,
+          inputClearMode: InputClearMode.never,
+          sendButtonDisabled: sending,
           sendIcon: const Icon(Icons.send, semanticLabel: 'Wyślij wiadomość'),
         ),
       ),

@@ -7,6 +7,8 @@ import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_catalog_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/statistics_repository.dart';
 
+import 'support/in_memory_chat_repository.dart';
+
 class _ModelRepository implements ModelCatalogRepository {
   const _ModelRepository();
 
@@ -40,7 +42,8 @@ class _StatisticsRepository implements StatisticsRepository {
 void main() {
   testWidgets('Views receive models and charts through repository contracts',
       (tester) async {
-    await tester.pumpWidget(const MyApp(
+    await tester.pumpWidget(MyApp(
+      chatRepository: InMemoryChatRepository(),
       modelRepository: _ModelRepository(),
       statisticsRepository: _StatisticsRepository(),
     ));
