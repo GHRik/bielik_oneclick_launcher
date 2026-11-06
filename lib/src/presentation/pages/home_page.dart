@@ -24,6 +24,7 @@ class HomePage extends StatefulWidget {
     super.key,
     required this.models,
     required this.llmConfiguration,
+    this.onSaveLlmConfiguration,
     required this.modelFilesRepository,
     this.llmRepository,
     this.deviceResourcesRepository,
@@ -37,6 +38,7 @@ class HomePage extends StatefulWidget {
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
   final LlmConfiguration llmConfiguration;
+  final Future<void> Function(LlmConfiguration)? onSaveLlmConfiguration;
   final List<BielikModel> models;
   final List<StatisticSeries> statisticSeries;
   final StatisticsRepository? statisticsRepository;
@@ -135,7 +137,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ? null
                 : () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) => LlmSettingsPage(draft: _settingsDraft),
+                      builder: (_) => LlmSettingsPage(
+                        draft: _settingsDraft,
+                        onSave: widget.onSaveLlmConfiguration,
+                      ),
                     ),
                   ),
           ),

@@ -52,7 +52,7 @@ Android ogranicza dostęp do [HardwarePropertiesManager](https://developer.andro
 
 ## Konfiguracja modeli
 
-`LlmConfiguration` w domenie jest niemutowalnym zestawem parametrów CPU i generowania. `main.dart` wstrzykuje do `LocalLlmRepository` funkcję `llmConfigurationFor`, która wybiera nadpisanie z `modelLlmConfigurations` lub wartości domyślne. Repozytorium mapuje ustawienia na natywne parametry i zawsze wymusza `ComputeDevice.cpu`, `GpuBackend.cpu` oraz 0 warstw GPU. APK Androida pakuje wyłącznie backend CPU. Zmiana pliku lub profilu przeładowuje silnik. `LlmRuntimeInfo` przekazuje raport działania do widoku. Formularz pod zębatką jest osobnym szkicem w warstwie prezentacji i nie wpływa na silnik.
+`LlmConfiguration` w domenie jest niemutowalnym zestawem parametrów CPU i generowania. `main.dart` wstrzykuje do `LocalLlmRepository` funkcję `llmConfigurationFor`, która wybiera nadpisanie z `modelLlmConfigurations` lub wartości domyślne. Repozytorium mapuje ustawienia na natywne parametry i zawsze wymusza `ComputeDevice.cpu`, `GpuBackend.cpu` oraz 0 warstw GPU. APK Androida pakuje wyłącznie backend CPU. Zmiana pliku lub profilu przeładowuje silnik. `LlmRuntimeInfo` przekazuje raport działania do widoku. Formularz pod zębatką przechowuje szkic w prezentacji i waliduje pola przed zapisem. `LlmSettingsRepository` oddziela trwałe ustawienia od UI. Implementacja SQLite zapisuje cały profil atomowo w tabeli `settings`; migracja v1 → v2 zachowuje rozmowy. Composition root odczytuje profil przy starcie, a po udanym zapisie podmienia konfigurację używaną przez silnik. Nowy profil obowiązuje przy kolejnym otwarciu czatu. Brak zapisanego profilu zachowuje konfigurację poszczególnych modeli z plików.
 
 ## Lokalny LLM w czacie
 
@@ -62,7 +62,7 @@ Android ogranicza dostęp do [HardwarePropertiesManager](https://developer.andro
 
 ## SQLite — trwała historia rozmów
 
-`AppDatabase` w `data/datasources/local/` otwiera prywatny plik `bielik.db` przy ładowaniu historii. Interfejs może pokazać błąd otwarcia bazy i pozwolić ponowić próbę. Schemat w wersji 1 tworzy tabele `conversations` i `messages`, indeks wiadomości oraz klucz obcy z `ON DELETE CASCADE`. Rozmowa ma też miejsce na szkic wiadomości. Czas jest przechowywany jako liczba milisekund od epoki UTC.
+`AppDatabase` w `data/datasources/local/` otwiera prywatny plik `bielik.db` przy ładowaniu historii. Interfejs może pokazać błąd otwarcia bazy i pozwolić ponowić próbę. Schemat w wersji 2 zawiera tabelę ustawień i tworzy tabele `conversations` i `messages`, indeks wiadomości oraz klucz obcy z `ON DELETE CASCADE`. Rozmowa ma też miejsce na szkic wiadomości. Czas jest przechowywany jako liczba milisekund od epoki UTC.
 
 Baza jest tworzona przy pierwszym otwarciu; kolejne otwarcia zachowują dane. Zmiany schematu będą wymagać zwiększenia wersji i dodania migracji.
 

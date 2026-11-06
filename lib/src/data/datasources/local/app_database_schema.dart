@@ -1,9 +1,22 @@
 import 'package:sqflite/sqflite.dart';
 
 class AppDatabaseSchema {
-  static const version = 1;
+  static const version = 2;
+
+  static Future<void> upgrade(
+    Database database,
+    int oldVersion,
+    int newVersion,
+  ) async {
+    if (oldVersion < 2) await _createSettings(database);
+  }
+
+  static Future<void> _createSettings(Database database) => database.execute(
+    'CREATE TABLE settings (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL)',
+  );
 
   static Future<void> create(Database database, int version) async {
+    await _createSettings(database);
     await database.execute('''
       CREATE TABLE conversations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

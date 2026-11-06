@@ -1,11 +1,14 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/llm_configuration.dart';
+
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/llm_settings_draft.dart';
 
 class LlmSettingsPage extends StatefulWidget {
-  const LlmSettingsPage({super.key, required this.draft});
+  const LlmSettingsPage({super.key, required this.draft, this.onSave});
 
   final LlmSettingsDraft draft;
+  final Future<void> Function(LlmConfiguration)? onSave;
 
   @override
   State<LlmSettingsPage> createState() => _LlmSettingsPageState();
@@ -13,6 +16,32 @@ class LlmSettingsPage extends StatefulWidget {
 
 class _LlmSettingsPageState extends State<LlmSettingsPage> {
   LlmSettingsDraft get draft => widget.draft;
+  bool _saving = false;
+  String? _error;
+
+  Future<void> _save() async {
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      final configuration = draft.configuration();
+      await widget.onSave?.call(configuration);
+      if (!mounted) return;
+      draft.save();
+      Navigator.of(context).pop();
+    } on FormatException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _error = 'Nie udało się zapisać ustawień. Spróbuj ponownie.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
 
   @override
   void initState() {
@@ -56,10 +85,7 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: FilledButton.icon(
-          onPressed: () {
-            draft.save();
-            Navigator.of(context).pop();
-          },
+          onPressed: _saving ? null : _save,
           icon: const Icon(Icons.save_outlined),
           label: const Text('Zapisz'),
         ),
@@ -75,9 +101,19 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Podgląd ustawień · tylko interfejs. Zmiany pozostają na tym '
-                  'ekranie podczas bieżącej sesji i nie wpływają na model.',
+                  'Ustawienia wspólne dla modeli. Zapisz zmiany, aby użyć ich '
+                  'przy następnym otwarciu czatu. Obliczenia działają na CPU.',
                 ),
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      _error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 16),
                 _section('Kontekst i odpowiedź', [
                   _field('contextSize'),

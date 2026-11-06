@@ -37,7 +37,7 @@ void main() {
     expect(await File(databasePath).exists(), isTrue);
     expect(
       (await connection.rawQuery('PRAGMA user_version')).single['user_version'],
-      1,
+      2,
     );
     expect((await connection.rawQuery('PRAGMA foreign_keys')).single.values.single, 1);
     final schema = await connection.rawQuery(
@@ -83,7 +83,7 @@ void main() {
     expect((await reopened.query('messages')).single['text'], 'Cześć Bielik!');
     expect(
       (await reopened.rawQuery('PRAGMA user_version')).single['user_version'],
-      1,
+      2,
     );
   });
 

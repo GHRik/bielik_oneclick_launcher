@@ -26,6 +26,7 @@ class AppDatabase {
           onConfigure: (database) =>
               database.execute('PRAGMA foreign_keys = ON'),
           onCreate: AppDatabaseSchema.create,
+          onUpgrade: AppDatabaseSchema.upgrade,
         ),
       );
     } catch (_) {

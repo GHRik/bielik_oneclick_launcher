@@ -96,7 +96,7 @@ final modelLlmConfigurations = <String, LlmConfiguration>{
 
 Brak wpisu oznacza użycie `defaultLlmConfiguration`. Model działa wyłącznie na CPU: 4 wątki, kontekst 2048 i odpowiedź do 512 tokenów. Akceleracja GPU została wycofana z powodu niepoprawnych odpowiedzi na testowanym urządzeniu. APK dla Androida zawiera tylko backend CPU. Statystyki GPU pozostają niezależnymi odczytami telefonu.
 
-Zębatka na ekranie głównym otwiera podgląd konfiguracji LLM. Edycja formularza działa tylko w pamięci bieżącej sesji i nie zmienia ustawień silnika. Po zmianie pliku konfiguracji uruchom aplikację ponownie.
+Zębatka na ekranie głównym otwiera konfigurację LLM. Przycisk „Zapisz” sprawdza wartości i zapisuje wspólne ustawienia CPU oraz generowania w SQLite. Obowiązują przy kolejnym otwarciu czatu i pozostają po restarcie aplikacji. Powrót bez zapisu odrzuca edycję. Zapisany profil ma pierwszeństwo przed konfiguracją z plików; przed pierwszym zapisem działają profile z `lib/configuration/`.
 
 ## Kolejne plany
 

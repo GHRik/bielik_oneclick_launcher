@@ -19,6 +19,7 @@ class MyApp extends StatelessWidget {
     required this.modelFilesRepository,
     this.llmRepository,
     this.llmConfiguration = defaultLlmConfiguration,
+    this.onSaveLlmConfiguration,
     this.deviceResourcesRepository,
     this.modelRepository = const ConfiguredModelCatalogRepository(bielikModels),
     this.statisticsRepository,
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
   final LlmConfiguration llmConfiguration;
+  final Future<void> Function(LlmConfiguration)? onSaveLlmConfiguration;
   final ModelCatalogRepository modelRepository;
   final StatisticsRepository? statisticsRepository;
 
@@ -43,6 +45,7 @@ class MyApp extends StatelessWidget {
         modelFilesRepository: modelFilesRepository,
         llmRepository: llmRepository,
         llmConfiguration: llmConfiguration,
+        onSaveLlmConfiguration: onSaveLlmConfiguration,
         models: modelRepository.getModels(),
         statisticSeries: statisticsRepository?.getSeries() ?? const [],
         statisticsRepository: statisticsRepository,
