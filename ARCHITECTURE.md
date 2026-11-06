@@ -33,6 +33,16 @@ Repozytoria `PreviewModelCatalogRepository` i `PreviewStatisticsRepository` dost
 
 Symulacja pobierania pozostaje kontrolerem prezentacji. Ocena RAM i miejsca jest wspólną regułą domenową wykorzystywaną przez oznaczenia wymagań oraz potwierdzenie pobierania.
 
+## SQLite — pierwszy etap
+
+`AppDatabase` w `data/datasources/local/` otwiera prywatny plik `bielik.db` przed uruchomieniem interfejsu. Schemat w wersji 1 tworzy tabele `conversations` i `messages`, indeks wiadomości oraz klucz obcy z `ON DELETE CASCADE`. Rozmowa ma też miejsce na szkic wiadomości. Czas jest przechowywany jako liczba milisekund od epoki UTC.
+
+Baza jest tworzona przy pierwszym otwarciu; kolejne otwarcia zachowują dane. Zmiany schematu będą wymagać zwiększenia wersji i dodania migracji.
+
+Ten etap nie podłącza jeszcze `ChatWorkspace` do SQLite: rozmowy widoczne w UI nadal pozostają w pamięci. Następny etap to kontrakt repozytorium rozmów, jego implementacja SQLite i odtwarzanie stanu widoku.
+
+Testy używają `sqflite_common_ffi` z rzeczywistym tymczasowym plikiem SQLite. Produkcja na Androidzie korzysta z `sqflite`.
+
 ## Weryfikacja
 
 `flutter analyze --no-pub` oraz `flutter test --no-pub`.
