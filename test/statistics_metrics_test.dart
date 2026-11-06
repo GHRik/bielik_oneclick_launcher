@@ -81,4 +81,18 @@ void main() {
         .single;
     expect(value, 100);
   });
+  test(
+    'Measures Prędkość generowania through the statistics adapter',
+    () async {
+      final metrics = GenerationMetrics();
+      metrics.complete(tokens: 100, duration: const Duration(seconds: 10));
+      final repository = LocalStatisticsRepository(_Source(), metrics);
+      final series = await repository.sample();
+      final value = series
+          .singleWhere((item) => item.title == 'Prędkość generowania')
+          .values
+          .single;
+      expect(value, 10);
+    },
+  );
 }

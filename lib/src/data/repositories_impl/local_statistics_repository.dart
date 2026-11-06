@@ -34,14 +34,15 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
     _samples.add((
       time: now,
       values: [
+        _generation.tokensPerSecond,
+        _generation.firstResponseSeconds,
         number('appRamBytes') == null
             ? null
             : number('appRamBytes')! / 1000000000,
-        number('appCpuPercent'),
+        _generation.completedTokens?.toDouble(),
         number('cpuTemperature'),
         number('batteryTemperature'),
-        _generation.firstResponseSeconds,
-        _generation.completedTokens?.toDouble(),
+        number('appCpuPercent'),
       ],
     ));
     _samples.removeWhere(
@@ -59,16 +60,28 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
         .toList();
     const definitions = [
       (
+        'Prędkość generowania',
+        'tok./s',
+        40.0,
+        'Średnia ostatniej odpowiedzi: tokeny / czas żądania silnika, łącznie z przetwarzaniem kontekstu. Aktualizacja po zakończeniu.',
+      ),
+      (
+        'Czas do pierwszej odpowiedzi',
+        's',
+        10.0,
+        'Od rozpoczęcia żądania LLM do pierwszego tekstu, łącznie z ładowaniem modelu. Ostatnia odpowiedź.',
+      ),
+      (
         'RAM aplikacji',
         'GB',
         1.0,
         'Pamięć PSS procesu aplikacji, w tym silnik i model.',
       ),
       (
-        'CPU aplikacji',
-        '%',
-        100.0,
-        'Udział aplikacji w łącznej mocy wszystkich dostępnych rdzeni CPU.',
+        'Wygenerowane tokeny',
+        'tokeny',
+        512.0,
+        'Suma tokenów raportowanych przez silnik w tej sesji aplikacji. Aktualizacja po zakończeniu odpowiedzi; przerwane bez raportu są pomijane.',
       ),
       (
         'Temperatura CPU',
@@ -83,16 +96,10 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
         'Temperatura baterii; jest osobnym pomiarem od temperatury CPU.',
       ),
       (
-        'Czas do pierwszej odpowiedzi',
-        's',
-        10.0,
-        'Od rozpoczęcia żądania LLM do pierwszego tekstu, łącznie z ładowaniem modelu. Ostatnia odpowiedź.',
-      ),
-      (
-        'Wygenerowane tokeny',
-        'tokeny',
-        512.0,
-        'Suma tokenów raportowanych przez silnik w tej sesji aplikacji. Aktualizacja po zakończeniu odpowiedzi; przerwane bez raportu są pomijane.',
+        'CPU aplikacji',
+        '%',
+        100.0,
+        'Udział aplikacji w łącznej mocy wszystkich dostępnych rdzeni CPU.',
       ),
     ];
     return List.generate(definitions.length, (i) {

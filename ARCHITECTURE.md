@@ -40,9 +40,11 @@ lib/src/
 
 ## Pomiary statystyk
 
-Kontrakt `SamplingStatisticsRepository` oddziela widok od odczytów platformy. `StatisticsController` pobiera próbki co sekundę na pierwszym planie; zatrzymuje timer w tle i przy usuwaniu kontrolera. `LocalStatisticsRepository` utrzymuje maksymalnie 61 próbek z ostatnich 60 sekund w pamięci. Wykresy zachowują rzeczywiste odstępy czasowe i przerwy dla brakujących danych.
+`SamplingStatisticsRepository` rozszerza kontrakt statystyk o asynchroniczny pomiar. `LocalStatisticsRepository` łączy `StatisticsDataSource` i domenowy rejestr `GenerationMetrics`, utrzymując maksymalnie 61 próbek z ostatnich 60 sekund. `StatisticsController` pobiera dane co sekundę na pierwszym planie, także podczas generowania i przed otwarciem statystyk; zatrzymuje timer w tle i przy usuwaniu kontrolera. Wykresy korzystają z rzeczywistych odstępów czasowych, pokazują przerwy dla brakujących pomiarów i nie wypełniają historii sztucznymi zerami. Historia nie jest zapisywana do SQLite.
 
-`StatisticsDataSource` komunikuje się z androidowym `DeviceStatisticsReader` przez kanał platformowy działający w kolejce tła. Obsługiwane pomiary: RAM aplikacji, CPU aplikacji, Temperatura CPU, Temperatura baterii, Czas do pierwszej odpowiedzi, Wygenerowane tokeny.
+Androidowy `DeviceStatisticsReader` działa w kolejce tła istniejącego kanału platformowego. Zwraca PSS procesu (RAM aplikacji), CPU procesu z różnicy liczników czasu (procent łącznej mocy rdzeni), temperaturę baterii i temperaturę CPU, jeśli system na to pozwala. Odmowa dostępu do temperatury CPU daje brak danych, a nie temperaturę baterii pod inną nazwą.
+
+`LocalLlmRepository` rejestruje czas do pierwszego tekstu od rozpoczęcia żądania LLM, razem z ładowaniem. Liczbę tokenów oraz średnią prędkość tokeny / czas żądania pobiera z końcowego raportu silnika, bez utożsamiania fragmentów tekstu z tokenami. Te dwie metryki opisują ostatnie zakończone żądanie i sumę raportowanych tokenów sesji. Przerwane żądanie bez raportu nie zwiększa licznika.
 
 ## Lokalny LLM w czacie
 

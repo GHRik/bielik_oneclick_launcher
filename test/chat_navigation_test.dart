@@ -79,6 +79,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Statystyki'), findsOneWidget);
     expect(find.text('Wydajność modelu'), findsOneWidget);
+    expect(find.text('Prędkość generowania'), findsOneWidget);
     expect(find.text('RAM aplikacji'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pageBack();

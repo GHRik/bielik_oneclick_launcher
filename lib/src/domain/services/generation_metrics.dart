@@ -1,4 +1,5 @@
 class GenerationMetrics {
+  double? tokensPerSecond;
   double? firstResponseSeconds;
   int? completedTokens;
   int _total = 0;
@@ -22,5 +23,7 @@ class GenerationMetrics {
     if (tokens < 0) return;
     _total += tokens;
     completedTokens = _total;
+    final seconds = duration == null ? null : duration.inMicroseconds / 1000000;
+    tokensPerSecond = seconds != null && seconds > 0 ? tokens / seconds : null;
   }
 }
