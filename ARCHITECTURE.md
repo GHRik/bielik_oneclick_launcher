@@ -12,7 +12,8 @@ lib/src/
 │   └── sidebars/
 ├── domain/
 │   ├── models/
-│   └── repositories/
+│   ├── repositories/
+│   └── services/
 └── data/
     ├── datasources/
     └── repositories_impl/
@@ -20,7 +21,7 @@ lib/src/
 
 ## Zależności
 
-- `domain` zawiera czyste modele Dart, ocenę wymagań zasobów i kontrakty repozytoriów. Nie zależy od Fluttera, widoków ani źródeł danych.
+- `domain` zawiera modele, kontrakty repozytoriów i serwisy czystego Darta. Nie zależy od Fluttera, widoków ani źródeł danych. Jedyna dodatkowa biblioteka domeny, `characters`, zachowuje poprawne granice znaków Unicode w tytułach.
 - `presentation` zawiera ekrany, widgety, panele boczne i kontrolery stanu UI. Zależy od domeny, ale nie importuje warstwy danych.
 - `data` implementuje kontrakty domeny i dostarcza dane ze źródeł. Nie zależy od widoków.
 - `app.dart` składa aplikację: wybiera implementacje repozytoriów i przekazuje dane do ekranów. Testy mogą wstrzyknąć własne implementacje.
@@ -33,13 +34,13 @@ Repozytoria `PreviewModelCatalogRepository` i `PreviewStatisticsRepository` dost
 
 `ModelFilesRepository` definiuje pobieranie i usuwanie modeli. `FlutterModelDownloadDataSource` przekazuje transfer do `flutter_downloader`, który zapisuje zadania i wykonuje je na Androidzie przez WorkManager. `main.dart` inicjalizuje plugin przed uruchomieniem widoków. `LocalModelFilesRepository` odczytuje stan zapisanych zadań, mierzy przyrost pliku dla prędkości i ETA oraz weryfikuje rozmiar i SHA-256 przed zmianą nazwy `.part` na docelową. Zamknięcie widoku nie anuluje zadania. Po ponownym wyborze modelu kontroler dołącza do istniejącego zadania, również gdy transfer zakończył się podczas nieobecności aplikacji; weryfikacja odbywa się wtedy po jej otwarciu. Gotowe pliki pozostają w prywatnym katalogu aplikacji. Usuwanie kasuje również powiązane zadania pluginu.
 
-Ocena RAM i miejsca jest wspólną regułą domenową wykorzystywaną przez oznaczenia wymagań oraz potwierdzenie pobierania.
+`ModelRequirements.evaluate` jest wspólną regułą domenową oceniającą RAM i miejsce. Zwraca stany zasobów oraz decyzję `requiresConfirmation`. Widgety tylko wyświetlają wyniki i otwierają okno potwierdzenia.
 
 ## Lokalny LLM w czacie
 
-`LlmRepository` w domenie definiuje strumień odpowiedzi, zatrzymanie i zwolnienie modelu. `LocalLlmRepository` korzysta z `llamadart` / `llama.cpp`, otwierając lokalny GGUF wybrany na ekranie głównym. Jeden model pozostaje w pamięci podczas pracy w czacie. Generowanie działa na CPU, z kontekstem 2048 tokenów i limitem odpowiedzi 512 tokenów. Przed generowaniem najstarsze tury są pomijane, aż sformatowany prompt zmieści się w budżecie; pełna historia w bazie nie jest przycinana.
+`LlmRepository` w domenie definiuje strumień odpowiedzi, zatrzymanie i zwolnienie modelu. `LocalLlmRepository` korzysta z `llamadart` / `llama.cpp`, otwierając lokalny GGUF wybrany na ekranie głównym. Jeden model pozostaje w pamięci podczas pracy w czacie. Generowanie działa na CPU, z kontekstem 2048 tokenów i limitem odpowiedzi 512 tokenów. `ChatContextPolicy` w domenie scala kolejne wiadomości tej samej roli i wybiera najnowsze tury mieszczące się w budżecie. Adapter LLM dostarcza liczenie tokenów na podstawie rzeczywistego szablonu modelu. Pełna historia w bazie nie jest przycinana.
 
-`ChatWorkspace` najpierw zapisuje wiadomość użytkownika, a potem uruchamia generowanie poza kolejką operacji szkiców. Odpowiedź jest przypisana do rozmowy źródłowej także po przełączeniu widoku. Pierwszy fragment tworzy wiadomość asystenta; kolejne aktualizują jej tekst w UI, okresowo w SQLite i zawsze przy zakończeniu lub zatrzymaniu. Zapis asystenta nie czyści szkicu użytkownika. Usunięcie aktywnej rozmowy czeka na zatrzymanie generowania. Wyjście z czatu lub przejście do tła zatrzymuje generowanie i zwalnia silnik po zakończeniu zapisu.
+`ChatService` w domenie prowadzi wysłanie: tworzy tytuł, zapisuje użytkownika, uruchamia LLM oraz okresowo i na końcu utrwala odpowiedź. Serializuje zapisy ze szkicami i emituje zdarzenia `ChatMessageSaved` / `ChatMessageUpdated`. Nie zna kontrolerów Fluttera ani biblioteki czatu. `ChatWorkspace` przekazuje polecenia i mapuje zdarzenia na stan widoku oraz właściwy `ConversationController`, także po przełączeniu rozmowy. Usunięcie aktywnej rozmowy czeka na zatrzymanie generowania. Wyjście z czatu lub przejście do tła zatrzymuje generowanie i zwalnia silnik po zakończeniu zapisu.
 
 ## SQLite — trwała historia rozmów
 
@@ -51,7 +52,7 @@ Kontrakt `ChatRepository` jest w domenie. `SqliteChatRepository` mapuje rekordy 
 
 `ChatWorkspace` ładuje rozmowy, wiadomości i szkice z bazy. Przy pustej historii tworzy pierwszą rozmowę. Po restarcie domyślnie otwiera najnowszą utworzoną rozmowę; pozostałe są dostępne na liście.
 
-Wysłanie wiadomości, aktualizacja tytułu i wyczyszczenie zapisanego szkicu odbywają się w jednej transakcji. UI pokazuje wiadomość dopiero po zapisie. Identyfikatory wiadomości są generowane w SQLite, więc nie resetują się po uruchomieniu aplikacji.
+`ChatService` jawnie przekazuje `clearDraft: true` dla wiadomości użytkownika i `false` dla asystenta. SQLite nie rozpoznaje autora ani nie podejmuje tej decyzji. Zapis wiadomości, aktualizacja tytułu i ewentualne wyczyszczenie szkicu pozostają jedną transakcją. UI pokazuje wiadomość dopiero po zapisie. Identyfikatory wiadomości są generowane w SQLite, więc nie resetują się po uruchomieniu aplikacji.
 
 Zmiany szkiców i operacje rozmów są kolejkowane w kolejności wykonania. Nowszy szkic nie jest czyszczony przez kończący się zapis wcześniejszej wiadomości. Błędy odczytu i zapisu są pokazywane w czacie; nieudane wysłanie pozostawia tekst w polu wpisywania.
 
@@ -63,4 +64,4 @@ Testy używają `sqflite_common_ffi` z rzeczywistym tymczasowym plikiem SQLite. 
 
 `flutter analyze --no-pub` oraz `flutter test --no-pub`.
 
-Test architektury pilnuje kierunków zależności. Test wstrzykiwania repozytoriów sprawdza, czy ekrany faktycznie korzystają z przekazanych implementacji.
+Test architektury pilnuje kierunków zależności, jawnej listy bibliotek domeny i zakazu bibliotek UI w `data`. Serwis rozmowy, polityka kontekstu i ocena wymagań mają testy niezależne od widgetów. Test wstrzykiwania repozytoriów sprawdza, czy ekrany faktycznie korzystają z przekazanych implementacji.

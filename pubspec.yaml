@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+  characters: ^1.4.0
   crypto: ^3.0.6
   cupertino_icons: ^1.0.8
   flutter_chat_core: ^2.0.0

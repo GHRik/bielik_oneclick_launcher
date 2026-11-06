@@ -2,6 +2,7 @@ import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/conversation_controller.dart';
 
 class ConversationView extends StatelessWidget {
@@ -21,9 +22,9 @@ class ConversationView extends StatelessWidget {
     return Chat(
       key: ValueKey('chat-${conversation.id}'),
       chatController: conversation.controller,
-      currentUserId: 'local-user',
+      currentUserId: ChatAuthors.user,
       onMessageSend: onMessageSend,
-      resolveUser: (id) async => User(id: id, name: id == 'local-user' ? 'Ty' : 'Bielik'),
+      resolveUser: (id) async => User(id: id, name: id == ChatAuthors.user ? 'Ty' : 'Bielik'),
       builders: Builders(
         emptyChatListBuilder: (context) => Center(
           child: Padding(

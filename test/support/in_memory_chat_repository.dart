@@ -45,6 +45,7 @@ class InMemoryChatRepository implements ChatRepository {
     required String authorId,
     required String text,
     String? conversationTitle,
+    bool clearDraft = false,
   }) async {
     if (sendStarted != null && !sendStarted!.isCompleted) sendStarted!.complete();
     await sendGate?.future;
@@ -60,7 +61,7 @@ class InMemoryChatRepository implements ChatRepository {
     _messages.add(message);
     _conversations[conversationId] = conversation.copyWith(
       title: conversationTitle,
-      draft: authorId == 'local-user' ? '' : conversation.draft,
+      draft: clearDraft ? '' : conversation.draft,
       updatedAt: message.createdAt,
     );
     return message;

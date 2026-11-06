@@ -55,12 +55,14 @@ class SqliteChatRepository implements ChatRepository {
     required String authorId,
     required String text,
     String? conversationTitle,
+    bool clearDraft = false,
   }) async => _message(
         await dataSource.addMessage(
           conversationId: conversationId,
           authorId: authorId,
           text: text,
           conversationTitle: conversationTitle,
+          clearDraft: clearDraft,
           timestamp: DateTime.now().toUtc().millisecondsSinceEpoch,
         ),
       );

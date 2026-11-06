@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/model_requirements.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/requirement_status_row.dart';
 
 class ModelRequirementsCard extends StatelessWidget {
@@ -17,6 +18,9 @@ class ModelRequirementsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final requirements = ModelRequirements.evaluate(
+      model, availableStorageGb: availableStorageGb, availableRamGb: availableRamGb,
+    );
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -31,14 +35,14 @@ class ModelRequirementsCard extends StatelessWidget {
             RequirementStatusRow(
               requirement: 'Miejsce na dysku: ${model.diskSpace}',
               availableLabel: 'Wolne miejsce u Ciebie',
-              requiredGb: model.downloadSizeMb / 1000,
+              requiredGb: requirements.storage.requiredGb,
               availableGb: availableStorageGb,
             ),
             const SizedBox(height: 8),
             RequirementStatusRow(
               requirement: 'RAM (szacunkowo): ${model.ram}',
               availableLabel: 'Dostępny RAM u Ciebie',
-              requiredGb: model.requiredFreeRamGb,
+              requiredGb: requirements.ram.requiredGb,
               availableGb: availableRamGb,
             ),
             const SizedBox(height: 12),

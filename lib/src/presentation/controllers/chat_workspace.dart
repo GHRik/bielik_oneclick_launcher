@@ -4,16 +4,20 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/chat_update.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/conversation.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
+import 'package:bielik_oneclick_launcher/src/domain/services/chat_service.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/conversation_controller.dart';
 
 class ChatWorkspace extends ChangeNotifier {
-  ChatWorkspace(this.repository, {LlmRepository? llmRepository}) : _llm = llmRepository;
+  ChatWorkspace(this.repository, {LlmRepository? llmRepository})
+      : _chatService = ChatService(repository, llmRepository: llmRepository);
 
   final ChatRepository repository;
-  final LlmRepository? _llm;
+  final ChatService _chatService;
   BielikModel? _model;
   ConversationController? _generationTarget;
   Future<void>? _generationTask;
@@ -36,7 +40,7 @@ class ChatWorkspace extends ChangeNotifier {
   Future<void> stopGeneration() async {
     if (!_sending) return;
     _stopRequested = true;
-    _llm?.stop();
+    _chatService.stop();
     _notify();
     await _generationTask;
   }
@@ -48,7 +52,7 @@ class ChatWorkspace extends ChangeNotifier {
     final task = () async {
       try {
         await stopGeneration();
-        await _llm?.unload();
+        await _chatService.unload();
       } catch (error) {
         _error = 'Nie udało się zwolnić modelu: $error';
       } finally {
@@ -129,7 +133,7 @@ class ChatWorkspace extends ChangeNotifier {
       onDraftChanged: (draft) {
         unawaited(_enqueue(() async {
           if (_conversations.contains(controller)) {
-            await repository.saveDraft(controller.id, draft);
+            await _chatService.saveDraft(controller.id, draft);
           }
         }, errorMessage: 'Nie udało się zapisać szkicu wiadomości.'));
       },
@@ -209,13 +213,14 @@ class ChatWorkspace extends ChangeNotifier {
   Future<void> sendMessage(String text) {
     final message = text.trim();
     if (message.isEmpty || !ready || _disposed || _sending || _releasing) return Future.value();
-    if (_llm != null && _model?.file == null) {
+    if (_chatService.hasLlm && _model?.file == null) {
       _error = 'Wybierz model na ekranie głównym.';
       _notify();
       return Future.value();
     }
     final target = selected;
     final revision = target.draftRevision;
+    _error = null;
     _sending = true;
     _stopRequested = false;
     _generationTarget = target;
@@ -229,24 +234,35 @@ class ChatWorkspace extends ChangeNotifier {
   Future<void> _sendAndGenerate(
     ConversationController target, String message, int revision,
   ) async {
-    var savedUser = false;
     try {
-      await _runAction(() async {
-        if (!_conversations.contains(target)) return;
-        final title = target.hasMessages
-            ? null
-            : message.replaceAll(RegExp(r'\s+'), ' ').characters.take(40).toString();
-        final saved = await repository.addMessage(
-          conversationId: target.id, authorId: 'local-user',
-          text: message, conversationTitle: title,
-        );
-        if (_disposed) return;
-        await target.addMessage(saved, submittedDraftRevision: revision, title: title);
-        savedUser = true;
-      }, errorMessage: 'Nie udało się zapisać wiadomości. Tekst pozostał w polu wpisywania.');
-      if (savedUser && !_disposed && !_stopRequested && _llm != null) {
-        await _generate(target);
-      }
+      await flush();
+      if (_disposed || _stopRequested || !_conversations.contains(target)) return;
+      await _chatService.send(
+        conversationId: target.id,
+        text: message,
+        history: target.messages,
+        model: _model?.file,
+        onStage: (stage) { _stage = stage; _notify(); },
+        onUpdate: (update) async {
+          if (_disposed) return;
+          switch (update) {
+            case ChatMessageSaved():
+              await target.addMessage(
+                update.message,
+                submittedDraftRevision: update.message.role == ChatRole.user ? revision : null,
+                title: update.title,
+              );
+            case ChatMessageUpdated():
+              await target.updateMessage(update.id, update.text);
+          }
+        },
+      );
+    } on UserMessageSaveFailure {
+      _error = 'Nie udało się zapisać wiadomości. Tekst pozostał w polu wpisywania.';
+    } on ChatContextTooLong {
+      _error = 'Wiadomość jest za długa. Skróć ją i spróbuj ponownie.';
+    } on EmptyModelReply {
+      if (!_stopRequested) _error = 'Model nie zwrócił odpowiedzi.';
     } catch (error) {
       if (!_stopRequested) _error = 'Nie udało się wygenerować odpowiedzi: $error';
     } finally {
@@ -257,48 +273,14 @@ class ChatWorkspace extends ChangeNotifier {
     }
   }
 
-  Future<void> _generate(ConversationController target) async {
-    final history = target.messages;
-    final buffer = StringBuffer();
-    String? responseId;
-    var lastSave = DateTime.now();
-    try {
-      await for (final fragment in _llm!.generate(
-        _model!.file!, history,
-        onStage: (stage) { _stage = stage; _notify(); },
-      )) {
-        if (_stopRequested || _disposed) break;
-        buffer.write(fragment);
-        if (responseId == null) {
-          final saved = await repository.addMessage(
-            conversationId: target.id, authorId: 'bielik', text: buffer.toString(),
-          );
-          responseId = saved.id;
-          await target.addMessage(saved);
-        } else {
-          await target.updateMessage(responseId, buffer.toString());
-          if (DateTime.now().difference(lastSave).inMilliseconds >= 500) {
-            await repository.updateMessage(responseId, buffer.toString());
-            lastSave = DateTime.now();
-          }
-        }
-      }
-      if (responseId == null && !_stopRequested && !_disposed) {
-        throw StateError('Model nie zwrócił odpowiedzi.');
-      }
-    } finally {
-      _llm!.stop();
-      if (responseId != null) {
-        await repository.updateMessage(responseId, buffer.toString());
-      }
-    }
-  }
-
   Future<void> flush() async {
     while (true) {
       final pending = _pending;
       await pending;
-      if (identical(pending, _pending)) return;
+      if (identical(pending, _pending)) {
+        await _chatService.flush();
+        if (identical(pending, _pending)) return;
+      }
     }
   }
 
@@ -306,12 +288,12 @@ class ChatWorkspace extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _stopRequested = true;
-    _llm?.stop();
+    _chatService.stop();
     unawaited(() async {
       await _generationTask;
       await flush();
       try {
-        await _llm?.unload();
+        await _chatService.unload();
       } catch (error) {
         _error = 'Nie udało się zwolnić modelu: $error';
       } finally {

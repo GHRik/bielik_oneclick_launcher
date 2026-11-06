@@ -10,6 +10,7 @@ abstract interface class ChatRepository {
     required String authorId,
     required String text,
     String? conversationTitle,
+    bool clearDraft = false,
   });
   Future<void> updateMessage(String id, String text);
   Future<void> saveDraft(int conversationId, String draft);

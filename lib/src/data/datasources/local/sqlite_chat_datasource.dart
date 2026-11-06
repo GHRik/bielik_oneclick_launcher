@@ -41,6 +41,7 @@ class SqliteChatDataSource {
     required String text,
     required int timestamp,
     String? conversationTitle,
+    required bool clearDraft,
   }) async {
     final connection = await database.open();
     return connection.transaction((transaction) async {
@@ -58,7 +59,7 @@ class SqliteChatDataSource {
       await transaction.update(
         'conversations',
         {
-          if (authorId == 'local-user') 'draft': '',
+          if (clearDraft) 'draft': '',
           'updated_at': timestamp,
           'title': ?conversationTitle,
         },

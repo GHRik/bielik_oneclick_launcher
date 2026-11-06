@@ -98,7 +98,8 @@ lib/
     │   └── formatters/           # Formatowanie danych do wyświetlenia
     ├── domain/
     │   ├── models/               # Czyste modele Dart
-    │   └── repositories/         # Kontrakty danych i operacji
+    │   ├── repositories/         # Kontrakty danych i operacji
+    │   └── services/             # Wysyłanie, zapis odpowiedzi i polityka kontekstu
     └── data/
         ├── datasources/          # SQLite, pliki, downloader, dane przykładowe
         └── repositories_impl/    # Implementacje kontraktów, w tym silnik LLM

@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
-import 'package:bielik_oneclick_launcher/src/domain/models/resource_requirement.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/model_requirements.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/model_download_controller.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/download_confirmation_dialog.dart';
@@ -39,13 +39,6 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
     _download.select(_selectedModel);
   }
 
-  bool _hasEnough(double? available, double requiredGb) =>
-      ResourceRequirement(
-        requiredGb: requiredGb,
-        availableGb: available,
-      ).status ==
-      RequirementStatus.sufficient;
-
   Future<void> _requestDownload() async {
     if (_download.isRunning ||
         _download.checking ||
@@ -54,11 +47,13 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
       return;
     }
     final model = _selectedModel;
-    final meetsRequirements =
-        _hasEnough(widget.availableStorageGb, model.downloadSizeMb / 1000) &&
-        _hasEnough(widget.availableRamGb, model.requiredFreeRamGb);
+    final requirements = ModelRequirements.evaluate(
+      model,
+      availableStorageGb: widget.availableStorageGb,
+      availableRamGb: widget.availableRamGb,
+    );
 
-    if (!meetsRequirements) {
+    if (requirements.requiresConfirmation) {
       _downloadDialogOpen = true;
       bool? confirmed;
       try {

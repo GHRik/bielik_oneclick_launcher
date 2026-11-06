@@ -4,15 +4,23 @@ import 'package:bielik_oneclick_launcher/src/data/datasources/local/model_file_d
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
 
 class LocalLlmRepository implements LlmRepository {
-  LocalLlmRepository(this._files);
+  LocalLlmRepository(this._files, {this.contextPolicy = const ChatContextPolicy()});
 
   final ModelFileDataSource _files;
+  final ChatContextPolicy contextPolicy;
   LlamaEngine? _engine;
   String? _loadedPath;
   bool _active = false;
   bool _stopped = false;
+
+  List<LlamaChatMessage> _engineMessages(List<ContextMessage> messages) =>
+      messages.map((message) => LlamaChatMessage.fromText(
+        role: message.role == ChatRole.user ? LlamaChatRole.user : LlamaChatRole.assistant,
+        text: message.text,
+      )).toList();
 
   @override
   Stream<String> generate(
@@ -36,8 +44,8 @@ class LocalLlmRepository implements LlmRepository {
         if (_stopped) return;
         _engine = await LlamaEngine.load(
           LlamaModel(ModelSource.path(file.path)),
-          params: const ModelParams(
-            contextSize: 2048,
+          params: ModelParams(
+            contextSize: contextPolicy.contextSize,
             device: ComputeDevice.cpu,
             gpuLayers: 0,
             numberOfThreads: 4,
@@ -48,37 +56,19 @@ class LocalLlmRepository implements LlmRepository {
       }
       if (_stopped) return;
       final engine = _engine!;
-      final turns = <(LlamaChatRole, String)>[];
-      for (final message in history.where((message) => message.text.trim().isNotEmpty)) {
-        final role = message.authorId == 'local-user'
-            ? LlamaChatRole.user : LlamaChatRole.assistant;
-        if (turns.isNotEmpty && turns.last.$1 == role) {
-          final previous = turns.removeLast();
-          turns.add((role, '${previous.$2}\n\n${message.text}'));
-        } else {
-          turns.add((role, message.text));
-        }
-      }
-      final messages = turns.map((turn) =>
-          LlamaChatMessage.fromText(role: turn.$1, text: turn.$2)).toList();
-      while (messages.isNotEmpty) {
-        final template = await engine.chatTemplate(messages);
-        final count = template.tokenCount ?? await engine.getTokenCount(template.prompt);
-        if (_stopped) return;
-        if (count <= 1504) break;
-        if (messages.length == 1) {
-          throw StateError('Wiadomość jest za długa. Skróć ją i spróbuj ponownie.');
-        }
-        messages.removeAt(0);
-        while (messages.length > 1 && messages.first.role != LlamaChatRole.user) {
-          messages.removeAt(0);
-        }
-      }
+      final context = await contextPolicy.prepare(
+        history,
+        isCancelled: () => _stopped,
+        countTokens: (messages) async {
+          final template = await engine.chatTemplate(_engineMessages(messages));
+          return template.tokenCount ?? await engine.getTokenCount(template.prompt);
+        },
+      );
       if (_stopped) return;
       onStage(LlmStage.generating);
       await for (final chunk in engine.create(
-        messages,
-        params: const GenerationParams(maxTokens: 512),
+        _engineMessages(context),
+        params: GenerationParams(maxTokens: contextPolicy.responseTokens),
       )) {
         if (_stopped) break;
         if (chunk.text.isNotEmpty) yield chunk.text;

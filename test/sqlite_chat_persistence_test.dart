@@ -61,6 +61,7 @@ void main() {
       conversationId: first.id,
       authorId: 'local-user',
       text: 'Kolejna wiadomość',
+      clearDraft: true,
     );
     expect(next.id, isNot(message.id));
     expect(
