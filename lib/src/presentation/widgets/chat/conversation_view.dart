@@ -23,7 +23,7 @@ class ConversationView extends StatelessWidget {
       chatController: conversation.controller,
       currentUserId: 'local-user',
       onMessageSend: onMessageSend,
-      resolveUser: (id) async => User(id: id, name: 'Ty'),
+      resolveUser: (id) async => User(id: id, name: id == 'local-user' ? 'Ty' : 'Bielik'),
       builders: Builders(
         emptyChatListBuilder: (context) => Center(
           child: Padding(

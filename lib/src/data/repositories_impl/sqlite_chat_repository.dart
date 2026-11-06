@@ -66,6 +66,9 @@ class SqliteChatRepository implements ChatRepository {
       );
 
   @override
+  Future<void> updateMessage(String id, String text) => dataSource.updateMessage(id, text);
+
+  @override
   Future<void> saveDraft(int conversationId, String draft) =>
       dataSource.saveDraft(conversationId, draft);
 

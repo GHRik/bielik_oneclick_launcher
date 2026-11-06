@@ -35,6 +35,12 @@ Repozytoria `PreviewModelCatalogRepository` i `PreviewStatisticsRepository` dost
 
 Ocena RAM i miejsca jest wspólną regułą domenową wykorzystywaną przez oznaczenia wymagań oraz potwierdzenie pobierania.
 
+## Lokalny LLM w czacie
+
+`LlmRepository` w domenie definiuje strumień odpowiedzi, zatrzymanie i zwolnienie modelu. `LocalLlmRepository` korzysta z `llamadart` / `llama.cpp`, otwierając lokalny GGUF wybrany na ekranie głównym. Jeden model pozostaje w pamięci podczas pracy w czacie. Generowanie działa na CPU, z kontekstem 2048 tokenów i limitem odpowiedzi 512 tokenów. Przed generowaniem najstarsze tury są pomijane, aż sformatowany prompt zmieści się w budżecie; pełna historia w bazie nie jest przycinana.
+
+`ChatWorkspace` najpierw zapisuje wiadomość użytkownika, a potem uruchamia generowanie poza kolejką operacji szkiców. Odpowiedź jest przypisana do rozmowy źródłowej także po przełączeniu widoku. Pierwszy fragment tworzy wiadomość asystenta; kolejne aktualizują jej tekst w UI, okresowo w SQLite i zawsze przy zakończeniu lub zatrzymaniu. Zapis asystenta nie czyści szkicu użytkownika. Usunięcie aktywnej rozmowy czeka na zatrzymanie generowania. Wyjście z czatu lub przejście do tła zatrzymuje generowanie i zwalnia silnik po zakończeniu zapisu.
+
 ## SQLite — trwała historia rozmów
 
 `AppDatabase` w `data/datasources/local/` otwiera prywatny plik `bielik.db` przy ładowaniu historii. Interfejs może pokazać błąd otwarcia bazy i pozwolić ponowić próbę. Schemat w wersji 1 tworzy tabele `conversations` i `messages`, indeks wiadomości oraz klucz obcy z `ON DELETE CASCADE`. Rozmowa ma też miejsce na szkic wiadomości. Czas jest przechowywany jako liczba milisekund od epoki UTC.

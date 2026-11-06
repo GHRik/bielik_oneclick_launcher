@@ -60,10 +60,21 @@ class InMemoryChatRepository implements ChatRepository {
     _messages.add(message);
     _conversations[conversationId] = conversation.copyWith(
       title: conversationTitle,
-      draft: '',
+      draft: authorId == 'local-user' ? '' : conversation.draft,
       updatedAt: message.createdAt,
     );
     return message;
+  }
+
+  @override
+  Future<void> updateMessage(String id, String text) async {
+    if (failSend) throw StateError('Send failed');
+    final index = _messages.indexWhere((message) => message.id == id);
+    final old = _messages[index];
+    _messages[index] = ChatMessage(
+      id: old.id, conversationId: old.conversationId, authorId: old.authorId,
+      text: text, createdAt: old.createdAt,
+    );
   }
 
   @override

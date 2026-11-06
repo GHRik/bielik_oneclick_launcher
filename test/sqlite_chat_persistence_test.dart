@@ -78,6 +78,21 @@ void main() {
     expect(await repository.getMessages(first.id), isEmpty);
   });
 
+  test('Assistant updates survive restart and preserve the next user draft', () async {
+    final conversation = await repository.createConversation();
+    await repository.saveDraft(conversation.id, 'Następne pytanie');
+    final assistant = await repository.addMessage(
+      conversationId: conversation.id, authorId: 'bielik', text: 'Pierwszy',
+    );
+    await repository.updateMessage(assistant.id, 'Pierwszy i drugi fragment');
+    await reopen();
+    final restored = (await repository.getMessages(conversation.id)).single;
+    expect(restored.id, assistant.id);
+    expect(restored.authorId, 'bielik');
+    expect(restored.text, 'Pierwszy i drugi fragment');
+    expect((await repository.getConversations()).single.draft, 'Następne pytanie');
+  });
+
   testWidgets('Restores workspace history and drafts after a database restart',
       (tester) async {
     await tester.runAsync(() async {

@@ -87,7 +87,15 @@ class _ChatPageState extends State<ChatPage> {
                         ),
                       ],
                     ),
-              title: const Text('Czat'),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Czat'),
+                  if (widget.workspace.modelName != null)
+                    Text(widget.workspace.modelName!, maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall),
+                ],
+              ),
               actions: [
                 IconButton(
                   tooltip: 'Statystyki',
@@ -127,11 +135,28 @@ class _ChatPageState extends State<ChatPage> {
                             ),
                           ],
                         ),
+                      if (widget.workspace.sending)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Row(children: [
+                            const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                            const SizedBox(width: 12),
+                            Expanded(child: Text(
+                              '${widget.workspace.generationStatus}\n${widget.workspace.generatingTitle ?? ''}',
+                              maxLines: 2, overflow: TextOverflow.ellipsis,
+                            )),
+                            TextButton.icon(
+                              onPressed: widget.workspace.stopGeneration,
+                              icon: const Icon(Icons.stop),
+                              label: const Text('Zatrzymaj'),
+                            ),
+                          ]),
+                        ),
                       Expanded(
                         child: ConversationView(
                           conversation: widget.workspace.selected,
                           onMessageSend: widget.workspace.sendMessage,
-                          sending: widget.workspace.sending,
+                          sending: widget.workspace.sending || widget.workspace.busy,
                         ),
                       ),
                     ],

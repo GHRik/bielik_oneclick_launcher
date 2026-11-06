@@ -5,7 +5,7 @@ import 'package:bielik_oneclick_launcher/src/data/repositories_impl/preview_stat
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_catalog_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_repository.dart';
-import 'package:bielik_oneclick_launcher/src/domain/repositories/model_probe_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/statistics_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/pages/home_page.dart';
 
@@ -14,14 +14,14 @@ class MyApp extends StatelessWidget {
     super.key,
     required this.chatRepository,
     required this.modelFilesRepository,
-    this.modelProbeRepository,
+    this.llmRepository,
     this.modelRepository = const PreviewModelCatalogRepository(),
     this.statisticsRepository = const PreviewStatisticsRepository(),
   });
 
   final ChatRepository chatRepository;
   final ModelFilesRepository modelFilesRepository;
-  final ModelProbeRepository? modelProbeRepository;
+  final LlmRepository? llmRepository;
   final ModelCatalogRepository modelRepository;
   final StatisticsRepository statisticsRepository;
 
@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
       home: HomePage(
         chatRepository: chatRepository,
         modelFilesRepository: modelFilesRepository,
-        modelProbeRepository: modelProbeRepository,
+        llmRepository: llmRepository,
         models: modelRepository.getModels(),
         statisticSeries: statisticsRepository.getSeries(),
       ),

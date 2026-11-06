@@ -6,7 +6,7 @@ import 'package:bielik_oneclick_launcher/src/data/datasources/local/model_file_d
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/sqlite_chat_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/model_download_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_model_files_repository.dart';
-import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_model_probe_repository.dart';
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/sqlite_chat_repository.dart';
 
 Future<void> main() async {
@@ -17,7 +17,7 @@ Future<void> main() async {
     MyApp(
       chatRepository: SqliteChatRepository(SqliteChatDataSource(database)),
       modelFilesRepository: LocalModelFilesRepository(ModelFileDataSource()),
-      modelProbeRepository: LocalModelProbeRepository(ModelFileDataSource()),
+      llmRepository: LocalLlmRepository(ModelFileDataSource()),
     ),
   );
 }

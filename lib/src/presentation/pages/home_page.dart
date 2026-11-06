@@ -6,7 +6,7 @@ import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_repository.dart';
-import 'package:bielik_oneclick_launcher/src/domain/repositories/model_probe_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/pages/chat_page.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_management_panel.dart';
@@ -16,14 +16,14 @@ class HomePage extends StatefulWidget {
     super.key,
     required this.models,
     required this.modelFilesRepository,
-    this.modelProbeRepository,
+    this.llmRepository,
     required this.chatRepository,
     required this.statisticSeries,
   });
 
   final ChatRepository chatRepository;
   final ModelFilesRepository modelFilesRepository;
-  final ModelProbeRepository? modelProbeRepository;
+  final LlmRepository? llmRepository;
   final List<BielikModel> models;
   final List<StatisticSeries> statisticSeries;
 
@@ -33,31 +33,46 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   late final ChatWorkspace _chatWorkspace;
+  late BielikModel _selectedModel = widget.models.first;
+  bool _chatOpen = false;
 
   @override
   void initState() {
     super.initState();
-    _chatWorkspace = ChatWorkspace(widget.chatRepository);
+    _chatWorkspace = ChatWorkspace(widget.chatRepository, llmRepository: widget.llmRepository);
     WidgetsBinding.instance.addObserver(this);
     unawaited(_chatWorkspace.initialize());
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      unawaited(_chatWorkspace.releaseModel());
+    }
     if (state != AppLifecycleState.resumed) {
       unawaited(_chatWorkspace.flush());
     }
   }
 
-  void _openChat() {
-    Navigator.of(context).push(
+  Future<void> _openChat() async {
+    if (_chatOpen) return;
+    setState(() => _chatOpen = true);
+    try {
+      await _chatWorkspace.releaseModel();
+      if (!mounted) return;
+      _chatWorkspace.useModel(_selectedModel);
+      await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => ChatPage(
           workspace: _chatWorkspace,
           statisticSeries: widget.statisticSeries,
         ),
       ),
-    );
+      );
+    } finally {
+      await _chatWorkspace.releaseModel();
+      if (mounted) setState(() => _chatOpen = false);
+    }
   }
 
   @override
@@ -88,10 +103,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     child: Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 480),
-                        child: ModelManagementPanel(
-                          models: widget.models,
-                          repository: widget.modelFilesRepository,
-                          probeRepository: widget.modelProbeRepository,
+                        child: AbsorbPointer(
+                          absorbing: _chatOpen,
+                          child: ModelManagementPanel(
+                            models: widget.models,
+                            repository: widget.modelFilesRepository,
+                            onModelSelected: (model) => _selectedModel = model,
+                          ),
                         ),
                       ),
                     ),
@@ -104,7 +122,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: _openChat,
+                  onPressed: _chatOpen ? null : _openChat,
                   icon: const Icon(Icons.chat_bubble_outline),
                   label: const Text('Otwórz czat'),
                 ),

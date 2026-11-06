@@ -1,6 +1,6 @@
 # Bielik OneClick Launcher
 
-Aplikacja Flutter na Androida do pobierania modeli Bielik i uruchamiania ich lokalnie na telefonie. Obecny etap: działająca próba jednej odpowiedzi Bielika 1.5B oraz czat z historią w SQLite.
+Aplikacja Flutter na Androida do pobierania modeli Bielik i uruchamiania ich lokalnie na telefonie. Lokalny czat generuje odpowiedzi fragmentami i zapisuje rozmowy w SQLite.
 
 **[Pobierz APK na telefon](https://github.com/GHRik/bielik_oneclick_launcher/releases)**, zainstaluj i uruchom. Bez Fluttera i Android Studio.
 
@@ -11,11 +11,13 @@ Aplikacja Flutter na Androida do pobierania modeli Bielik i uruchamiania ich lok
 - Sprawdzanie rozmiaru i SHA-256 przed oznaczeniem modelu jako pobrany; usuwanie lokalnych plików modeli.
 - Tworzenie i usuwanie rozmów z potwierdzeniem. Wiadomości i szkice pozostają w SQLite po zamknięciu aplikacji.
 - Przybliżony rozmiar treści każdej rozmowy na liście.
-- Osobny ekran próby: pobrany Bielik 1.5B odpowiada na jedno ustalone pytanie, po czym aplikacja zwalnia model z pamięci.
+- Odpowiedzi LLM w czacie przez `llamadart` / `llama.cpp`: strumieniowanie, historia jako kontekst i zatrzymywanie generowania.
+- Wybrany na ekranie głównym model jest ładowany przy pierwszej wiadomości. Wyjście z czatu lub przejście aplikacji do tła zatrzymuje generowanie i zwalnia model.
+- Częściowa odpowiedź jest zapisywana także po zatrzymaniu generowania.
 
-**Pełny czat nie generuje jeszcze odpowiedzi LLM.** Wykresy statystyk pokazują dane przykładowe, a dostępny RAM i miejsce na telefonie nie są jeszcze automatycznie odczytywane.
+Wykresy statystyk pokazują dane przykładowe, a dostępny RAM i miejsce na telefonie nie są jeszcze automatycznie odczytywane.
 
-## Potwierdzony etap: jedna odpowiedź
+## Archiwalny etap: jedna odpowiedź
 
 Integracja `llamadart` / `llama.cpp` została sprawdzona na fizycznym telefonie CPH2747 z Androidem 16 (ARM64). Próba korzysta z CPU, kontekstu 512 tokenów i limitu odpowiedzi 64 tokenów.
 
@@ -48,7 +50,9 @@ Wystarczy pobrać APK na telefon z Androidem, zainstalować je i otworzyć aplik
 2. W wybranym wydaniu rozwiń **Assets** i pobierz plik `bielik-arm64-….apk`.
 3. Otwórz plik na telefonie. Jeśli Android o to poprosi, zezwól przeglądarce lub menedżerowi plików na instalację aplikacji.
 4. Uruchom Bielika, wybierz **Bielik 1.5B v3.0 · Q8** i pobierz model.
-5. Otwórz **Próba Bielika 1.5B → Wygeneruj odpowiedź**.
+5. Naciśnij **Otwórz czat** i wyślij wiadomość. Przycisk **Zatrzymaj** kończy bieżącą odpowiedź.
+
+Czat używa kontekstu 2048 tokenów i limitu odpowiedzi 512 tokenów. Do modelu trafia najnowsza historia mieszcząca się w tym limicie; pełna historia pozostaje w SQLite. Starsze wydania APK, w tym branch archiwalny, zachowują ekran próby zamiast pełnego czatu.
 
 APK jest wersją testową `debug` dla telefonów ARM64. Podpis instalacji z GitHub Actions może różnić się od lokalnej wersji developerskiej i między buildami CI; stałe podpisywanie aktualizacji jest kolejnym krokiem.
 
@@ -74,11 +78,10 @@ Pliki modeli pobiera użytkownik podczas działania aplikacji — nie są dołą
 
 ## Kolejne plany
 
-1. Podłączyć generowanie do istniejącego czatu: historia jako kontekst, odpowiedź wyświetlana fragmentami i zapisywana do SQLite.
-2. Dodać zatrzymywanie generowania oraz bezpieczne ładowanie i przełączanie modeli.
-3. Sprawdzić generowanie dla Bielika 4.5B i dobrać parametry do możliwości telefonu.
-4. Odczytywać rzeczywisty RAM i wolne miejsce oraz podłączyć pomiary do wykresów.
-5. Rozszerzyć testy pobierania i pracy LLM na urządzeniach, w tym zachowanie po przejściu aplikacji do tła.
+1. Sprawdzić generowanie dla Bielika 4.5B i dobrać parametry do możliwości telefonu.
+2. Odczytywać rzeczywisty RAM i wolne miejsce oraz podłączyć pomiary do wykresów.
+3. Rozszerzyć testy pobierania i pracy LLM na różnych urządzeniach.
+4. Dodać stałe podpisywanie APK do wygodnych aktualizacji.
 
 ## Struktura projektu
 
@@ -88,7 +91,7 @@ lib/
 └── src/
     ├── app.dart                  # Konfiguracja aplikacji
     ├── presentation/
-    │   ├── pages/                # Ekrany: główny, czat, statystyki, próba modelu
+    │   ├── pages/                # Ekrany: główny, czat, statystyki
     │   ├── controllers/          # Stan widoków
     │   ├── widgets/              # Elementy interfejsu
     │   ├── sidebars/             # Lista rozmów i jej elementy
@@ -98,7 +101,7 @@ lib/
     │   └── repositories/         # Kontrakty danych i operacji
     └── data/
         ├── datasources/          # SQLite, pliki, downloader, dane przykładowe
-        └── repositories_impl/    # Implementacje kontraktów, w tym próba LLM
+        └── repositories_impl/    # Implementacje kontraktów, w tym silnik LLM
 
 test/                             # Testy logiki, SQLite, widoków i architektury
 ```

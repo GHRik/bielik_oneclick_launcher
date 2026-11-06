@@ -10,6 +10,7 @@ class ConversationController extends ChangeNotifier {
     required List<ChatMessage> messages,
     required this.onDraftChanged,
   }) : _conversation = conversation,
+       _messages = List.of(messages),
        controller = InMemoryChatController(
          messages: messages.map(_viewMessage).toList(),
        ),
@@ -20,6 +21,8 @@ class ConversationController extends ChangeNotifier {
   }
 
   Conversation _conversation;
+  final List<ChatMessage> _messages;
+  List<ChatMessage> get messages => List.unmodifiable(_messages);
   final InMemoryChatController controller;
   final TextEditingController draft;
   final ValueChanged<String> onDraftChanged;
@@ -51,10 +54,11 @@ class ConversationController extends ChangeNotifier {
 
   Future<void> addMessage(
     ChatMessage message, {
-    required int submittedDraftRevision,
+    int? submittedDraftRevision,
     String? title,
   }) async {
     await controller.insertMessage(_viewMessage(message));
+    _messages.add(message);
     hasMessages = true;
     _messageContentBytes += message.contentSizeBytes;
     _conversation = _conversation.copyWith(
@@ -68,6 +72,20 @@ class ConversationController extends ChangeNotifier {
       _draftRevision++;
       _conversation = _conversation.copyWith(draft: '');
     }
+    notifyListeners();
+  }
+
+  Future<void> updateMessage(String id, String text) async {
+    final index = _messages.indexWhere((message) => message.id == id);
+    if (index < 0) return;
+    final old = _messages[index];
+    final updated = ChatMessage(
+      id: old.id, conversationId: old.conversationId, authorId: old.authorId,
+      text: text, createdAt: old.createdAt,
+    );
+    await controller.updateMessage(_viewMessage(old), _viewMessage(updated));
+    _messages[index] = updated;
+    _messageContentBytes += updated.contentSizeBytes - old.contentSizeBytes;
     notifyListeners();
   }
 

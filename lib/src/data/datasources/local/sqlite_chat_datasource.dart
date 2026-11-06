@@ -58,7 +58,7 @@ class SqliteChatDataSource {
       await transaction.update(
         'conversations',
         {
-          'draft': '',
+          if (authorId == 'local-user') 'draft': '',
           'updated_at': timestamp,
           'title': ?conversationTitle,
         },
@@ -67,6 +67,14 @@ class SqliteChatDataSource {
       );
       return message;
     });
+  }
+
+  Future<void> updateMessage(String id, String text) async {
+    final connection = await database.open();
+    final count = await connection.update(
+      'messages', {'text': text}, where: 'id = ?', whereArgs: [id],
+    );
+    if (count != 1) throw StateError('Nie znaleziono wiadomości do zapisu.');
   }
 
   Future<void> saveDraft(int conversationId, String draft) async {
