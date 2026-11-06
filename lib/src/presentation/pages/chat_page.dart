@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/controllers/statistics_controller.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/conversation_controller.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/pages/statistics_page.dart';
@@ -13,10 +14,12 @@ class ChatPage extends StatefulWidget {
     super.key,
     required this.workspace,
     required this.statisticSeries,
+    this.statisticsController,
   });
 
   final ChatWorkspace workspace;
   final List<StatisticSeries> statisticSeries;
+  final StatisticsController? statisticsController;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -41,7 +44,10 @@ class _ChatPageState extends State<ChatPage> {
     FocusManager.instance.primaryFocus?.unfocus();
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => StatisticsPage(series: widget.statisticSeries),
+        builder: (_) => StatisticsPage(
+          series: widget.statisticSeries,
+          controller: widget.statisticsController,
+        ),
       ),
     );
   }
@@ -92,8 +98,12 @@ class _ChatPageState extends State<ChatPage> {
                 children: [
                   const Text('Czat'),
                   if (widget.workspace.modelName != null)
-                    Text(widget.workspace.modelName!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelSmall),
+                    Text(
+                      widget.workspace.modelName!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
                 ],
               ),
               actions: [
@@ -107,19 +117,25 @@ class _ChatPageState extends State<ChatPage> {
             ),
             drawer: showSidebar
                 ? null
-                : Drawer(width: 280, child: ChatSidebar(
-                    workspace: widget.workspace,
-                    onNewChat: _newChat,
-                    onSelect: _selectConversation,
-                  )),
+                : Drawer(
+                    width: 280,
+                    child: ChatSidebar(
+                      workspace: widget.workspace,
+                      onNewChat: _newChat,
+                      onSelect: _selectConversation,
+                    ),
+                  ),
             body: Row(
               children: [
                 if (showSidebar) ...[
-                  SizedBox(width: 280, child: ChatSidebar(
-                    workspace: widget.workspace,
-                    onNewChat: _newChat,
-                    onSelect: _selectConversation,
-                  )),
+                  SizedBox(
+                    width: 280,
+                    child: ChatSidebar(
+                      workspace: widget.workspace,
+                      onNewChat: _newChat,
+                      onSelect: _selectConversation,
+                    ),
+                  ),
                   const VerticalDivider(width: 1),
                 ],
                 Expanded(
@@ -137,26 +153,41 @@ class _ChatPageState extends State<ChatPage> {
                         ),
                       if (widget.workspace.sending)
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: Row(children: [
-                            const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-                            const SizedBox(width: 12),
-                            Expanded(child: Text(
-                              widget.workspace.generationStatus,
-                              maxLines: 1, overflow: TextOverflow.ellipsis,
-                            )),
-                            TextButton.icon(
-                              onPressed: widget.workspace.stopGeneration,
-                              icon: const Icon(Icons.stop),
-                              label: const Text('Zatrzymaj'),
-                            ),
-                          ]),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            children: [
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  widget.workspace.generationStatus,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              TextButton.icon(
+                                onPressed: widget.workspace.stopGeneration,
+                                icon: const Icon(Icons.stop),
+                                label: const Text('Zatrzymaj'),
+                              ),
+                            ],
+                          ),
                         ),
                       Expanded(
                         child: ConversationView(
                           conversation: widget.workspace.selected,
                           onMessageSend: widget.workspace.sendMessage,
-                          sending: widget.workspace.sending || widget.workspace.busy,
+                          sending:
+                              widget.workspace.sending || widget.workspace.busy,
                         ),
                       ),
                     ],

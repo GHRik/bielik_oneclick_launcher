@@ -1,7 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/preview_model_catalog_repository.dart';
-import 'package:bielik_oneclick_launcher/src/data/repositories_impl/preview_statistics_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/device_resources_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_catalog_repository.dart';
@@ -18,7 +17,7 @@ class MyApp extends StatelessWidget {
     this.llmRepository,
     this.deviceResourcesRepository,
     this.modelRepository = const PreviewModelCatalogRepository(),
-    this.statisticsRepository = const PreviewStatisticsRepository(),
+    this.statisticsRepository,
   });
 
   final DeviceResourcesRepository? deviceResourcesRepository;
@@ -26,7 +25,7 @@ class MyApp extends StatelessWidget {
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
   final ModelCatalogRepository modelRepository;
-  final StatisticsRepository statisticsRepository;
+  final StatisticsRepository? statisticsRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +38,8 @@ class MyApp extends StatelessWidget {
         modelFilesRepository: modelFilesRepository,
         llmRepository: llmRepository,
         models: modelRepository.getModels(),
-        statisticSeries: statisticsRepository.getSeries(),
+        statisticSeries: statisticsRepository?.getSeries() ?? const [],
+        statisticsRepository: statisticsRepository,
       ),
     );
   }

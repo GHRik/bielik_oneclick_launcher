@@ -18,10 +18,14 @@ class StatisticCard extends StatelessWidget {
           children: [
             Text(series.title, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
-            Text(
-              series.unit,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            Text(series.unit, style: Theme.of(context).textTheme.bodySmall),
+            if (series.description.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                series.description,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
             const SizedBox(height: 16),
             StatisticLineChart(series: series),
           ],

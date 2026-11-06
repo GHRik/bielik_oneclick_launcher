@@ -12,26 +12,43 @@ class StatisticLineChart extends StatefulWidget {
 }
 
 class _StatisticLineChartState extends State<StatisticLineChart> {
-  int? _selectedIndex;
+  double? _selectedSeconds;
 
   String _format(double value) =>
       value.toStringAsFixed(value == value.roundToDouble() ? 0 : 1);
-
-  void _select(double x, double width) {
-    if (width <= 0 || widget.series.values.isEmpty) return;
-    final index = ((x / width).clamp(0.0, 1.0) *
-            (widget.series.values.length - 1))
-        .round();
-    setState(() => _selectedIndex = index);
-  }
 
   @override
   Widget build(BuildContext context) {
     final series = widget.series;
     final colors = Theme.of(context).colorScheme;
-    final index = _selectedIndex;
+    final times = series.secondsAgo.length == series.values.length
+        ? series.secondsAgo
+        : List.generate(
+            series.values.length,
+            (i) => series.values.length < 2
+                ? 0.0
+                : -60 + i * 60 / (series.values.length - 1),
+          );
+    int? index;
+    if (_selectedSeconds != null && times.isNotEmpty) {
+      index = 0;
+      for (var i = 1; i < times.length; i++) {
+        if ((times[i] - _selectedSeconds!).abs() <
+            (times[index!] - _selectedSeconds!).abs()) {
+          index = i;
+        }
+      }
+    }
+    final value = index == null ? null : series.values[index];
+    final hasData = series.values.any((value) => value != null);
+    final reading = index != null
+        ? '${times[index].round()} s · ${value == null ? 'Brak danych' : '${_format(value)} ${series.unit}'}'
+        : hasData
+        ? 'Dotknij wykresu, aby zobaczyć wartość'
+        : 'Brak danych';
     return Semantics(
-      label: 'Wykres: ${series.title}, jednostka ${series.unit}. Dane przykładowe z 60 sekund.',
+      label:
+          'Wykres: ${series.title}, jednostka ${series.unit}. Ostatnie 60 sekund.',
       child: Column(
         children: [
           SizedBox(
@@ -54,22 +71,39 @@ class _StatisticLineChartState extends State<StatisticLineChart> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: LayoutBuilder(
-                      builder: (context, constraints) => GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTapDown: (details) =>
-                            _select(details.localPosition.dx, constraints.maxWidth),
-                        onHorizontalDragUpdate: (details) =>
-                            _select(details.localPosition.dx, constraints.maxWidth),
-                        child: CustomPaint(
-                          size: Size(constraints.maxWidth, constraints.maxHeight),
-                          painter: _LineChartPainter(
-                            series: series,
-                            selectedIndex: index,
-                            lineColor: colors.primary,
-                            gridColor: colors.outlineVariant,
+                      builder: (context, constraints) {
+                        void select(double x) {
+                          if (constraints.maxWidth <= 0 || times.isEmpty) {
+                            return;
+                          }
+                          setState(
+                            () => _selectedSeconds =
+                                -60 +
+                                60 * (x / constraints.maxWidth).clamp(0, 1),
+                          );
+                        }
+
+                        return GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTapDown: (details) =>
+                              select(details.localPosition.dx),
+                          onHorizontalDragUpdate: (details) =>
+                              select(details.localPosition.dx),
+                          child: CustomPaint(
+                            size: Size(
+                              constraints.maxWidth,
+                              constraints.maxHeight,
+                            ),
+                            painter: _LineChartPainter(
+                              series: series,
+                              times: times,
+                              selectedIndex: index,
+                              lineColor: colors.primary,
+                              gridColor: colors.outlineVariant,
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -85,9 +119,7 @@ class _StatisticLineChartState extends State<StatisticLineChart> {
           ),
           const SizedBox(height: 12),
           Text(
-            index == null
-                ? 'Dotknij wykresu, aby zobaczyć wartość'
-                : '${-60 + (index * 60 / (series.values.length - 1)).round()} s · ${_format(series.values[index])} ${series.unit}',
+            reading,
             key: ValueKey('chart-reading-${series.title}'),
             style: Theme.of(context).textTheme.bodySmall,
             textAlign: TextAlign.center,
@@ -101,43 +133,55 @@ class _StatisticLineChartState extends State<StatisticLineChart> {
 class _LineChartPainter extends CustomPainter {
   const _LineChartPainter({
     required this.series,
+    required this.times,
     required this.selectedIndex,
     required this.lineColor,
     required this.gridColor,
   });
 
   final StatisticSeries series;
+  final List<double> times;
   final int? selectedIndex;
   final Color lineColor;
   final Color gridColor;
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (series.values.length < 2 || series.maximum <= series.minimum) return;
-    final gridPaint = Paint()
-      ..color = gridColor
-      ..strokeWidth = 1;
+    if (series.maximum <= series.minimum) return;
     for (var i = 0; i <= 4; i++) {
       final y = size.height * i / 4;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y),
+        Paint()
+          ..color = gridColor
+          ..strokeWidth = 1,
+      );
     }
-
-    Offset point(int index) => Offset(
-          size.width * index / (series.values.length - 1),
-          size.height *
-              (1 - ((series.values[index] - series.minimum) /
-                      (series.maximum - series.minimum)).clamp(0.0, 1.0)),
-        );
-
-    final line = Path()..moveTo(point(0).dx, point(0).dy);
-    for (var i = 1; i < series.values.length; i++) {
-      line.lineTo(point(i).dx, point(i).dy);
+    Offset point(int i) => Offset(
+      size.width * ((times[i] + 60) / 60).clamp(0, 1),
+      size.height *
+          (1 -
+              ((series.values[i]! - series.minimum) /
+                      (series.maximum - series.minimum))
+                  .clamp(0, 1)),
+    );
+    final line = Path();
+    var connected = false;
+    for (var i = 0; i < series.values.length; i++) {
+      if (series.values[i] == null) {
+        connected = false;
+        continue;
+      }
+      final p = point(i);
+      if (connected && (times[i] - times[i - 1]) <= 3) {
+        line.lineTo(p.dx, p.dy);
+      } else {
+        line.moveTo(p.dx, p.dy);
+      }
+      canvas.drawCircle(p, 2, Paint()..color = lineColor);
+      connected = true;
     }
-    final fill = Path.from(line)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(fill, Paint()..color = lineColor.withValues(alpha: 0.08));
     canvas.drawPath(
       line,
       Paint()
@@ -146,16 +190,17 @@ class _LineChartPainter extends CustomPainter {
         ..strokeWidth = 2.5
         ..strokeJoin = StrokeJoin.round,
     );
-    if (selectedIndex != null) {
-      final selected = point(selectedIndex!);
+    final selected = selectedIndex;
+    if (selected != null && series.values[selected] != null) {
+      final p = point(selected);
       canvas.drawLine(
-        Offset(selected.dx, 0),
-        Offset(selected.dx, size.height),
+        Offset(p.dx, 0),
+        Offset(p.dx, size.height),
         Paint()
           ..color = lineColor.withValues(alpha: 0.4)
           ..strokeWidth = 1,
       );
-      canvas.drawCircle(selected, 5, Paint()..color = lineColor);
+      canvas.drawCircle(p, 5, Paint()..color = lineColor);
     }
   }
 

@@ -28,7 +28,7 @@ lib/src/
 
 ## Obecne źródła danych
 
-Repozytoria `PreviewModelCatalogRepository` i `PreviewStatisticsRepository` dostarczają lokalny katalog modeli i przykładowe serie wykresów. Nie wykonują operacji sieciowych, odczytów parametrów telefonu ani inferencji AI.
+`PreviewModelCatalogRepository` dostarcza lokalny katalog modeli. Dane `PreviewStatisticsRepository` są zachowane do podglądów i testów; produkcja wstrzykuje `LocalStatisticsRepository`.
 
 `Conversation` jest modelem domenowym. `ConversationController` przechowuje kontroler biblioteki czatu, szkic wiadomości i stan widoku. `ChatWorkspace` zarządza wyborem i cyklem życia rozmów.
 
@@ -37,6 +37,12 @@ Repozytoria `PreviewModelCatalogRepository` i `PreviewStatisticsRepository` dost
 `DeviceResourcesRepository` udostępnia dostępny i całkowity RAM oraz wolne miejsce w bajtach. `LocalDeviceResourcesRepository` korzysta z `DeviceResourcesDataSource` i kanału `bielik/device_resources`. Androidowy `DeviceResourcesChannel` odczytuje `ActivityManager.MemoryInfo` oraz `StatFs` dla katalogu aplikacji, w którym przechowujemy modele; pracuje w kolejce tła. Nie wymaga dodatkowych uprawnień. `DeviceResourcesController` odświeża dane przy otwarciu, wznowieniu aplikacji, powrocie z czatu oraz po pobraniu lub usunięciu modelu. Brak obsługi platformy lub błąd daje brak danych. Implementację dla laptopa można dodać przez ten sam kontrakt, bez zmiany widoku. GB oznacza tutaj miliard bajtów, zgodnie z rozmiarami modeli.
 
 `ModelRequirements.evaluate` jest wspólną regułą domenową oceniającą RAM i miejsce. Zwraca stany zasobów oraz decyzję `requiresConfirmation`. Widgety tylko wyświetlają wyniki i otwierają okno potwierdzenia.
+
+## Pomiary statystyk
+
+Kontrakt `SamplingStatisticsRepository` oddziela widok od odczytów platformy. `StatisticsController` pobiera próbki co sekundę na pierwszym planie; zatrzymuje timer w tle i przy usuwaniu kontrolera. `LocalStatisticsRepository` utrzymuje maksymalnie 61 próbek z ostatnich 60 sekund w pamięci. Wykresy zachowują rzeczywiste odstępy czasowe i przerwy dla brakujących danych.
+
+`StatisticsDataSource` komunikuje się z androidowym `DeviceStatisticsReader` przez kanał platformowy działający w kolejce tła. Obsługiwane pomiary: RAM aplikacji.
 
 ## Lokalny LLM w czacie
 

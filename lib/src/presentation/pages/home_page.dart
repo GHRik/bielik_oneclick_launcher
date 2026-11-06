@@ -4,6 +4,8 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/statistics_repository.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/controllers/statistics_controller.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/device_resources_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/device_resources_controller.dart';
@@ -22,6 +24,7 @@ class HomePage extends StatefulWidget {
     this.deviceResourcesRepository,
     required this.chatRepository,
     required this.statisticSeries,
+    this.statisticsRepository,
   });
 
   final DeviceResourcesRepository? deviceResourcesRepository;
@@ -30,6 +33,7 @@ class HomePage extends StatefulWidget {
   final LlmRepository? llmRepository;
   final List<BielikModel> models;
   final List<StatisticSeries> statisticSeries;
+  final StatisticsRepository? statisticsRepository;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -37,6 +41,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   late final ChatWorkspace _chatWorkspace;
+  StatisticsController? _statistics;
   late final _resources = DeviceResourcesController(
     widget.deviceResourcesRepository,
   );
@@ -53,12 +58,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     unawaited(_chatWorkspace.initialize());
     unawaited(_resources.refresh());
+    final repository = widget.statisticsRepository;
+    if (repository != null) {
+      _statistics = StatisticsController(repository)..start();
+    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       unawaited(_resources.refresh());
+      _statistics?.start();
+    } else {
+      _statistics?.pause();
     }
     if (state == AppLifecycleState.paused) {
       unawaited(_chatWorkspace.releaseModel());
@@ -80,6 +92,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           builder: (_) => ChatPage(
             workspace: _chatWorkspace,
             statisticSeries: widget.statisticSeries,
+            statisticsController: _statistics,
           ),
         ),
       );
@@ -95,6 +108,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _statistics?.dispose();
     _resources.dispose();
     _chatWorkspace.dispose();
     super.dispose();

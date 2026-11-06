@@ -1,0 +1,77 @@
+import 'package:bielik_oneclick_launcher/src/data/datasources/statistics_datasource.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/sampling_statistics_repository.dart';
+
+class LocalStatisticsRepository implements SamplingStatisticsRepository {
+  LocalStatisticsRepository(this._source, {DateTime Function()? now})
+    : _now = now ?? DateTime.now;
+
+  final StatisticsDataSource _source;
+  final DateTime Function() _now;
+  final List<({DateTime time, List<double?> values})> _samples = [];
+
+  @override
+  Future<List<StatisticSeries>> sample() async {
+    Map<String, dynamic> values;
+    try {
+      values = await _source.read();
+    } catch (_) {
+      values = {};
+    }
+    double? number(String key) {
+      final value = values[key];
+      return value is num && value.isFinite && value >= 0
+          ? value.toDouble()
+          : null;
+    }
+
+    final now = _now();
+    _samples.add((
+      time: now,
+      values: [
+        number('appRamBytes') == null
+            ? null
+            : number('appRamBytes')! / 1000000000,
+      ],
+    ));
+    _samples.removeWhere(
+      (sample) => now.difference(sample.time).inMilliseconds > 60000,
+    );
+    if (_samples.length > 61) _samples.removeRange(0, _samples.length - 61);
+    return getSeries();
+  }
+
+  @override
+  List<StatisticSeries> getSeries() {
+    final now = _now();
+    final samples = _samples
+        .where((s) => now.difference(s.time).inMilliseconds <= 60000)
+        .toList();
+    const definitions = [
+      (
+        'RAM aplikacji',
+        'GB',
+        1.0,
+        'Pamięć PSS procesu aplikacji, w tym silnik i model.',
+      ),
+    ];
+    return List.generate(definitions.length, (i) {
+      final values = samples.map((s) => s.values[i]).toList();
+      final maximum = values.whereType<double>().fold<double>(
+        definitions[i].$3,
+        (max, value) => value > max ? value : max,
+      );
+      return StatisticSeries(
+        title: definitions[i].$1,
+        unit: definitions[i].$2,
+        description: definitions[i].$4,
+        minimum: 0,
+        maximum: maximum,
+        values: List.unmodifiable(values),
+        secondsAgo: List.unmodifiable(
+          samples.map((s) => -now.difference(s.time).inMicroseconds / 1000000),
+        ),
+      );
+    });
+  }
+}

@@ -6,16 +6,19 @@ import 'package:bielik_oneclick_launcher/src/presentation/pages/statistics_page.
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/statistics/statistic_line_chart.dart';
 
 void main() {
-  testWidgets('Shows historical charts, CPU temperature and selected samples',
-      (tester) async {
+  testWidgets('Shows historical charts, CPU temperature and selected samples', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MaterialApp(home: StatisticsPage(series: statisticsPreviewData)));
+    await tester.pumpWidget(
+      const MaterialApp(home: StatisticsPage(series: statisticsPreviewData)),
+    );
     expect(find.byType(StatisticLineChart), findsNWidgets(5));
-    expect(find.textContaining('Dane przykładowe'), findsOneWidget);
+    expect(find.textContaining('Ostatnie 60 sekund'), findsOneWidget);
     expect(find.text('-60 s'), findsNWidgets(5));
 
     final graph = find.descendant(

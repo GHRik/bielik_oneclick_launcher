@@ -1,15 +1,26 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/controllers/statistics_controller.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/statistics/statistic_card.dart';
 
 class StatisticsPage extends StatelessWidget {
-  const StatisticsPage({super.key, required this.series});
+  const StatisticsPage({super.key, required this.series, this.controller});
 
   final List<StatisticSeries> series;
+  final StatisticsController? controller;
 
   @override
   Widget build(BuildContext context) {
+    final source = controller;
+    if (source == null) return _content(context, series);
+    return ListenableBuilder(
+      listenable: source,
+      builder: (context, _) => _content(context, source.series),
+    );
+  }
+
+  Widget _content(BuildContext context, List<StatisticSeries> series) {
     return Scaffold(
       appBar: AppBar(title: const Text('Statystyki')),
       body: SafeArea(
@@ -27,7 +38,7 @@ class StatisticsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Dane przykładowe · ostatnie 60 sekund. To podgląd wykresów, nie pomiary telefonu.',
+                    'Ostatnie 60 sekund · pomiary co sekundę podczas działania aplikacji na pierwszym planie. Historia bieżącej sesji.',
                   ),
                   const SizedBox(height: 24),
                   LayoutBuilder(

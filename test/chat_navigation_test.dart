@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/app.dart';
+import 'package:bielik_oneclick_launcher/src/data/datasources/statistics_datasource.dart';
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_statistics_repository.dart';
 
 import 'support/in_memory_chat_repository.dart';
 import 'support/in_memory_model_files_repository.dart';
@@ -19,6 +21,9 @@ void main() {
       MyApp(
         modelFilesRepository: InMemoryModelFilesRepository(),
         chatRepository: InMemoryChatRepository(),
+        statisticsRepository: LocalStatisticsRepository(
+          const StatisticsDataSource(),
+        ),
       ),
     );
     await tester.tap(find.text('Otwórz czat'));
@@ -72,8 +77,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Statystyki'), findsOneWidget);
     expect(find.text('Wydajność modelu'), findsOneWidget);
-    expect(find.text('Prędkość generowania'), findsOneWidget);
-    expect(find.text('Zużycie RAM'), findsOneWidget);
+    expect(find.text('RAM aplikacji'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pageBack();
     await tester.pumpAndSettle();

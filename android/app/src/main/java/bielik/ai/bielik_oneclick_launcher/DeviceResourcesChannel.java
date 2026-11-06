@@ -12,12 +12,17 @@ import io.flutter.plugin.common.MethodChannel;
 
 final class DeviceResourcesChannel {
     static void register(Context context, BinaryMessenger messenger) {
+        DeviceStatisticsReader statistics = new DeviceStatisticsReader();
         new MethodChannel(
             messenger,
             "bielik/device_resources",
             io.flutter.plugin.common.StandardMethodCodec.INSTANCE,
             messenger.makeBackgroundTaskQueue()
         ).setMethodCallHandler((call, result) -> {
+            if (call.method.equals("statistics")) {
+                result.success(statistics.read(context));
+                return;
+            }
             if (!call.method.equals("read")) {
                 result.notImplemented();
                 return;
