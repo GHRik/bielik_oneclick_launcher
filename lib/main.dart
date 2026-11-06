@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter_chat_core/flutter_chat_core.dart';
+import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,58 +12,95 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Bielik',
       theme: ThemeData(
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-
-
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  final _chatController = InMemoryChatController();
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  @override
+  void dispose() {
+    _chatController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
+      appBar: AppBar(title: const Text('Bielik')),
       body: Center(
-        child: Column(
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+        child: FilledButton.icon(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => ChatPage(chatController: _chatController),
+              ),
+            );
+          },
+          icon: const Icon(Icons.chat_bubble_outline),
+          label: const Text('Otwórz czat'),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+    );
+  }
+}
+
+class ChatPage extends StatefulWidget {
+  const ChatPage({super.key, required this.chatController});
+
+  final InMemoryChatController chatController;
+
+  @override
+  State<ChatPage> createState() => _ChatPageState();
+}
+
+class _ChatPageState extends State<ChatPage> {
+  static const _userId = 'local-user';
+  int _messageSequence = 0;
+
+  void _sendMessage(String text) {
+    final message = text.trim();
+    if (message.isEmpty) return;
+
+    widget.chatController.insertMessage(
+      TextMessage(
+        id: '${DateTime.now().microsecondsSinceEpoch}-${_messageSequence++}',
+        authorId: _userId,
+        createdAt: DateTime.now().toUtc(),
+        text: message,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Czat')),
+      body: Chat(
+        chatController: widget.chatController,
+        currentUserId: _userId,
+        onMessageSend: _sendMessage,
+        resolveUser: (id) async => User(id: id, name: 'Ty'),
+        builders: Builders(
+          composerBuilder: (context) => const Composer(
+            hintText: 'Napisz wiadomość…',
+            attachmentIcon: null,
+            sendIcon: Icon(Icons.send, semanticLabel: 'Wyślij wiadomość'),
+          ),
+        ),
       ),
     );
   }
