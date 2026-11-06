@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -5,10 +6,53 @@ import 'package:bielik_oneclick_launcher/src/data/datasources/preview_model_data
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_management_panel.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_requirements_card.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/requirement_status_row.dart';
 
 import 'support/in_memory_model_files_repository.dart';
 
 void main() {
+  testWidgets(
+    'Resource information wraps on narrow screens with enlarged text',
+    (tester) async {
+      for (final width in [280.0, 320.0, 600.0]) {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: MediaQuery(
+              data: MediaQueryData(textScaler: TextScaler.linear(2)),
+              child: Scaffold(
+                body: SingleChildScrollView(
+                  child: Center(
+                    child: SizedBox(
+                      width: width,
+                      child: ModelRequirementsCard(
+                        model: bielikModels.last,
+                        availableStorageGb: 123.45,
+                        availableRamGb: 4.25,
+                        totalRamGb: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        expect(tester.takeException(), isNull);
+        for (final label in [
+          'Wolne miejsce u Ciebie: 123,45 GB',
+          'Dostępny RAM u Ciebie: 4,25 GB',
+        ]) {
+          final paragraph = tester.renderObject<RenderParagraph>(
+            find.text(label),
+          );
+          expect(paragraph.didExceedMaxLines, isFalse);
+          expect(paragraph.size.width, lessThan(width - 40));
+        }
+      }
+    },
+  );
+
   testWidgets(
     'Marks missing, insufficient and sufficient resources independently',
     (tester) async {
@@ -36,16 +80,29 @@ void main() {
           find.text('Brak danych'),
           findsNWidgets(2 - values.$3 - values.$4),
         );
-        final chips = tester.widgetList<Chip>(find.byType(Chip));
+        final boxes = tester.widgetList<DecoratedBox>(
+          find.descendant(
+            of: find.byType(RequirementStatusRow),
+            matching: find.byType(DecoratedBox),
+          ),
+        );
         expect(
-          chips
-              .where((chip) => chip.backgroundColor == Colors.red.shade50)
+          boxes
+              .where(
+                (box) =>
+                    (box.decoration as BoxDecoration).color ==
+                    Colors.red.shade50,
+              )
               .length,
           values.$3,
         );
         expect(
-          chips
-              .where((chip) => chip.backgroundColor == Colors.green.shade50)
+          boxes
+              .where(
+                (box) =>
+                    (box.decoration as BoxDecoration).color ==
+                    Colors.green.shade50,
+              )
               .length,
           values.$4,
         );

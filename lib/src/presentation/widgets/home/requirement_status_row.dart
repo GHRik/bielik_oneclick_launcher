@@ -19,48 +19,80 @@ class RequirementStatusRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final available = availableGb;
-    final requirementStatus =
-        ResourceRequirement(requiredGb: requiredGb, availableGb: available).status;
+    final requirementStatus = ResourceRequirement(
+      requiredGb: requiredGb,
+      availableGb: available,
+    ).status;
     final hasData = requirementStatus != RequirementStatus.unknown;
     final enough = requirementStatus == RequirementStatus.sufficient;
     final color = !hasData
         ? Theme.of(context).colorScheme.onSurfaceVariant
-        : enough ? Colors.green.shade800 : Colors.red.shade800;
+        : enough
+        ? Colors.green.shade800
+        : Colors.red.shade800;
     final background = !hasData
         ? Theme.of(context).colorScheme.surfaceContainerLow
-        : enough ? Colors.green.shade50 : Colors.red.shade50;
+        : enough
+        ? Colors.green.shade50
+        : Colors.red.shade50;
     final status = !hasData
         ? 'Brak danych'
-        : enough ? 'Wystarczająco' : 'Za mało';
+        : enough
+        ? 'Wystarczająco'
+        : 'Za mało';
     final value = hasData
         ? available!.toStringAsFixed(2).replaceAll('.', ',')
         : '—';
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(requirement, style: TextStyle(color: color)),
-        Chip(
-          backgroundColor: background,
-          side: BorderSide(color: color.withValues(alpha: 0.4)),
-          avatar: Icon(
-            !hasData ? Icons.help_outline
-                : enough ? Icons.check_circle_outline : Icons.error_outline,
-            color: color,
-            size: 18,
+        const SizedBox(height: 8),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: background,
+            border: Border.all(color: color.withValues(alpha: 0.4)),
+            borderRadius: BorderRadius.circular(12),
           ),
-          label: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('$availableLabel: $value GB', style: TextStyle(color: color)),
-              Text(
-                status,
-                style: TextStyle(color: color, fontWeight: FontWeight.w600),
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  !hasData
+                      ? Icons.help_outline
+                      : enough
+                      ? Icons.check_circle_outline
+                      : Icons.error_outline,
+                  color: color,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '$availableLabel: $value GB',
+                        style: TextStyle(color: color),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        status,
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
