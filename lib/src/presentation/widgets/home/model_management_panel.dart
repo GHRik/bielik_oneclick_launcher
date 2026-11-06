@@ -3,7 +3,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/resource_requirement.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/model_probe_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/model_download_controller.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/pages/model_probe_page.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/download_confirmation_dialog.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/download_progress_card.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_requirements_card.dart';
@@ -13,12 +15,14 @@ class ModelManagementPanel extends StatefulWidget {
     super.key,
     required this.models,
     required this.repository,
+    this.probeRepository,
     this.availableStorageGb,
     this.availableRamGb,
   });
 
   final List<BielikModel> models;
   final ModelFilesRepository repository;
+  final ModelProbeRepository? probeRepository;
   final double? availableStorageGb;
   final double? availableRamGb;
 
@@ -192,6 +196,21 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
                 onPressed: () => _download.select(_selectedModel),
                 child: const Text('Sprawdź ponownie'),
               ),
+          ],
+          if (widget.probeRepository != null &&
+              _selectedModel.file?.name == 'Bielik-1.5B-v3.0-Instruct.Q8_0.gguf') ...[
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: !_download.complete || _download.busy || _download.checking
+                  ? null
+                  : () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      builder: (_) => ModelProbePage(
+                        model: _selectedModel.file!,
+                        repository: widget.probeRepository!,
+                      ),
+                    )),
+              child: const Text('Próba Bielika 1.5B'),
+            ),
           ],
           const SizedBox(height: 24),
           ModelRequirementsCard(

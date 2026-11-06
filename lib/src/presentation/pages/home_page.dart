@@ -6,6 +6,7 @@ import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/model_probe_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/pages/chat_page.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_management_panel.dart';
@@ -15,12 +16,14 @@ class HomePage extends StatefulWidget {
     super.key,
     required this.models,
     required this.modelFilesRepository,
+    this.modelProbeRepository,
     required this.chatRepository,
     required this.statisticSeries,
   });
 
   final ChatRepository chatRepository;
   final ModelFilesRepository modelFilesRepository;
+  final ModelProbeRepository? modelProbeRepository;
   final List<BielikModel> models;
   final List<StatisticSeries> statisticSeries;
 
@@ -88,6 +91,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         child: ModelManagementPanel(
                           models: widget.models,
                           repository: widget.modelFilesRepository,
+                          probeRepository: widget.modelProbeRepository,
                         ),
                       ),
                     ),
