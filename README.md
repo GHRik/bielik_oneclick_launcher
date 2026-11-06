@@ -2,6 +2,8 @@
 
 Aplikacja Flutter na Androida do pobierania modeli Bielik i uruchamiania ich lokalnie na telefonie. Obecny etap: działająca próba jednej odpowiedzi Bielika 1.5B oraz czat z historią w SQLite.
 
+**[Pobierz APK na telefon](https://github.com/GHRik/bielik_oneclick_launcher/releases)**, zainstaluj i uruchom. Bez Fluttera i Android Studio.
+
 ## Co już działa
 
 - Wybór Bielika 1.5B lub 4.5B v3.0 Instruct w formacie GGUF Q8.
@@ -38,17 +40,35 @@ Powrót do dalszego rozwoju:
 git switch master
 ```
 
-## Uruchomienie
+## Instalacja na telefonie
 
-Potrzebny jest Flutter z Dartem zgodnym z `pubspec.yaml` (`^3.13.7`), Android SDK i telefon z Androidem. Dotychczasową próbę wykonano na ARM64.
+Wystarczy pobrać APK na telefon z Androidem, zainstalować je i otworzyć aplikację. Flutter i Android Studio nie są potrzebne.
+
+1. Otwórz [wydania z APK](https://github.com/GHRik/bielik_oneclick_launcher/releases).
+2. W wybranym wydaniu rozwiń **Assets** i pobierz plik `bielik-arm64-….apk`.
+3. Otwórz plik na telefonie. Jeśli Android o to poprosi, zezwól przeglądarce lub menedżerowi plików na instalację aplikacji.
+4. Uruchom Bielika, wybierz **Bielik 1.5B v3.0 · Q8** i pobierz model.
+5. Otwórz **Próba Bielika 1.5B → Wygeneruj odpowiedź**.
+
+APK jest wersją testową `debug` dla telefonów ARM64. Podpis instalacji z GitHub Actions może różnić się od lokalnej wersji developerskiej i między buildami CI; stałe podpisywanie aktualizacji jest kolejnym krokiem.
+
+## Ręczne generowanie APK
+
+Na GitHubie otwórz **Actions → Build Android APK → Run workflow**, wybierz branch i uruchom workflow. Działa wyłącznie na żądanie.
+
+Workflow sprawdza kod i testy, buduje APK z dokładnego commita wybranego brancha i publikuje je jako testowe wydanie w **Releases**. Dołącza sumę SHA-256 oraz plik `BUILD.txt` z identyfikatorem commita. Kopia plików jest też dostępna przez 30 dni jako artefakt uruchomienia. Pliki APK nie trafiają do historii kodu.
+
+Konfiguracja: [.github/workflows/build-apk.yml](.github/workflows/build-apk.yml). Używana wersja Fluttera: **3.47.9**.
+
+## Uruchomienie ze źródeł
+
+Dla programistów: potrzebny jest Flutter z Dartem zgodnym z `pubspec.yaml` (`^3.13.7`), Android SDK i telefon z Androidem.
 
 ```sh
 flutter pub get
 flutter devices
 flutter run -d <identyfikator-telefonu>
 ```
-
-W aplikacji wybierz **Bielik 1.5B v3.0 · Q8**, pobierz model, a następnie otwórz **Próba Bielika 1.5B → Wygeneruj odpowiedź**.
 
 Pliki modeli pobiera użytkownik podczas działania aplikacji — nie są dołączone do APK. Wariant 1.5B zajmuje około 1,7 GB, a 4.5B około 5,06 GB; pamięć potrzebna do uruchomienia jest większa od samego pliku. Dotychczasowy test generowania dotyczy wyłącznie wariantu 1.5B.
 
