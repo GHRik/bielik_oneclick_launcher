@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/app.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/statistics_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_statistics_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/services/generation_metrics.dart';
 
 import 'support/in_memory_chat_repository.dart';
 import 'support/in_memory_model_files_repository.dart';
@@ -23,6 +24,7 @@ void main() {
         chatRepository: InMemoryChatRepository(),
         statisticsRepository: LocalStatisticsRepository(
           const StatisticsDataSource(),
+          GenerationMetrics(),
         ),
       ),
     );

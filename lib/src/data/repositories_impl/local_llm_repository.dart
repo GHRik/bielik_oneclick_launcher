@@ -5,11 +5,17 @@ import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
+import 'package:bielik_oneclick_launcher/src/domain/services/generation_metrics.dart';
 
 class LocalLlmRepository implements LlmRepository {
-  LocalLlmRepository(this._files, {this.contextPolicy = const ChatContextPolicy()});
+  LocalLlmRepository(
+    this._files, {
+    this.contextPolicy = const ChatContextPolicy(),
+    this.metrics,
+  });
 
   final ModelFileDataSource _files;
+  final GenerationMetrics? metrics;
   final ChatContextPolicy contextPolicy;
   LlamaEngine? _engine;
   String? _loadedPath;
@@ -17,10 +23,16 @@ class LocalLlmRepository implements LlmRepository {
   bool _stopped = false;
 
   List<LlamaChatMessage> _engineMessages(List<ContextMessage> messages) =>
-      messages.map((message) => LlamaChatMessage.fromText(
-        role: message.role == ChatRole.user ? LlamaChatRole.user : LlamaChatRole.assistant,
-        text: message.text,
-      )).toList();
+      messages
+          .map(
+            (message) => LlamaChatMessage.fromText(
+              role: message.role == ChatRole.user
+                  ? LlamaChatRole.user
+                  : LlamaChatRole.assistant,
+              text: message.text,
+            ),
+          )
+          .toList();
 
   @override
   Stream<String> generate(
@@ -31,6 +43,7 @@ class LocalLlmRepository implements LlmRepository {
     if (_active) throw StateError('Generowanie już trwa.');
     _active = true;
     _stopped = false;
+    metrics?.begin();
     try {
       final file = await _files.file(model);
       if (!await file.exists() || await file.length() != model.sizeBytes) {
@@ -61,7 +74,8 @@ class LocalLlmRepository implements LlmRepository {
         isCancelled: () => _stopped,
         countTokens: (messages) async {
           final template = await engine.chatTemplate(_engineMessages(messages));
-          return template.tokenCount ?? await engine.getTokenCount(template.prompt);
+          return template.tokenCount ??
+              await engine.getTokenCount(template.prompt);
         },
       );
       if (_stopped) return;
@@ -71,7 +85,10 @@ class LocalLlmRepository implements LlmRepository {
         params: GenerationParams(maxTokens: contextPolicy.responseTokens),
       )) {
         if (_stopped) break;
-        if (chunk.text.isNotEmpty) yield chunk.text;
+        if (chunk.text.isNotEmpty) {
+          metrics?.firstText();
+          yield chunk.text;
+        }
       }
     } finally {
       _active = false;

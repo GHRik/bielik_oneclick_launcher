@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bielik_oneclick_launcher/src/data/datasources/statistics_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_statistics_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/services/generation_metrics.dart';
 
 class _Source extends StatisticsDataSource {
   @override
@@ -15,7 +16,8 @@ class _Source extends StatisticsDataSource {
 
 void main() {
   test('Measures RAM aplikacji through the statistics adapter', () async {
-    final repository = LocalStatisticsRepository(_Source());
+    final metrics = GenerationMetrics();
+    final repository = LocalStatisticsRepository(_Source(), metrics);
     final series = await repository.sample();
     final value = series
         .singleWhere((item) => item.title == 'RAM aplikacji')
@@ -24,7 +26,8 @@ void main() {
     expect(value, 2.5);
   });
   test('Measures CPU aplikacji through the statistics adapter', () async {
-    final repository = LocalStatisticsRepository(_Source());
+    final metrics = GenerationMetrics();
+    final repository = LocalStatisticsRepository(_Source(), metrics);
     final series = await repository.sample();
     final value = series
         .singleWhere((item) => item.title == 'CPU aplikacji')
@@ -33,7 +36,8 @@ void main() {
     expect(value, 25);
   });
   test('Measures Temperatura CPU through the statistics adapter', () async {
-    final repository = LocalStatisticsRepository(_Source());
+    final metrics = GenerationMetrics();
+    final repository = LocalStatisticsRepository(_Source(), metrics);
     final series = await repository.sample();
     final value = series
         .singleWhere((item) => item.title == 'Temperatura CPU')
@@ -42,7 +46,8 @@ void main() {
     expect(value, 48.5);
   });
   test('Measures Temperatura baterii through the statistics adapter', () async {
-    final repository = LocalStatisticsRepository(_Source());
+    final metrics = GenerationMetrics();
+    final repository = LocalStatisticsRepository(_Source(), metrics);
     final series = await repository.sample();
     final value = series
         .singleWhere((item) => item.title == 'Temperatura baterii')
@@ -50,4 +55,19 @@ void main() {
         .single;
     expect(value, 36.5);
   });
+  test(
+    'Measures Czas do pierwszej odpowiedzi through the statistics adapter',
+    () async {
+      final metrics = GenerationMetrics();
+      metrics.begin();
+      metrics.firstText();
+      final repository = LocalStatisticsRepository(_Source(), metrics);
+      final series = await repository.sample();
+      final value = series
+          .singleWhere((item) => item.title == 'Czas do pierwszej odpowiedzi')
+          .values
+          .single;
+      expect(value, greaterThanOrEqualTo(0));
+    },
+  );
 }

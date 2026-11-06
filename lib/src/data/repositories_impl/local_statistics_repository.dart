@@ -1,12 +1,17 @@
 import 'package:bielik_oneclick_launcher/src/data/datasources/statistics_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/sampling_statistics_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/services/generation_metrics.dart';
 
 class LocalStatisticsRepository implements SamplingStatisticsRepository {
-  LocalStatisticsRepository(this._source, {DateTime Function()? now})
-    : _now = now ?? DateTime.now;
+  LocalStatisticsRepository(
+    this._source,
+    this._generation, {
+    DateTime Function()? now,
+  }) : _now = now ?? DateTime.now;
 
   final StatisticsDataSource _source;
+  final GenerationMetrics _generation;
   final DateTime Function() _now;
   final List<({DateTime time, List<double?> values})> _samples = [];
 
@@ -35,6 +40,7 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
         number('appCpuPercent'),
         number('cpuTemperature'),
         number('batteryTemperature'),
+        _generation.firstResponseSeconds,
       ],
     ));
     _samples.removeWhere(
@@ -74,6 +80,12 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
         '°C',
         60.0,
         'Temperatura baterii; jest osobnym pomiarem od temperatury CPU.',
+      ),
+      (
+        'Czas do pierwszej odpowiedzi',
+        's',
+        10.0,
+        'Od rozpoczęcia żądania LLM do pierwszego tekstu, łącznie z ładowaniem modelu. Ostatnia odpowiedź.',
       ),
     ];
     return List.generate(definitions.length, (i) {
