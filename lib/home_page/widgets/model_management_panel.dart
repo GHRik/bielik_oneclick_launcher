@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/home_page/controllers/download_preview_controller.dart';
 import 'package:bielik_oneclick_launcher/home_page/models/bielik_model.dart';
+import 'package:bielik_oneclick_launcher/home_page/widgets/download_confirmation_dialog.dart';
 import 'package:bielik_oneclick_launcher/home_page/widgets/download_progress_card.dart';
 import 'package:bielik_oneclick_launcher/home_page/widgets/model_requirements_card.dart';
 
@@ -22,6 +23,33 @@ class ModelManagementPanel extends StatefulWidget {
 class _ModelManagementPanelState extends State<ModelManagementPanel> {
   final _download = DownloadPreviewController();
   BielikModel _selectedModel = bielikModels.first;
+  bool _downloadDialogOpen = false;
+
+  bool _hasEnough(double? available, double requiredGb) =>
+      available != null && available.isFinite && available >= requiredGb;
+
+  Future<void> _requestDownload() async {
+    if (_download.isRunning || _downloadDialogOpen) return;
+    final model = _selectedModel;
+    final meetsRequirements =
+        _hasEnough(widget.availableStorageGb, model.downloadSizeMb / 1000) &&
+        _hasEnough(widget.availableRamGb, model.requiredFreeRamGb);
+
+    if (!meetsRequirements) {
+      _downloadDialogOpen = true;
+      bool? confirmed;
+      try {
+        confirmed = await showDialog<bool>(
+          context: context,
+          builder: (_) => DownloadConfirmationDialog(modelName: model.name),
+        );
+      } finally {
+        _downloadDialogOpen = false;
+      }
+      if (!mounted || confirmed != true) return;
+    }
+    _download.start(model.downloadSizeMb);
+  }
 
   void _selectModel(BielikModel? model) {
     if (model == null) return;
@@ -79,7 +107,7 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
                 child: FilledButton.icon(
                   onPressed: _download.isRunning
                       ? null
-                      : () => _download.start(_selectedModel.downloadSizeMb),
+                      : _requestDownload,
                   icon: const Icon(Icons.download),
                   label: Text(
                     _download.isRunning ? '${_download.percent}%' : 'Pobierz',

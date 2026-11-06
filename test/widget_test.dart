@@ -17,6 +17,9 @@ void main() {
     expect(find.text('Miejsce na dysku: około 1,7 GB'), findsOneWidget);
     await tester.tap(find.text('Pobierz'));
     await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    await tester.tap(find.text('Pobierz mimo to'));
+    await tester.pumpAndSettle();
     expect(find.text('Symulacja pobierania · 0%'), findsOneWidget);
     expect(find.text('Prędkość: 20.0 MB/s'), findsOneWidget);
     expect(find.text('Pozostało (ETA): 1 min 25 s'), findsOneWidget);
