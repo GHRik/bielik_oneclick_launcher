@@ -142,8 +142,8 @@ class _ChatPageState extends State<ChatPage> {
                             const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
                             const SizedBox(width: 12),
                             Expanded(child: Text(
-                              '${widget.workspace.generationStatus}\n${widget.workspace.generatingTitle ?? ''}',
-                              maxLines: 2, overflow: TextOverflow.ellipsis,
+                              widget.workspace.generationStatus,
+                              maxLines: 1, overflow: TextOverflow.ellipsis,
                             )),
                             TextButton.icon(
                               onPressed: widget.workspace.stopGeneration,
