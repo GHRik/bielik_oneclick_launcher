@@ -32,6 +32,7 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
         number('appRamBytes') == null
             ? null
             : number('appRamBytes')! / 1000000000,
+        number('appCpuPercent'),
       ],
     ));
     _samples.removeWhere(
@@ -53,6 +54,12 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
         'GB',
         1.0,
         'Pamięć PSS procesu aplikacji, w tym silnik i model.',
+      ),
+      (
+        'CPU aplikacji',
+        '%',
+        100.0,
+        'Udział aplikacji w łącznej mocy wszystkich dostępnych rdzeni CPU.',
       ),
     ];
     return List.generate(definitions.length, (i) {

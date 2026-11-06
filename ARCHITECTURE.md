@@ -42,7 +42,7 @@ lib/src/
 
 Kontrakt `SamplingStatisticsRepository` oddziela widok od odczytów platformy. `StatisticsController` pobiera próbki co sekundę na pierwszym planie; zatrzymuje timer w tle i przy usuwaniu kontrolera. `LocalStatisticsRepository` utrzymuje maksymalnie 61 próbek z ostatnich 60 sekund w pamięci. Wykresy zachowują rzeczywiste odstępy czasowe i przerwy dla brakujących danych.
 
-`StatisticsDataSource` komunikuje się z androidowym `DeviceStatisticsReader` przez kanał platformowy działający w kolejce tła. Obsługiwane pomiary: RAM aplikacji.
+`StatisticsDataSource` komunikuje się z androidowym `DeviceStatisticsReader` przez kanał platformowy działający w kolejce tła. Obsługiwane pomiary: RAM aplikacji, CPU aplikacji.
 
 ## Lokalny LLM w czacie
 
