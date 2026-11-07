@@ -8,7 +8,8 @@ Iterable<({String path, String uri})> _imports(String layer) sync* {
   final files = Directory('lib/src/$layer')
       .listSync(recursive: true)
       .whereType<File>()
-      .where((file) => file.path.endsWith('.dart'));
+      .where((file) => file.path.endsWith('.dart'))
+      .where((file) => !file.uri.pathSegments.contains('ut'));
   expect(
     files,
     isNotEmpty,
@@ -27,6 +28,26 @@ Iterable<({String path, String uri})> _imports(String layer) sync* {
 
 void main() {
   group('Layer dependency boundaries', () {
+    test(
+      'Production layers do not import unit tests or their test framework',
+      () {
+        for (final layer in ['domain', 'data', 'presentation']) {
+          for (final dependency in _imports(layer)) {
+            expect(
+              dependency.uri.split('/'),
+              isNot(contains('ut')),
+              reason: '${dependency.path} imports ${dependency.uri}',
+            );
+            expect(
+              dependency.uri.startsWith('package:flutter_test/'),
+              isFalse,
+              reason: '${dependency.path} imports ${dependency.uri}',
+            );
+          }
+        }
+      },
+    );
+
     test('Domain depends only on pure Dart libraries and domain code', () {
       const libraries = {
         'dart:async',
@@ -101,5 +122,31 @@ void main() {
         );
       }
     });
+  });
+
+  test('The default test entry point registers every colocated unit test', () {
+    final files = Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.uri.pathSegments.contains('ut'))
+        .where(
+          (file) =>
+              file.uri.pathSegments.last.startsWith('test_') &&
+              file.path.endsWith('.dart'),
+        );
+    final runner = File('test/ut_test.dart').readAsStringSync();
+    final registrations = RegExp(
+      r"""^import\s+['"](package:bielik_oneclick_launcher/[^'"]+/ut/test_[^'"]+\.dart)['"]""",
+      multiLine: true,
+    ).allMatches(runner).map((match) => match.group(1)!).toSet();
+    final expected = files
+        .map(
+          (file) =>
+              'package:bielik_oneclick_launcher/${file.uri.pathSegments.skip(1).join('/')}',
+        )
+        .toSet();
+
+    expect(expected, isNotEmpty);
+    expect(registrations, unorderedEquals(expected));
   });
 }

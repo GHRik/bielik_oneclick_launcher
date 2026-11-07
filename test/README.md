@@ -1,47 +1,51 @@
 # Testy
 
-Pierwszy katalog określa poziom testu, kolejny funkcjonalność. Nazwy grup i przypadków są po angielsku i opisują oczekiwane zachowanie.
+## Testy jednostkowe przy klasach
 
-## Poziomy
+UT są w katalogu `ut` bezpośrednio obok testowanych plików produkcyjnych. Plik `test_<nazwa_pliku>.dart` sprawdza wyłącznie klasę lub funkcje z odpowiadającego mu pliku. Zależności zewnętrzne zastępują prywatne atrapy.
 
-| Katalog | Co sprawdza | Rzeczywiste zależności / atrapy |
-| --- | --- | --- |
-| `unit/` | Pojedynczą klasę lub funkcję: polityki, formatowanie, walidację, kontroler, serwis lub router | Modele wartości są rzeczywiste; zewnętrzne źródła danych i repozytoria są atrapami. Bez plików, SQLite i widoków. |
-| `component/` | Widok lub współpracę kilku klas: workspace, serwis, kontrolery, repozytorium statystyk i wykresy | Komponenty aplikacji są rzeczywiste; zapis, LLM, pobieranie i pomiary urządzenia zastępują atrapy lub brak dostępnego kanału platformowego. |
-| `integration/` | Współpracę z lokalnym SQLite lub systemem plików | Baza i pliki tymczasowe są rzeczywiste. Silnik LLM i transfer sieciowy nadal są atrapami. |
-| `architecture/` | Dozwolone zależności między warstwami | Czyta importy plików produkcyjnych. |
-| `support/` | Wspólne repozytoria w pamięci | Pomocniki; nie zawiera samodzielnych przypadków testowych. |
+```text
+lib/src/data/datasources/
+├── device_resources_datasource.dart
+├── gpu_inference_adapter.dart
+├── llm_runtime_adapter.dart
+└── ut/
+    ├── test_device_resources_datasource.dart
+    ├── test_gpu_inference_adapter.dart
+    ├── test_llm_runtime_adapter.dart
+    └── analysis_options.yaml
+```
 
-O poziomie decyduje zakres i zależności, nie samo użycie `test()` lub `testWidgets()`. Test workspace bez renderowania widoku jest komponentowy, jeżeli uruchamia rzeczywisty serwis i kontrolery rozmów. Test z widokiem i rzeczywistą bazą pozostaje integracyjny.
-
-## Funkcjonalności
-
-| Podkatalog | Zakres |
+| Katalog UT | Testowane klasy lub funkcje |
 | --- | --- |
-| `unit/chat/` | Kontekst, serwis wysyłania z atrapami repozytoriów, rozmiar wiadomości i formatowanie bajtów |
-| `unit/configuration/` | Domyślne parametry LLM, nadpisania i walidacja szkicu ustawień |
-| `unit/device_resources/` | Mapowanie odczytów RAM/miejsca i kontroler odświeżania z atrapami źródeł |
-| `unit/llm/` | Routing CPU/GPU i parametry adapterów z atrapą silnika |
-| `unit/model_management/` | Wymagania modelu, klasyfikacja zasobów i kontroler pobierania z atrapą repozytorium |
-| `component/app/` | Przepływy aplikacji i wstrzykiwanie repozytoriów do widoków |
-| `component/chat/` | Streaming, szkice, nawigacja, nagłówek, rozmiar w panelu i kopiowanie |
-| `component/configuration/` | Formularz ustawień i przycisk zapisu z podstawionym callbackiem |
-| `component/llm/` | Wybór trybu obliczeń z ekranu głównego |
-| `component/model_management/` | Potwierdzenie pobierania, kolory wymagań i responsywność |
-| `component/statistics/` | Współpraca repozytorium, metryk, kontrolera i wykresów; pomiary źródłowe są sztuczne |
-| `integration/database/` | Fabryka SQLite, schemat, migracje, trwałość ustawień, rozmów i workspace |
-| `integration/model_management/` | Pliki modeli, SHA, rozmiar, usuwanie i odtwarzanie zadań z atrapą downloadera |
-| `integration/llm/` | Repozytorium LLM z rzeczywistym plikiem testowym, ale atrapą silnika; prompt, parametry i cykl życia |
-| `integration/native/android/` | Test Java odczytu GPU ze sztucznego drzewa plików sysfs |
+| `lib/configuration/ut/` | Funkcje wyboru konfiguracji LLM; nie model domenowy |
+| `lib/src/data/datasources/ut/` | `DeviceResourcesDataSource`, `GpuInferenceAdapter`, `CpuRuntimeAdapter` z pliku `llm_runtime_adapter.dart` |
+| `lib/src/data/repositories_impl/ut/` | `LocalDeviceResourcesRepository`, `ComputeRoutingLlmRepository`, `ConfiguredModelCatalogRepository` |
+| `lib/src/domain/models/ut/` | `ChatMessage`, `DeviceResources`, `LlmConfiguration`, `ModelRequirements`, `ResourceRequirement` |
+| `lib/src/domain/services/ut/` | `ChatService`, `ChatContextPolicy` |
+| `lib/src/presentation/controllers/ut/` | `DeviceResourcesController`, `LlmSettingsDraft`, `ModelDownloadController` |
+| `lib/src/presentation/formatters/ut/` | `StorageSizeFormatter` |
 
-Pliki łączące różne poziomy zostały rozdzielone: rozmiar wiadomości i formatter mają UT, panel z rozmiarem test komponentowy; ustawienia mają osobno UT walidacji, test formularza oraz integrację zapisu i migracji.
+To wykaz klas objętych obecnymi UT, nie deklaracja pełnego pokrycia wszystkich klas aplikacji. Interfejsy bez implementacji nie potrzebują pustych testów.
 
-## Zasady
+Przykładowo:
+- `test_device_resources_datasource.dart` sprawdza wywołanie kanału, argumenty, wynik i przekazywanie błędu; kanały platformowe są atrapami.
+- `test_local_device_resources_repository.dart` sprawdza konwersję danych z atrapą źródła.
+- `test_device_resources_controller.dart` sprawdza odświeżanie i powiadomienia z atrapą repozytorium.
 
-- Jeden test sprawdza jedno zachowanie. Kilka asercji może opisywać ten sam wynik operacji.
-- Przygotowanie, wykonanie operacji i sprawdzenie wyniku są oddzielone pustymi wierszami.
-- Warianty platformy, danych i rozmiaru ekranu mają osobne nazwane przypadki.
-- Każdy przypadek dostaje własny stan; bazy i pliki tymczasowe są sprzątane po próbie.
+Wspólny plik `analysis_options_ut.yaml` w głównym katalogu dziedziczy ustawienia projektu i wyłącza wyłącznie regułę `depend_on_referenced_packages`, aby UT w `lib` mogły używać `flutter_test` z zależności deweloperskich. Każdy `ut/analysis_options.yaml` zawiera tylko jednolinijkowy `include` wskazujący tę wspólną konfigurację. Pozostałe reguły i wykrywanie błędów pozostają aktywne.
+
+## Pozostałe poziomy
+
+| Katalog | Co sprawdza |
+| --- | --- |
+| `test/component/` | Widoki i współpracę rzeczywistych komponentów, np. workspace, serwisu, kontrolerów i wykresów. Zewnętrzny zapis, LLM i pomiary są zastępowane. |
+| `test/integration/` | Rzeczywisty lokalny SQLite i pliki tymczasowe. Transfer oraz silnik LLM nadal są atrapami. |
+| `test/integration/native/android/` | Samodzielny test Java odczytu GPU ze sztucznego drzewa sysfs. |
+| `test/architecture/` | Zależności warstw, brak importowania UT przez produkcję i kompletność rejestru UT. |
+| `test/support/` | Wspólne atrapy testów komponentowych; UT mają własne prywatne atrapy. |
+
+Próby porównujące dwa adaptery CPU/GPU są w komponentowych. O poziomie decyduje zakres i zależności, nie samo użycie `test()` lub `testWidgets()`.
 
 ## Uruchamianie
 
@@ -49,24 +53,29 @@ Z głównego katalogu projektu, po `flutter pub get`:
 
 ```sh
 flutter test --no-pub
-flutter test --no-pub test/unit
+flutter test --no-pub test/ut_test.dart
+flutter test --no-pub lib/src/data/datasources/ut/test_device_resources_datasource.dart
 flutter test --no-pub test/component
 flutter test --no-pub test/integration
 flutter test --no-pub test/architecture
 flutter analyze --no-pub
 ```
 
-Test Java uruchamia się osobno, z JDK w PATH:
+`test/ut_test.dart` rejestruje wszystkie UT z katalogów przy klasach. Dzięki niemu zwykłe `flutter test` i istniejący workflow GitHub Actions nadal je uruchamiają. Po dodaniu nowego pliku UT dopisz jego import oraz wywołanie `main` w tym rejestrze. Test architektury wykrywa brak rejestracji.
+
+Nazwy `test_*.dart` nie są automatycznie wyszukiwane jak standardowe `*_test.dart`, dlatego pojedynczy plik uruchamiaj przez pełną ścieżkę lub rejestr.
+
+Java, z JDK w PATH:
 
 ```sh
 javac -d .agent-staging/native-tests android/app/src/main/java/bielik/ai/bielik_oneclick_launcher/GpuSysfsReader.java test/integration/native/android/GpuSysfsReaderTest.java
 java -cp .agent-staging/native-tests bielik.ai.bielik_oneclick_launcher.GpuSysfsReaderTest
 ```
 
-## Platformy
+## Zasady i platformy
 
-UT i testy komponentowe działają na komputerze z Flutter SDK bez telefonu i emulatora. Korzystanie z atrap oznacza, że nie sprawdzają rzeczywistego Android API ani sprzętu.
-
-Lokalne integracje SQLite wymagają działającego FFI na komputerze uruchamiającym testy. Testy plikowe używają katalogów tymczasowych tego komputera. Java sprawdza implementację Androida bez uruchamiania Androida.
-
-Nie ma tu testów end-to-end na urządzeniu. Wynik nie potwierdza działania pobierania, uprawnień, natywnego SQLite, silnika LLM ani GPU na Androidzie, iOS czy desktopie. Taka weryfikacja wymaga osobnych testów na docelowej platformie.
+- Jeden przypadek testuje jedno zachowanie wskazanej klasy; kilka asercji może opisywać ten sam wynik.
+- Każdy przypadek dostaje własny stan. Tymczasowe bazy i pliki są sprzątane po próbie.
+- Testy działają lokalnie z Flutter SDK; Java wymaga JDK, a SQLite sprawnego FFI.
+- Atrapy kanałów, downloadera i LLM nie potwierdzają działania Android API, pobierania ani modelu na urządzeniu.
+- Testy end-to-end na Androidzie, iOS lub desktopie wymagają osobnej weryfikacji na docelowej platformie.
