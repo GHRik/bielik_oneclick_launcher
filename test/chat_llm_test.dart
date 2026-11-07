@@ -54,124 +54,188 @@ Future<void> _until(bool Function() ready) async {
 }
 
 void main() {
-  testWidgets(
-    'Streams to the originating chat, saves drafts and reuses history',
-    (tester) async {
+  group('Chat generation lifecycle', () {
+    Future<void> withWorkspace(
+      WidgetTester tester,
+      Future<void> Function(InMemoryChatRepository, _Llm, ChatWorkspace)
+      scenario,
+    ) async {
       await tester.runAsync(() async {
         final repository = InMemoryChatRepository();
         final llm = _Llm();
         final workspace = ChatWorkspace(repository, llmRepository: llm)
           ..useModel(bielikModels.first);
         await workspace.initialize();
-        final original = workspace.selected;
-        original.draft.text = 'Pytanie';
-        final send = workspace.sendMessage('Pytanie');
-        await _until(() => llm.streams.isNotEmpty);
-        await workspace.sendMessage('Duplikat');
-        expect(llm.inputs, hasLength(1));
-        llm.streams.last.add('Cześć');
-        await _until(() => original.messages.length == 2);
-        original.draft.text = 'Następne pytanie';
-        await workspace.newChat();
-        final other = workspace.selected;
-        llm.streams.last.add(' świecie!');
-        await llm.streams.last.close();
-        await send;
-        await workspace.flush();
-        expect(other.messages, isEmpty);
-        expect(original.messages.last.text, 'Cześć świecie!');
-        expect(
-          (await repository.getMessages(original.id)).last.text,
-          'Cześć świecie!',
-        );
-        expect(
-          (await repository.getConversations()).last.draft,
-          'Następne pytanie',
-        );
-        workspace.selectConversation(original);
-        final second = workspace.sendMessage('Następne pytanie');
-        await _until(() => llm.streams.length == 2);
-        expect(llm.inputs.last.map((m) => m.text), [
-          'Pytanie',
-          'Cześć świecie!',
-          'Następne pytanie',
-        ]);
-        llm.streams.last.add('Druga odpowiedź');
-        await llm.streams.last.close();
-        await second;
-        expect(workspace.error, isNull);
-        await workspace.releaseModel();
-        expect(llm.unloads, 1);
-        workspace.dispose();
-        await workspace.flush();
-      });
-    },
-  );
-
-  testWidgets(
-    'Stopping preserves partial answer and deletion stops active generation',
-    (tester) async {
-      await tester.runAsync(() async {
-        final repository = InMemoryChatRepository();
-        final llm = _Llm();
-        final workspace = ChatWorkspace(repository, llmRepository: llm)
-          ..useModel(bielikModels.first);
-        await workspace.initialize();
-        final original = workspace.selected;
-        final send = workspace.sendMessage('Pytanie');
-        await _until(() => llm.streams.isNotEmpty);
-        llm.streams.last.add('Fragment');
-        await _until(() => original.messages.length == 2);
-        await workspace.stopGeneration();
-        await send;
-        expect(workspace.sending, isFalse);
-        expect(
-          (await repository.getMessages(original.id)).last.text,
-          'Fragment',
-        );
-        expect(workspace.error, isNull);
-        final next = workspace.sendMessage('Kolejne');
-        await _until(() => llm.streams.length == 2);
-        await workspace.deleteConversation(original);
-        await next;
-        expect(await repository.getMessages(original.id), isEmpty);
-        expect(workspace.selected.id, isNot(original.id));
-        workspace.dispose();
-        await workspace.flush();
+        try {
+          await scenario(repository, llm, workspace);
+        } finally {
+          await workspace.stopGeneration();
+          workspace.dispose();
+          await workspace.flush();
+        }
       });
       await tester.pump();
-    },
-  );
+    }
 
-  testWidgets(
-    'Persistence failures retain draft; engine failures retain partial answer',
-    (tester) async {
-      await tester.runAsync(() async {
-        final repository = InMemoryChatRepository()..failSend = true;
-        final llm = _Llm();
-        final workspace = ChatWorkspace(repository, llmRepository: llm)
-          ..useModel(bielikModels.first);
-        await workspace.initialize();
-        workspace.selected.draft.text = 'Nie zgub';
-        await workspace.sendMessage('Nie zgub');
-        expect(workspace.selected.draft.text, 'Nie zgub');
-        expect(llm.streams, isEmpty);
-        repository.failSend = false;
-        final send = workspace.sendMessage('Nie zgub');
+    testWidgets('Ignores a duplicate send while generation is active', (
+      tester,
+    ) async {
+      await withWorkspace(tester, (repository, llm, workspace) async {
+        final send = workspace.sendMessage('Question');
         await _until(() => llm.streams.isNotEmpty);
-        llm.streams.last.add('Częściowa');
-        await _until(() => workspace.selected.messages.length == 2);
-        llm.streams.last.addError(StateError('Błąd silnika'));
+
+        await workspace.sendMessage('Duplicate');
+
+        expect(llm.inputs, hasLength(1));
+        await llm.streams.last.close();
         await send;
-        expect(workspace.error, contains('Błąd silnika'));
-        expect(
-          (await repository.getMessages(workspace.selected.id)).last.text,
-          'Częściowa',
-        );
-        expect(workspace.sending, isFalse);
-        workspace.dispose();
-        await workspace.flush();
       });
-    },
-  );
+    });
+
+    testWidgets(
+      'Streams into the originating chat after switching conversations',
+      (tester) async {
+        await withWorkspace(tester, (repository, llm, workspace) async {
+          final original = workspace.selected;
+          final send = workspace.sendMessage('Question');
+          await _until(() => llm.streams.isNotEmpty);
+          llm.streams.last.add('Hello');
+          await _until(() => original.messages.length == 2);
+          await workspace.newChat();
+
+          llm.streams.last.add(' world!');
+          await llm.streams.last.close();
+          await send;
+          await workspace.flush();
+
+          expect(workspace.selected.messages, isEmpty);
+          expect(original.messages.last.text, 'Hello world!');
+          expect(
+            (await repository.getMessages(original.id)).last.text,
+            'Hello world!',
+          );
+        });
+      },
+    );
+
+    testWidgets('Preserves a draft typed while a reply is streaming', (
+      tester,
+    ) async {
+      await withWorkspace(tester, (repository, llm, workspace) async {
+        final send = workspace.sendMessage('Question');
+        await _until(() => llm.streams.isNotEmpty);
+
+        workspace.selected.draft.text = 'Next question';
+        llm.streams.last.add('Reply');
+        await llm.streams.last.close();
+        await send;
+        await workspace.flush();
+
+        expect(
+          (await repository.getConversations()).single.draft,
+          'Next question',
+        );
+      });
+    });
+
+    testWidgets('Passes previous turns to the next generation', (tester) async {
+      await withWorkspace(tester, (repository, llm, workspace) async {
+        final first = workspace.sendMessage('Question');
+        await _until(() => llm.streams.isNotEmpty);
+        llm.streams.last.add('Reply');
+        await llm.streams.last.close();
+        await first;
+
+        final second = workspace.sendMessage('Next question');
+        await _until(() => llm.streams.length == 2);
+
+        expect(llm.inputs.last.map((m) => m.text), [
+          'Question',
+          'Reply',
+          'Next question',
+        ]);
+        await llm.streams.last.close();
+        await second;
+      });
+    });
+
+    testWidgets('Releasing the model unloads the engine', (tester) async {
+      await withWorkspace(tester, (repository, llm, workspace) async {
+        await workspace.releaseModel();
+
+        expect(llm.unloads, 1);
+      });
+    });
+
+    testWidgets('Stopping generation preserves the partial answer', (
+      tester,
+    ) async {
+      await withWorkspace(tester, (repository, llm, workspace) async {
+        final id = workspace.selected.id;
+        final send = workspace.sendMessage('Question');
+        await _until(() => llm.streams.isNotEmpty);
+        llm.streams.last.add('Partial');
+        await _until(() => workspace.selected.messages.length == 2);
+
+        await workspace.stopGeneration();
+        await send;
+
+        expect(workspace.sending, isFalse);
+        expect(workspace.error, isNull);
+        expect((await repository.getMessages(id)).last.text, 'Partial');
+      });
+    });
+
+    testWidgets('Deleting the active conversation stops generation', (
+      tester,
+    ) async {
+      await withWorkspace(tester, (repository, llm, workspace) async {
+        final original = workspace.selected;
+        final send = workspace.sendMessage('Question');
+        await _until(() => llm.streams.isNotEmpty);
+
+        await workspace.deleteConversation(original);
+        await send;
+
+        expect(llm.stops, greaterThan(0));
+        expect(await repository.getMessages(original.id), isEmpty);
+        expect(workspace.selected.id, isNot(original.id));
+      });
+    });
+
+    testWidgets(
+      'A storage failure preserves the draft without invoking the engine',
+      (tester) async {
+        await withWorkspace(tester, (repository, llm, workspace) async {
+          repository.failSend = true;
+          workspace.selected.draft.text = 'Keep this';
+
+          await workspace.sendMessage('Keep this');
+
+          expect(workspace.selected.draft.text, 'Keep this');
+          expect(llm.streams, isEmpty);
+        });
+      },
+    );
+
+    testWidgets(
+      'An engine failure preserves the partial answer and reports an error',
+      (tester) async {
+        await withWorkspace(tester, (repository, llm, workspace) async {
+          final id = workspace.selected.id;
+          final send = workspace.sendMessage('Question');
+          await _until(() => llm.streams.isNotEmpty);
+          llm.streams.last.add('Partial');
+          await _until(() => workspace.selected.messages.length == 2);
+
+          llm.streams.last.addError(StateError('Engine failed'));
+          await send;
+
+          expect(workspace.error, contains('Engine failed'));
+          expect((await repository.getMessages(id)).last.text, 'Partial');
+          expect(workspace.sending, isFalse);
+        });
+      },
+    );
+  });
 }
