@@ -2,6 +2,8 @@
 
 Aplikacja Flutter na Androida do pobierania modeli Bielik i uruchamiania ich lokalnie na telefonie. Lokalny czat generuje odpowiedzi fragmentami i zapisuje rozmowy w SQLite.
 
+[![Code Quality](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/code-quality.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/code-quality.yml)
+
 **[Pobierz APK na telefon](https://github.com/GHRik/bielik_oneclick_launcher/releases)**, zainstaluj i uruchom. Bez Fluttera i Android Studio.
 
 ## Co już działa
@@ -135,12 +137,25 @@ test/                             # Testy logiki, SQLite, widoków i architektur
 Szczegóły zależności warstw i zapisu rozmów: [ARCHITECTURE.md](ARCHITECTURE.md).
 Podział testów, zakres funkcjonalności i polecenia uruchomienia: [test/README.md](test/README.md).
 
-## Weryfikacja
+## CI/CD
+
+Każdy workflow ma osobny status powyżej. Kliknięcie badge'a otwiera jego historię uruchomień.
+
+| Workflow | Zakres |
+| --- | --- |
+| [Code Quality](.github/workflows/code-quality.yml) | Formatowanie Dart i analiza statyczna. |
+
+Automatyczne CI działa na pull requestach do `master` i pushach na `master`, tylko gdy zmieniają się źródła aplikacji, testy, zasoby, zależności lub konfiguracja analizy. Zmiany samych README, dokumentacji, strony `site/` lub plików `.github/` nie uruchamiają tych sprawdzeń. Każdy workflow można też uruchomić ręcznie z Actions.
+
+Raporty testów JSON i logi są dostępne przez 14 dni w artefaktach danego uruchomienia. E2E Androida pozostają ręczne i nie są wykonywane przez GitHub Actions. Osobny workflow Pages obsługuje publikację strony.
+
+Workflowów pomijanych przez filtry ścieżek nie należy ustawiać jako bezwarunkowo wymaganych sprawdzeń: PR zmieniający samą dokumentację mógłby czekać na ich wynik bez końca. Szczegóły: [GitHub — pomijane workflowy](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/skip-workflow-runs).
+
+## Weryfikacja lokalna
 
 ```sh
+dart format --output=none --set-exit-if-changed lib test
 flutter analyze --no-pub
 flutter test --no-pub
 flutter build apk --debug --no-pub --target-platform android-arm64
 ```
-
-Na etapie zapisanym w branchu przeszły analiza, 32 testy i build APK. Generowanie jednej odpowiedzi potwierdzono dodatkowo na telefonie.
