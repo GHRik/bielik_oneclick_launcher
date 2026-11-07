@@ -40,8 +40,8 @@ Download buttons link to the releases list because the APK workflow publishes pr
 ## Deploy to GitHub Pages
 
 1. Open **Settings → Pages → Build and deployment → Source → GitHub Actions** in the repository.
-2. Push the page and `.github/workflows/deploy-pages.yml` to `master`.
-3. The workflow publishes only `site/`; it can also be started manually from Actions.
+2. Push a change under `site/` to `master`.
+3. The workflow publishes only `site/` and runs only for changes under that directory. Changes to app code, root documentation, or workflow files do not trigger deployment.
 4. The default URL is [ghrik.github.io/bielik_oneclick_launcher](https://ghrik.github.io/bielik_oneclick_launcher/), available after a successful deployment.
 
 Deploying the page does not require rebuilding the Android app.
