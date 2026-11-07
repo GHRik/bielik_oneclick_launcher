@@ -16,6 +16,8 @@ The model section lists both bundled catalog entries and links to the root READM
 
 Attribution near the top and bottom credits SpeakLeash (Spichlerz) and ACK Cyfronet AGH, identifies OneClick as an independent launcher, and links to the official model cards and licenses.
 
+The favicon and page brand mark use the launcher's original eagle artwork, not the official Bielik logo. Source artwork and Android icon variants are documented in [assets/branding](../assets/branding/README.md).
+
 ## Real device screenshots
 
 | File | Screen |
