@@ -36,6 +36,10 @@ app.*.map.json
 
 .widget_preview/
 .agent-staging/
+/android/key.properties
+/android/signing/
+*.jks
+*.keystore
 
 /test/e2e/output/android/*
 !/test/e2e/output/android/README.md

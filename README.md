@@ -36,7 +36,7 @@ Official model cards and licenses: [Bielik 1.5B v3.0 Instruct GGUF](https://hugg
 
 No Flutter or Android Studio installation is needed. Models are downloaded separately inside the app: approximately 1.7 GB for 1.5B and 5.06 GB for 4.5B. Running a model also requires sufficient RAM.
 
-The APK is currently a debug build for ARM64 phones. A stable signing key for updates is still planned; CI builds may have different signatures.
+Distributed APKs are ARM64 release builds signed with a stable key. Install a newer release over the existing one to keep conversations, settings, and downloaded models. Older debug APKs may have incompatible signatures; do not uninstall them if you need their local data. See [releases and updates](docs/RELEASING.md).
 
 ## Adding models
 
@@ -130,7 +130,7 @@ The badges above link to separate workflows for code quality, unit tests, compon
 
 Automatic checks run on pull requests to `master` and pushes to `master` when application code, tests, assets, dependencies, or analysis configuration change. Documentation-only and `.github/`-only changes do not trigger these checks. E2E tests remain manual.
 
-To publish a downloadable test APK, open **Actions → Release APK → Run workflow** and select a branch. The workflow publishes the APK, SHA-256 checksum, and source commit details to Releases.
+To publish a downloadable test APK, open **Actions → Release APK → Run workflow** and select a branch. The workflow publishes a signed release APK, SHA-256 checksum, certificate details, and source commit information to Releases. Signing secrets are configured in the repository; the public certificate fingerprint is pinned in source control. See [release maintenance](docs/RELEASING.md).
 
 - [Test quick start and directory guide](test/README.md)
 - [Manual Android E2E tests](test/e2e/README.md)
