@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="420" viewBox="0 0 560 420" role="img" aria-labelledby="title">
+<title id="title">Schematyczny podgląd historii rozmów i ustawień</title>
+<defs><style>text{font-family:"Segoe UI",Arial,sans-serif;fill:#302a3d}.muted{fill:#91879e}.small{font-size:11px}.white{fill:#fff}</style></defs>
+<rect width="560" height="420" rx="22" fill="#eeede6"/>
+<circle cx="482" cy="368" r="140" fill="#e5e5d8"/>
+<rect x="31" y="36" width="267" height="329" rx="16" fill="#fff" stroke="#dfded5"/>
+<text x="54" y="70" font-size="15" font-weight="600">Twoje rozmowy</text>
+<rect x="52" y="90" width="223" height="34" rx="8" fill="#f6f3fc"/><text x="69" y="112" font-size="12" fill="#7450d8">+ Nowa rozmowa</text>
+<rect x="45" y="144" width="237" height="43" rx="8" fill="#e9e2f7"/><text x="61" y="170" font-size="12" font-weight="600">Pomysł na dobry dzień</text>
+<text x="61" y="211" font-size="12" class="muted">Plan weekendu</text>
+<text x="61" y="254" font-size="12" class="muted">Jak to działa?</text>
+<path d="M51 287h224" stroke="#ece9ef"/><circle cx="59" cy="322" r="3" fill="#8da958"/><text x="70" y="326" class="small muted">Historia zapisana lokalnie</text>
+<rect x="229" y="97" width="302" height="292" rx="16" fill="#fff" stroke="#ded6e9"/>
+<rect x="249" y="117" width="28" height="28" rx="8" fill="#eee8f8"/><path d="M256 125h14m-14 5h14m-14 5h14m-10-12v4m6 1v4m-8 1v4" stroke="#7450d8" stroke-width="1.4" stroke-linecap="round"/>
+<text x="288" y="136" font-size="14" font-weight="600">Po Twojemu</text>
+<text x="250" y="174" class="small muted">Kontekst</text><text x="507" y="174" text-anchor="end" class="small">2048 tokenów</text>
+<rect x="250" y="187" width="257" height="4" rx="2" fill="#eee9f4"/><rect x="250" y="187" width="132" height="4" rx="2" fill="#9676dc"/><circle cx="382" cy="189" r="6" fill="#7450d8"/>
+<text x="250" y="226" class="small muted">Długość odpowiedzi</text><text x="507" y="226" text-anchor="end" class="small">512 tokenów</text>
+<rect x="250" y="239" width="257" height="4" rx="2" fill="#eee9f4"/><rect x="250" y="239" width="190" height="4" rx="2" fill="#9676dc"/><circle cx="440" cy="241" r="6" fill="#7450d8"/>
+<text x="250" y="279" class="small muted">Temperatura</text><text x="507" y="279" text-anchor="end" class="small">0,8</text>
+<rect x="250" y="292" width="257" height="4" rx="2" fill="#eee9f4"/><rect x="250" y="292" width="95" height="4" rx="2" fill="#9676dc"/><circle cx="345" cy="294" r="6" fill="#7450d8"/>
+<rect x="250" y="328" width="257" height="37" rx="8" fill="#7450d8"/><text x="378" y="352" text-anchor="middle" class="white" font-size="12" font-weight="600">Zapisz ustawienia</text>
+</svg>

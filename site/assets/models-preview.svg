@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="420" viewBox="0 0 560 420" role="img" aria-labelledby="title">
+<title id="title">Schematyczny podgląd wyboru i pobierania modelu</title>
+<defs><style>text{font-family:"Segoe UI",Arial,sans-serif;fill:#302a3d}.muted{fill:#91879e}.small{font-size:11px}.label{font-size:13px}.white{fill:white}</style></defs>
+<rect width="560" height="420" rx="22" fill="#e9e2f7"/>
+<circle cx="488" cy="54" r="114" fill="#e2d8f2"/><circle cx="56" cy="389" r="88" fill="#e1d5f2"/>
+<rect x="34" y="31" width="492" height="355" rx="19" fill="#fff" stroke="#ddd3ed"/>
+<rect x="56" y="52" width="32" height="32" rx="10" fill="#7450d8"/><text x="72" y="74" text-anchor="middle" font-size="20" font-weight="700" class="white">B</text>
+<text x="100" y="66" font-size="15" font-weight="600">Wybierz swojego Bielika</text><text x="100" y="82" class="small muted">Model pobierasz bezpośrednio na urządzenie.</text>
+<rect x="56" y="106" width="448" height="52" rx="10" fill="#faf8fd" stroke="#e2d9ee"/>
+<text x="74" y="137" font-size="15" font-weight="600">Bielik 1.5B v3.0 · Q8</text><path d="m476 129 6 6 6-6" fill="none" stroke="#88789f" stroke-width="1.6" stroke-linecap="round"/>
+<rect x="56" y="174" width="218" height="36" rx="8" fill="#7450d8"/><text x="165" y="197" class="label white" text-anchor="middle" font-weight="600">Pobierz</text>
+<rect x="286" y="174" width="218" height="36" rx="8" fill="#fff" stroke="#e2d9ee"/><text x="395" y="197" class="label muted" text-anchor="middle">Usuń</text>
+<rect x="56" y="229" width="448" height="71" rx="10" fill="#f6f8f0"/>
+<circle cx="75" cy="251" r="3" fill="#7f9e49"/><text x="87" y="255" class="small">RAM — wystarczająco</text>
+<circle cx="75" cy="276" r="3" fill="#7f9e49"/><text x="87" y="280" class="small">Wolne miejsce — gotowe na model</text>
+<text x="56" y="329" class="small" font-weight="600">Pobieranie modelu</text><text x="504" y="329" text-anchor="end" class="small" font-weight="600">68%</text>
+<rect x="56" y="340" width="448" height="5" rx="2.5" fill="#eee9f4"/><rect x="56" y="340" width="305" height="5" rx="2.5" fill="#9274db"/>
+<text x="56" y="365" class="small muted">Prędkość · 8,2 MB/s</text><text x="504" y="365" text-anchor="end" class="small muted">Pozostało · około minuty</text>
+</svg>
