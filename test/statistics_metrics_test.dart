@@ -15,75 +15,83 @@ class _Source extends StatisticsDataSource {
 }
 
 void main() {
-  test('Measures RAM aplikacji through the statistics adapter', () async {
-    final metrics = GenerationMetrics();
-    final repository = LocalStatisticsRepository(_Source(), metrics);
-    final series = await repository.sample();
-    final value = series
-        .singleWhere((item) => item.title == 'RAM aplikacji')
-        .values
-        .single;
-    expect(value, 2.5);
-  });
-  test('Measures CPU aplikacji through the statistics adapter', () async {
-    final metrics = GenerationMetrics();
-    final repository = LocalStatisticsRepository(_Source(), metrics);
-    final series = await repository.sample();
-    final value = series
-        .singleWhere((item) => item.title == 'CPU aplikacji')
-        .values
-        .single;
-    expect(value, 25);
-  });
-  test('Measures Temperatura CPU through the statistics adapter', () async {
-    final metrics = GenerationMetrics();
-    final repository = LocalStatisticsRepository(_Source(), metrics);
-    final series = await repository.sample();
-    final value = series
-        .singleWhere((item) => item.title == 'Temperatura CPU')
-        .values
-        .single;
-    expect(value, 48.5);
-  });
-  test('Measures Temperatura baterii through the statistics adapter', () async {
-    final metrics = GenerationMetrics();
-    final repository = LocalStatisticsRepository(_Source(), metrics);
-    final series = await repository.sample();
-    final value = series
-        .singleWhere((item) => item.title == 'Temperatura baterii')
-        .values
-        .single;
-    expect(value, 36.5);
-  });
-  test(
-    'Measures Czas do pierwszej odpowiedzi through the statistics adapter',
-    () async {
+  group('Statistics adapter metric mapping', () {
+    test('Measures application RAM through the statistics adapter', () async {
       final metrics = GenerationMetrics();
-      metrics.begin();
-      metrics.firstText();
       final repository = LocalStatisticsRepository(_Source(), metrics);
       final series = await repository.sample();
       final value = series
-          .singleWhere((item) => item.title == 'Czas do pierwszej odpowiedzi')
+          .singleWhere((item) => item.title == 'RAM aplikacji')
           .values
           .single;
-      expect(value, greaterThanOrEqualTo(0));
-    },
-  );
-  test('Measures Wygenerowane tokeny through the statistics adapter', () async {
-    final metrics = GenerationMetrics();
-    metrics.complete(tokens: 100, duration: const Duration(seconds: 10));
-    final repository = LocalStatisticsRepository(_Source(), metrics);
-    final series = await repository.sample();
-    final value = series
-        .singleWhere((item) => item.title == 'Wygenerowane tokeny')
-        .values
-        .single;
-    expect(value, 100);
-  });
-  test(
-    'Measures Prędkość generowania through the statistics adapter',
-    () async {
+      expect(value, 2.5);
+    });
+    test(
+      'Measures application CPU usage through the statistics adapter',
+      () async {
+        final metrics = GenerationMetrics();
+        final repository = LocalStatisticsRepository(_Source(), metrics);
+        final series = await repository.sample();
+        final value = series
+            .singleWhere((item) => item.title == 'CPU aplikacji')
+            .values
+            .single;
+        expect(value, 25);
+      },
+    );
+    test('Measures CPU temperature through the statistics adapter', () async {
+      final metrics = GenerationMetrics();
+      final repository = LocalStatisticsRepository(_Source(), metrics);
+      final series = await repository.sample();
+      final value = series
+          .singleWhere((item) => item.title == 'Temperatura CPU')
+          .values
+          .single;
+      expect(value, 48.5);
+    });
+    test(
+      'Measures battery temperature through the statistics adapter',
+      () async {
+        final metrics = GenerationMetrics();
+        final repository = LocalStatisticsRepository(_Source(), metrics);
+        final series = await repository.sample();
+        final value = series
+            .singleWhere((item) => item.title == 'Temperatura baterii')
+            .values
+            .single;
+        expect(value, 36.5);
+      },
+    );
+    test(
+      'Measures time to first response through the statistics adapter',
+      () async {
+        final metrics = GenerationMetrics();
+        metrics.begin();
+        metrics.firstText();
+        final repository = LocalStatisticsRepository(_Source(), metrics);
+        final series = await repository.sample();
+        final value = series
+            .singleWhere((item) => item.title == 'Czas do pierwszej odpowiedzi')
+            .values
+            .single;
+        expect(value, greaterThanOrEqualTo(0));
+      },
+    );
+    test(
+      'Measures generated token count through the statistics adapter',
+      () async {
+        final metrics = GenerationMetrics();
+        metrics.complete(tokens: 100, duration: const Duration(seconds: 10));
+        final repository = LocalStatisticsRepository(_Source(), metrics);
+        final series = await repository.sample();
+        final value = series
+            .singleWhere((item) => item.title == 'Wygenerowane tokeny')
+            .values
+            .single;
+        expect(value, 100);
+      },
+    );
+    test('Measures generation speed through the statistics adapter', () async {
       final metrics = GenerationMetrics();
       metrics.complete(tokens: 100, duration: const Duration(seconds: 10));
       final repository = LocalStatisticsRepository(_Source(), metrics);
@@ -93,6 +101,6 @@ void main() {
           .values
           .single;
       expect(value, 10);
-    },
-  );
+    });
+  });
 }
