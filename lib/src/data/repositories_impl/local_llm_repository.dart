@@ -46,15 +46,14 @@ class LocalLlmRepository implements LlmRepository {
   List<LlamaChatMessage> _engineMessages(List<ContextMessage> messages) => [
     if (systemPrompt.trim().isNotEmpty)
       LlamaChatMessage.fromText(role: LlamaChatRole.system, text: systemPrompt),
-    ...messages
-        .map(
-          (message) => LlamaChatMessage.fromText(
-            role: message.role == ChatRole.user
-                ? LlamaChatRole.user
-                : LlamaChatRole.assistant,
-            text: message.text,
-          ),
-        ),
+    ...messages.map(
+      (message) => LlamaChatMessage.fromText(
+        role: message.role == ChatRole.user
+            ? LlamaChatRole.user
+            : LlamaChatRole.assistant,
+        text: message.text,
+      ),
+    ),
   ];
 
   @override

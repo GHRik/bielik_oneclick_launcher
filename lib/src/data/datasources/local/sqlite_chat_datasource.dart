@@ -7,7 +7,10 @@ class SqliteChatDataSource {
 
   Future<List<Map<String, Object?>>> getConversations() async {
     final connection = await database.open();
-    return connection.query('conversations', orderBy: 'created_at DESC, id DESC');
+    return connection.query(
+      'conversations',
+      orderBy: 'created_at DESC, id DESC',
+    );
   }
 
   Future<Map<String, Object?>> createConversation({
@@ -45,9 +48,11 @@ class SqliteChatDataSource {
   }) async {
     final connection = await database.open();
     return connection.transaction((transaction) async {
-      final id = (await transaction.rawQuery(
-        'SELECT lower(hex(randomblob(16))) AS id',
-      )).single['id']! as String;
+      final id =
+          (await transaction.rawQuery(
+                'SELECT lower(hex(randomblob(16))) AS id',
+              )).single['id']!
+              as String;
       final message = <String, Object?>{
         'id': id,
         'conversation_id': conversationId,
@@ -73,7 +78,10 @@ class SqliteChatDataSource {
   Future<void> updateMessage(String id, String text) async {
     final connection = await database.open();
     final count = await connection.update(
-      'messages', {'text': text}, where: 'id = ?', whereArgs: [id],
+      'messages',
+      {'text': text},
+      where: 'id = ?',
+      whereArgs: [id],
     );
     if (count != 1) throw StateError('Nie znaleziono wiadomości do zapisu.');
   }
@@ -82,7 +90,10 @@ class SqliteChatDataSource {
     final connection = await database.open();
     await connection.update(
       'conversations',
-      {'draft': draft, 'updated_at': DateTime.now().toUtc().millisecondsSinceEpoch},
+      {
+        'draft': draft,
+        'updated_at': DateTime.now().toUtc().millisecondsSinceEpoch,
+      },
       where: 'id = ?',
       whereArgs: [conversationId],
     );

@@ -36,8 +36,9 @@ class InMemoryChatRepository implements ChatRepository {
   }
 
   @override
-  Future<List<ChatMessage>> getMessages(int conversationId) async =>
-      _messages.where((message) => message.conversationId == conversationId).toList();
+  Future<List<ChatMessage>> getMessages(int conversationId) async => _messages
+      .where((message) => message.conversationId == conversationId)
+      .toList();
 
   @override
   Future<ChatMessage> addMessage({
@@ -47,7 +48,9 @@ class InMemoryChatRepository implements ChatRepository {
     String? conversationTitle,
     bool clearDraft = false,
   }) async {
-    if (sendStarted != null && !sendStarted!.isCompleted) sendStarted!.complete();
+    if (sendStarted != null && !sendStarted!.isCompleted) {
+      sendStarted!.complete();
+    }
     await sendGate?.future;
     if (failSend) throw StateError('Send failed');
     final conversation = _conversations[conversationId]!;
@@ -73,8 +76,11 @@ class InMemoryChatRepository implements ChatRepository {
     final index = _messages.indexWhere((message) => message.id == id);
     final old = _messages[index];
     _messages[index] = ChatMessage(
-      id: old.id, conversationId: old.conversationId, authorId: old.authorId,
-      text: text, createdAt: old.createdAt,
+      id: old.id,
+      conversationId: old.conversationId,
+      authorId: old.authorId,
+      text: text,
+      createdAt: old.createdAt,
     );
   }
 
@@ -90,6 +96,8 @@ class InMemoryChatRepository implements ChatRepository {
   Future<void> deleteConversation(int conversationId) async {
     if (failDelete) throw StateError('Delete failed');
     _conversations.remove(conversationId);
-    _messages.removeWhere((message) => message.conversationId == conversationId);
+    _messages.removeWhere(
+      (message) => message.conversationId == conversationId,
+    );
   }
 }

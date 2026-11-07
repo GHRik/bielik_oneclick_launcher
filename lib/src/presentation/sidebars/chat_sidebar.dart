@@ -24,9 +24,8 @@ class ChatSidebar extends StatelessWidget {
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => DeleteConversationDialog(
-        conversationTitle: conversation.title,
-      ),
+      builder: (_) =>
+          DeleteConversationDialog(conversationTitle: conversation.title),
     );
     if (confirmed == true && context.mounted) {
       workspace.deleteConversation(conversation);
@@ -47,7 +46,8 @@ class ChatSidebar extends StatelessWidget {
                 conversations: workspace.conversations,
                 selected: workspace.selected,
                 onSelect: onSelect,
-                onDelete: (conversation) => _confirmDelete(context, conversation),
+                onDelete: (conversation) =>
+                    _confirmDelete(context, conversation),
               ),
             ),
           ],

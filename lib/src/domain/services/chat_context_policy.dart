@@ -26,10 +26,14 @@ class ChatContextPolicy {
     bool Function()? isCancelled,
   }) async {
     final turns = <ContextMessage>[];
-    for (final message in history.where((message) => message.text.trim().isNotEmpty)) {
+    for (final message in history.where(
+      (message) => message.text.trim().isNotEmpty,
+    )) {
       if (turns.isNotEmpty && turns.last.role == message.role) {
         final previous = turns.removeLast();
-        turns.add(ContextMessage(message.role, '${previous.text}\n\n${message.text}'));
+        turns.add(
+          ContextMessage(message.role, '${previous.text}\n\n${message.text}'),
+        );
       } else {
         turns.add(ContextMessage(message.role, message.text));
       }

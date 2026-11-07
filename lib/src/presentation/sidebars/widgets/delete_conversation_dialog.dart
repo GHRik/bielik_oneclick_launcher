@@ -9,9 +9,7 @@ class DeleteConversationDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Usunąć rozmowę?'),
-      content: Text(
-        'Czy na pewno chcesz usunąć rozmowę „$conversationTitle”?',
-      ),
+      content: Text('Czy na pewno chcesz usunąć rozmowę „$conversationTitle”?'),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),

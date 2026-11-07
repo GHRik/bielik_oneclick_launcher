@@ -22,7 +22,8 @@ class ChatMessage {
   final String text;
   final DateTime createdAt;
 
-  ChatRole get role => authorId == ChatAuthors.user ? ChatRole.user : ChatRole.assistant;
+  ChatRole get role =>
+      authorId == ChatAuthors.user ? ChatRole.user : ChatRole.assistant;
 
   int get contentSizeBytes => utf8.encode(text).length;
 }

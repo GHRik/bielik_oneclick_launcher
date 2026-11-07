@@ -15,7 +15,8 @@ class Conversation {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  int get contentSizeBytes => utf8.encode(title).length + utf8.encode(draft).length;
+  int get contentSizeBytes =>
+      utf8.encode(title).length + utf8.encode(draft).length;
 
   Conversation copyWith({String? title, String? draft, DateTime? updatedAt}) =>
       Conversation(

@@ -10,5 +10,6 @@ class PreviewStatisticsRepository implements StatisticsRepository {
   final PreviewStatisticsDataSource dataSource;
 
   @override
-  List<StatisticSeries> getSeries() => List.unmodifiable(dataSource.getSeries());
+  List<StatisticSeries> getSeries() =>
+      List.unmodifiable(dataSource.getSeries());
 }

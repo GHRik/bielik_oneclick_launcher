@@ -16,7 +16,10 @@ class ConversationController extends ChangeNotifier {
        ),
        draft = TextEditingController(text: conversation.draft),
        hasMessages = messages.isNotEmpty,
-       _messageContentBytes = messages.fold(0, (total, message) => total + message.contentSizeBytes) {
+       _messageContentBytes = messages.fold(
+         0,
+         (total, message) => total + message.contentSizeBytes,
+       ) {
     draft.addListener(_draftChanged);
   }
 
@@ -35,14 +38,15 @@ class ConversationController extends ChangeNotifier {
   int get id => _conversation.id;
   String get title => _conversation.title;
   int get draftRevision => _draftRevision;
-  int get contentSizeBytes => _conversation.contentSizeBytes + _messageContentBytes;
+  int get contentSizeBytes =>
+      _conversation.contentSizeBytes + _messageContentBytes;
 
   static TextMessage _viewMessage(ChatMessage message) => TextMessage(
-        id: message.id,
-        authorId: message.authorId,
-        createdAt: message.createdAt,
-        text: message.text,
-      );
+    id: message.id,
+    authorId: message.authorId,
+    createdAt: message.createdAt,
+    text: message.text,
+  );
 
   void _draftChanged() {
     if (_suppressDraftChanges || draft.text == _conversation.draft) return;
@@ -80,8 +84,11 @@ class ConversationController extends ChangeNotifier {
     if (index < 0) return;
     final old = _messages[index];
     final updated = ChatMessage(
-      id: old.id, conversationId: old.conversationId, authorId: old.authorId,
-      text: text, createdAt: old.createdAt,
+      id: old.id,
+      conversationId: old.conversationId,
+      authorId: old.authorId,
+      text: text,
+      createdAt: old.createdAt,
     );
     await controller.updateMessage(_viewMessage(old), _viewMessage(updated));
     _messages[index] = updated;

@@ -23,7 +23,9 @@ class FlutterModelDownloadDataSource implements ModelDownloadDataSource {
   @override
   Future<List<DownloadTask>> loadTasks() async {
     final tasks = await FlutterDownloader.loadTasks();
-    if (tasks == null) throw StateError('Nie udało się odczytać zadań pobierania.');
+    if (tasks == null) {
+      throw StateError('Nie udało się odczytać zadań pobierania.');
+    }
     return tasks;
   }
 
@@ -45,7 +47,8 @@ class FlutterModelDownloadDataSource implements ModelDownloadDataSource {
   }
 
   @override
-  Future<void> cancel(String taskId) => FlutterDownloader.cancel(taskId: taskId);
+  Future<void> cancel(String taskId) =>
+      FlutterDownloader.cancel(taskId: taskId);
 
   @override
   Future<void> remove(String taskId) =>

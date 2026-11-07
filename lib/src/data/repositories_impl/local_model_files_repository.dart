@@ -31,11 +31,15 @@ class LocalModelFilesRepository implements ModelFilesRepository {
   }
 
   Future<List<DownloadTask>> _tasks(ModelFile model, File file) async {
-    return (await _downloads.loadTasks()).where((task) =>
-      task.url == model.url &&
-      task.savedDir == file.parent.path &&
-      task.filename == '${model.name}.part',
-    ).toList()..sort((a, b) => b.timeCreated.compareTo(a.timeCreated));
+    return (await _downloads.loadTasks())
+        .where(
+          (task) =>
+              task.url == model.url &&
+              task.savedDir == file.parent.path &&
+              task.filename == '${model.name}.part',
+        )
+        .toList()
+      ..sort((a, b) => b.timeCreated.compareTo(a.timeCreated));
   }
 
   bool _recoverable(DownloadTask task) =>
@@ -85,7 +89,8 @@ class LocalModelFilesRepository implements ModelFilesRepository {
       var previousTime = 0;
       while (true) {
         final task = (await _downloads.loadTasks())
-            .where((task) => task.taskId == taskId).firstOrNull;
+            .where((task) => task.taskId == taskId)
+            .firstOrNull;
         if (_cancelled) {
           await _downloads.cancel(taskId);
           await _waitUntilStopped(taskId);
@@ -107,15 +112,18 @@ class LocalModelFilesRepository implements ModelFilesRepository {
         final elapsed = watch.elapsedMilliseconds;
         final delta = elapsed - previousTime;
         final speed = delta > 0 && received >= previousBytes
-            ? (received - previousBytes) * 1000 / delta : 0.0;
+            ? (received - previousBytes) * 1000 / delta
+            : 0.0;
         previousBytes = received;
         previousTime = elapsed;
-        onProgress(ModelDownloadProgress(
-          receivedBytes: received.clamp(0, model.sizeBytes),
-          totalBytes: model.sizeBytes,
-          bytesPerSecond: speed,
-          verifying: task.status == DownloadTaskStatus.complete,
-        ));
+        onProgress(
+          ModelDownloadProgress(
+            receivedBytes: received.clamp(0, model.sizeBytes),
+            totalBytes: model.sizeBytes,
+            bytesPerSecond: speed,
+            verifying: task.status == DownloadTaskStatus.complete,
+          ),
+        );
         if (task.status == DownloadTaskStatus.complete) break;
         _wake = Completer<void>();
         await Future.any([Future<void>.delayed(pollInterval), _wake!.future]);
@@ -123,13 +131,18 @@ class LocalModelFilesRepository implements ModelFilesRepository {
       }
 
       removePartial = true;
-      if (!await partial.exists() || await partial.length() != model.sizeBytes) {
+      if (!await partial.exists() ||
+          await partial.length() != model.sizeBytes) {
         throw const FormatException('Nieprawidłowy rozmiar pobranego pliku.');
       }
-      final digest = await sha256.bind(partial.openRead().map((chunk) {
-        if (_cancelled) throw ModelDownloadCancelled();
-        return chunk;
-      })).first;
+      final digest = await sha256
+          .bind(
+            partial.openRead().map((chunk) {
+              if (_cancelled) throw ModelDownloadCancelled();
+              return chunk;
+            }),
+          )
+          .first;
       if (_cancelled) throw ModelDownloadCancelled();
       if (digest.toString() != model.sha256) {
         throw const FormatException('Pobrany plik jest uszkodzony.');
@@ -152,10 +165,11 @@ class LocalModelFilesRepository implements ModelFilesRepository {
     final deadline = DateTime.now().add(const Duration(seconds: 65));
     while (true) {
       final task = (await _downloads.loadTasks())
-          .where((task) => task.taskId == taskId).firstOrNull;
+          .where((task) => task.taskId == taskId)
+          .firstOrNull;
       if (task == null ||
           (task.status != DownloadTaskStatus.running &&
-           task.status != DownloadTaskStatus.enqueued)) {
+              task.status != DownloadTaskStatus.enqueued)) {
         return;
       }
       if (DateTime.now().isAfter(deadline)) {

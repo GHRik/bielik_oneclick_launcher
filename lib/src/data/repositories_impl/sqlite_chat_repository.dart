@@ -9,29 +9,29 @@ class SqliteChatRepository implements ChatRepository {
   final SqliteChatDataSource dataSource;
 
   Conversation _conversation(Map<String, Object?> row) => Conversation(
-        id: row['id']! as int,
-        title: row['title']! as String,
-        draft: row['draft']! as String,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(
-          row['created_at']! as int,
-          isUtc: true,
-        ),
-        updatedAt: DateTime.fromMillisecondsSinceEpoch(
-          row['updated_at']! as int,
-          isUtc: true,
-        ),
-      );
+    id: row['id']! as int,
+    title: row['title']! as String,
+    draft: row['draft']! as String,
+    createdAt: DateTime.fromMillisecondsSinceEpoch(
+      row['created_at']! as int,
+      isUtc: true,
+    ),
+    updatedAt: DateTime.fromMillisecondsSinceEpoch(
+      row['updated_at']! as int,
+      isUtc: true,
+    ),
+  );
 
   ChatMessage _message(Map<String, Object?> row) => ChatMessage(
-        id: row['id']! as String,
-        conversationId: row['conversation_id']! as int,
-        authorId: row['author_id']! as String,
-        text: row['text']! as String,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(
-          row['created_at']! as int,
-          isUtc: true,
-        ),
-      );
+    id: row['id']! as String,
+    conversationId: row['conversation_id']! as int,
+    authorId: row['author_id']! as String,
+    text: row['text']! as String,
+    createdAt: DateTime.fromMillisecondsSinceEpoch(
+      row['created_at']! as int,
+      isUtc: true,
+    ),
+  );
 
   @override
   Future<List<Conversation>> getConversations() async =>
@@ -39,11 +39,11 @@ class SqliteChatRepository implements ChatRepository {
 
   @override
   Future<Conversation> createConversation() async => _conversation(
-        await dataSource.createConversation(
-          title: 'Nowa rozmowa',
-          timestamp: DateTime.now().toUtc().millisecondsSinceEpoch,
-        ),
-      );
+    await dataSource.createConversation(
+      title: 'Nowa rozmowa',
+      timestamp: DateTime.now().toUtc().millisecondsSinceEpoch,
+    ),
+  );
 
   @override
   Future<List<ChatMessage>> getMessages(int conversationId) async =>
@@ -57,18 +57,19 @@ class SqliteChatRepository implements ChatRepository {
     String? conversationTitle,
     bool clearDraft = false,
   }) async => _message(
-        await dataSource.addMessage(
-          conversationId: conversationId,
-          authorId: authorId,
-          text: text,
-          conversationTitle: conversationTitle,
-          clearDraft: clearDraft,
-          timestamp: DateTime.now().toUtc().millisecondsSinceEpoch,
-        ),
-      );
+    await dataSource.addMessage(
+      conversationId: conversationId,
+      authorId: authorId,
+      text: text,
+      conversationTitle: conversationTitle,
+      clearDraft: clearDraft,
+      timestamp: DateTime.now().toUtc().millisecondsSinceEpoch,
+    ),
+  );
 
   @override
-  Future<void> updateMessage(String id, String text) => dataSource.updateMessage(id, text);
+  Future<void> updateMessage(String id, String text) =>
+      dataSource.updateMessage(id, text);
 
   @override
   Future<void> saveDraft(int conversationId, String draft) =>

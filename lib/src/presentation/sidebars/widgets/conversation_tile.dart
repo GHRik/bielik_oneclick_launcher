@@ -42,7 +42,8 @@ class ConversationTile extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Tooltip(
-                message: 'Rozmiar treści rozmowy: ${conversation.contentSizeBytes} B. '
+                message:
+                    'Rozmiar treści rozmowy: ${conversation.contentSizeBytes} B. '
                     'Tytuł, wiadomości i szkic w UTF-8, bez narzutu SQLite.',
                 child: Text(
                   '~${StorageSizeFormatter.format(conversation.contentSizeBytes)}',
