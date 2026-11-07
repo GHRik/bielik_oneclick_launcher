@@ -8,7 +8,7 @@ import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_man
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_requirements_card.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/requirement_status_row.dart';
 
-import '../support/in_memory_model_files_repository.dart';
+import '../../support/in_memory_model_files_repository.dart';
 
 void main() {
   group('Resource information layout', () {

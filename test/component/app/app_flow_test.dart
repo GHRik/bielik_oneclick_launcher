@@ -4,8 +4,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/app.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 
-import '../support/in_memory_chat_repository.dart';
-import '../support/in_memory_model_files_repository.dart';
+import '../../support/in_memory_chat_repository.dart';
+import '../../support/in_memory_model_files_repository.dart';
 
 Future<void> _openHome(
   WidgetTester tester, {

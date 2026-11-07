@@ -7,8 +7,8 @@ import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_catalog_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/statistics_repository.dart';
 
-import '../support/in_memory_chat_repository.dart';
-import '../support/in_memory_model_files_repository.dart';
+import '../../support/in_memory_chat_repository.dart';
+import '../../support/in_memory_model_files_repository.dart';
 
 class _ModelRepository implements ModelCatalogRepository {
   const _ModelRepository();

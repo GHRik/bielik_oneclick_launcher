@@ -6,8 +6,8 @@ import 'package:bielik_oneclick_launcher/src/data/datasources/statistics_datasou
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_statistics_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/generation_metrics.dart';
 
-import '../support/in_memory_chat_repository.dart';
-import '../support/in_memory_model_files_repository.dart';
+import '../../support/in_memory_chat_repository.dart';
+import '../../support/in_memory_model_files_repository.dart';
 
 Future<void> _openChat(WidgetTester tester, {double width = 390}) async {
   tester.view.physicalSize = Size(width, 844);

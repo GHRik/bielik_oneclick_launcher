@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as path;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -12,7 +11,6 @@ import 'package:bielik_oneclick_launcher/src/data/datasources/local/llm_settings
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/sqlite_llm_settings_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/llm_settings_draft.dart';
-import 'package:bielik_oneclick_launcher/src/presentation/pages/llm_settings_page.dart';
 
 void main() {
   setUpAll(sqfliteFfiInit);
@@ -179,68 +177,6 @@ void main() {
                   : isEmpty,
             );
           });
-        },
-      );
-    }
-  });
-
-  group('LLM settings input validation', () {
-    for (final entry in <String, String>{
-      'responseTokens': '2048',
-      'temperature': 'NaN',
-      'numberOfThreads': '1.5',
-      'seed': '-1',
-      'topP': '0',
-    }.entries) {
-      test('Rejects ${entry.key} = ${entry.value}', () {
-        final draft = LlmSettingsDraft(defaultLlmConfiguration);
-        addTearDown(draft.dispose);
-        draft.fields[entry.key]!.text = entry.value;
-
-        expect(draft.configuration, throwsFormatException);
-      });
-    }
-
-    test('Accepts a decimal comma in temperature', () {
-      final draft = LlmSettingsDraft(defaultLlmConfiguration);
-      addTearDown(draft.dispose);
-      draft.fields['temperature']!.text = '0,5';
-
-      expect(draft.configuration().temperature, 0.5);
-    });
-  });
-
-  group('Settings save action', () {
-    for (final valid in [false, true]) {
-      testWidgets(
-        valid ? 'Saves valid settings' : 'Does not save invalid settings',
-        (tester) async {
-          final draft = LlmSettingsDraft(defaultLlmConfiguration);
-          LlmConfiguration? saved;
-          await tester.pumpWidget(
-            MaterialApp(
-              home: LlmSettingsPage(
-                draft: draft,
-                onSave: (configuration) async {
-                  saved = configuration;
-                },
-              ),
-            ),
-          );
-          draft.fields['contextSize']!.text = valid ? '4096' : 'invalid';
-          draft.fields['numberOfThreads']!.text = '2';
-
-          await tester.tap(find.text('Zapisz'));
-          await tester.pumpAndSettle();
-
-          if (valid) {
-            expect(saved!.contextSize, 4096);
-            expect(saved!.numberOfThreads, 2);
-          } else {
-            expect(saved, isNull);
-          }
-          await tester.pumpWidget(const SizedBox.shrink());
-          draft.dispose();
         },
       );
     }

@@ -7,8 +7,8 @@ import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 
-import '../support/in_memory_chat_repository.dart';
-import '../support/in_memory_model_files_repository.dart';
+import '../../support/in_memory_chat_repository.dart';
+import '../../support/in_memory_model_files_repository.dart';
 
 class _Llm implements LlmRepository {
   final requests = <LlmComputeMode?>[];
