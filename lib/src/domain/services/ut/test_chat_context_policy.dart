@@ -97,4 +97,16 @@ void main() {
       expect(context, isEmpty);
     });
   });
+  test(
+    'ChatContextPolicy reserves the configured reply and safety budgets',
+    () {
+      const policy = ChatContextPolicy(
+        contextSize: 4096,
+        responseTokens: 1024,
+        safetyTokens: 32,
+      );
+
+      expect(policy.promptBudget, 3040);
+    },
+  );
 }
