@@ -1,0 +1,114 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'android/**'
+      - 'ios/**'
+      - 'linux/**'
+      - 'macos/**'
+      - 'windows/**'
+      - 'assets/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'analysis_options*.yaml'
+      - '!**/*.md'
+      - '!test/e2e/output/**'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'android/**'
+      - 'ios/**'
+      - 'linux/**'
+      - 'macos/**'
+      - 'windows/**'
+      - 'assets/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'analysis_options*.yaml'
+      - '!**/*.md'
+      - '!test/e2e/output/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: integration-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+
+      - name: Install locked dependencies
+        run: flutter pub get --enforce-lockfile
+
+      - name: Run integration tests
+        run: |
+          mkdir -p reports
+          set -o pipefail
+          flutter test --no-pub --reporter expanded --file-reporter json:reports/integration-tests.json test/integration 2>&1 | tee reports/integration-tests.log
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-tests-reports
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
+
+  android-adapter:
+    name: Android GPU sysfs adapter
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Compile adapter and test
+        run: |
+          mkdir -p build/native-tests reports
+          javac -d build/native-tests android/app/src/main/java/bielik/ai/bielik_oneclick_launcher/GpuSysfsReader.java test/integration/native/android/GpuSysfsReaderTest.java
+
+      - name: Test adapter with synthetic sysfs
+        run: |
+          set -o pipefail
+          java -cp build/native-tests bielik.ai.bielik_oneclick_launcher.GpuSysfsReaderTest 2>&1 | tee reports/android-adapter.log
+
+      - name: Upload adapter report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-adapter-report
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
