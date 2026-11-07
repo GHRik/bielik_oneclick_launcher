@@ -1,7 +1,14 @@
+import java.util.Base64
+
 plugins {
     id("com.android.application")
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+val e2eBuild = (project.findProperty("dart-defines") as? String)
+    ?.split(",")
+    ?.any { String(Base64.getDecoder().decode(it)) == "BIELIK_E2E=true" }
+    ?: false
 
 android {
     namespace = "bielik.ai.bielik_oneclick_launcher"
@@ -14,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "bielik.ai.bielik_oneclick_launcher"
+        applicationId = if (e2eBuild) "bielik.ai.bielik_oneclick_launcher.e2e" else "bielik.ai.bielik_oneclick_launcher"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
