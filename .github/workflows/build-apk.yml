@@ -97,10 +97,13 @@ jobs:
             exit 1
           fi
           "$apksigner" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk > dist/SIGNING.txt
-          actual="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' dist/SIGNING.txt | tr '[:upper:]' '[:lower:]')"
+          cat dist/SIGNING.txt
+          actual="$(awk '/^Signer #1 certificate SHA-256 digest:/ {sub(/^Signer #1 certificate SHA-256 digest:[[:space:]]*/, ""); gsub(/[[:space:]]/, ""); print tolower($0)}' dist/SIGNING.txt | sort -u)"
           expected="$(tr -d '[:space:]' < android/release-signing.sha256 | tr '[:upper:]' '[:lower:]')"
-          if [[ ! "$expected" =~ ^[0-9a-f]{64}$ || "$actual" != "$expected" ]]; then
-            printf '::error::The APK signing certificate does not match the pinned release identity.\n'
+          printf 'Expected certificate SHA-256: %s\n' "$expected"
+          printf 'Actual certificate SHA-256: %s\n' "${actual:-<not found>}"
+          if [[ ! "$expected" =~ ^[0-9a-f]{64}$ || ! "$actual" =~ ^[0-9a-f]{64}$ || "$actual" != "$expected" ]]; then
+            printf '::error::The APK signing certificate does not match the pinned release identity. See the public certificate details above.\n'
             exit 1
           fi
 
