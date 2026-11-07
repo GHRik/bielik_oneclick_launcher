@@ -32,50 +32,88 @@ class _CpuEngine extends Fake implements LlamaEngine {
 }
 
 void main() {
-  test('Inference forces CPU even for a legacy GPU request', () async {
-    final directory = await Directory.systemTemp.createTemp('bielik-cpu-test');
-    addTearDown(() => directory.delete(recursive: true));
-    final models = await Directory('${directory.path}/models').create();
-    await File('${models.path}/test.gguf').writeAsBytes([1]);
+  group('CPU runtime isolation', () {
+    late LocalLlmRepository repository;
+    late _CpuEngine engine;
+    late List<ModelParams> params;
     const model = ModelFile(
       name: 'test.gguf',
       url: '',
       sizeBytes: 1,
       sha256: '',
     );
-    final params = <ModelParams>[];
-    final engine = _CpuEngine();
-    final repository = LocalLlmRepository(
-      ModelFileDataSource(directory: () async => directory),
-      configurationFor: (_) => defaultLlmConfiguration,
-      loadEngine: (_, settings) async {
-        params.add(settings);
-        return engine;
-      },
-    );
+
+    setUp(() async {
+      final directory = await Directory.systemTemp.createTemp(
+        'bielik-cpu-test',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final models = await Directory('${directory.path}/models').create();
+      await File('${models.path}/test.gguf').writeAsBytes([1]);
+      params = <ModelParams>[];
+      engine = _CpuEngine();
+      repository = LocalLlmRepository(
+        ModelFileDataSource(directory: () async => directory),
+        configurationFor: (_) => defaultLlmConfiguration,
+        loadEngine: (_, settings) async {
+          params.add(settings);
+          return engine;
+        },
+      );
+
+      addTearDown(repository.unload);
+    });
+
     for (final mode in [null, LlmComputeMode.gpu, LlmComputeMode.cpu]) {
-      LlmRuntimeInfo? runtime;
-      await repository
-          .generate(
-            model,
-            [],
-            onStage: (_) {},
-            computeMode: mode,
-            onLoaded: (value) => runtime = value,
-          )
-          .drain<void>();
-      expect(runtime!.mode, LlmComputeMode.cpu);
-      expect(runtime!.gpuLayers, 0);
+      test(
+        'Reports CPU execution for a ${mode?.name ?? 'default'} request',
+        () async {
+          LlmRuntimeInfo? runtime;
+
+          await repository
+              .generate(
+                model,
+                [],
+                onStage: (_) {},
+                computeMode: mode,
+                onLoaded: (value) => runtime = value,
+              )
+              .drain<void>();
+
+          expect(runtime!.mode, LlmComputeMode.cpu);
+          expect(runtime!.gpuLayers, 0);
+        },
+      );
     }
-    expect(params, hasLength(1));
-    expect(params.single.device, ComputeDevice.cpu);
-    expect(params.single.preferredBackend, GpuBackend.cpu);
-    expect(params.single.gpuLayers, 0);
-    expect(
-      params.single.numberOfThreads,
-      defaultLlmConfiguration.numberOfThreads,
-    );
-    await repository.unload();
-    expect(engine.disposals, 1);
+
+    test('Loads the engine with CPU-only parameters', () async {
+      await repository.generate(model, [], onStage: (_) {}).drain<void>();
+
+      expect(params.single.device, ComputeDevice.cpu);
+      expect(params.single.preferredBackend, GpuBackend.cpu);
+      expect(params.single.gpuLayers, 0);
+      expect(
+        params.single.numberOfThreads,
+        defaultLlmConfiguration.numberOfThreads,
+      );
+    });
+
+    test('Reuses the CPU engine across legacy compute requests', () async {
+      for (final mode in [null, LlmComputeMode.gpu, LlmComputeMode.cpu]) {
+        await repository
+            .generate(model, [], onStage: (_) {}, computeMode: mode)
+            .drain<void>();
+      }
+
+      expect(params, hasLength(1));
+    });
+
+    test('Unloading disposes the CPU engine', () async {
+      await repository.generate(model, [], onStage: (_) {}).drain<void>();
+
+      await repository.unload();
+
+      expect(engine.disposals, 1);
+    });
   });
 }
