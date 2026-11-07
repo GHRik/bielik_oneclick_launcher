@@ -40,26 +40,39 @@ class _Llm implements LlmRepository {
 }
 
 void main() {
-  testWidgets('Home opens a CPU chat without an acceleration toggle', (
-    tester,
-  ) async {
-    final llm = _Llm();
-    await tester.pumpWidget(
-      MyApp(
-        chatRepository: InMemoryChatRepository(),
-        modelFilesRepository: InMemoryModelFilesRepository(),
-        llmRepository: llm,
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Akceleracja GPU'), findsNothing);
-    await tester.tap(find.text('Otwórz czat'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Pytanie');
-    await tester.pump();
-    await tester.tap(find.byIcon(Icons.send));
-    await tester.pumpAndSettle();
-    expect(llm.requests, [LlmComputeMode.cpu]);
-    await tester.pumpWidget(const SizedBox.shrink());
+  group('Default compute selection', () {
+    testWidgets('Home does not show an acceleration toggle', (tester) async {
+      final llm = _Llm();
+      await tester.pumpWidget(
+        MyApp(
+          chatRepository: InMemoryChatRepository(),
+          modelFilesRepository: InMemoryModelFilesRepository(),
+          llmRepository: llm,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Akceleracja GPU'), findsNothing);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('Opening chat sends CPU requests by default', (tester) async {
+      final llm = _Llm();
+      await tester.pumpWidget(
+        MyApp(
+          chatRepository: InMemoryChatRepository(),
+          modelFilesRepository: InMemoryModelFilesRepository(),
+          llmRepository: llm,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Otwórz czat'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Pytanie');
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.send));
+      await tester.pumpAndSettle();
+      expect(llm.requests, [LlmComputeMode.cpu]);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
   });
 }
