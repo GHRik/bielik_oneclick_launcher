@@ -8,6 +8,7 @@ Aplikacja Flutter na Androida do pobierania modeli Bielik i uruchamiania ich lok
 [![Integration Tests](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/integration-tests.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/integration-tests.yml)
 [![Architecture](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/architecture.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/architecture.yml)
 [![Android Build](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/android-build.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/android-build.yml)
+[![Release APK](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/build-apk.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/build-apk.yml)
 
 **[Pobierz APK na telefon](https://github.com/GHRik/bielik_oneclick_launcher/releases)**, zainstaluj i uruchom. Bez Fluttera i Android Studio.
 
@@ -65,7 +66,7 @@ APK jest wersją testową `debug` dla telefonów ARM64. Podpis instalacji z GitH
 
 ## Ręczne generowanie APK
 
-Na GitHubie otwórz **Actions → Build Android APK → Run workflow**, wybierz branch i uruchom workflow. Działa wyłącznie na żądanie.
+Na GitHubie otwórz **Actions → Release APK → Run workflow**, wybierz branch i uruchom workflow. Działa wyłącznie na żądanie.
 
 Workflow sprawdza kod i testy, buduje APK z dokładnego commita wybranego brancha i publikuje je jako testowe wydanie w **Releases**. Dołącza sumę SHA-256 oraz plik `BUILD.txt` z identyfikatorem commita. Kopia plików jest też dostępna przez 30 dni jako artefakt uruchomienia. Pliki APK nie trafiają do historii kodu.
 
@@ -154,6 +155,7 @@ Każdy workflow ma osobny status powyżej. Kliknięcie badge'a otwiera jego hist
 | [Integration Tests](.github/workflows/integration-tests.yml) | SQLite, pliki i integracje z `test/integration`; osobny job Java adaptera GPU ze sztucznym sysfs. |
 | [Architecture](.github/workflows/architecture.yml) | Granice warstw i kompletność rejestru UT. |
 | [Android Build](.github/workflows/android-build.yml) | Budowanie APK debug dla ARM64; artefakt dostępny przez 7 dni. |
+| [Release APK](.github/workflows/build-apk.yml) | Ręczna publikacja testowego APK, SHA-256 i `BUILD.txt` w Releases. |
 
 Automatyczne CI działa na pull requestach do `master` i pushach na `master`, tylko gdy zmieniają się źródła aplikacji, testy, zasoby, zależności lub konfiguracja analizy. Zmiany samych README, dokumentacji, strony `site/` lub plików `.github/` nie uruchamiają tych sprawdzeń. Każdy workflow można też uruchomić ręcznie z Actions.
 
