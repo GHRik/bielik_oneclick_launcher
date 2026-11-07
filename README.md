@@ -4,6 +4,7 @@ Aplikacja Flutter na Androida do pobierania modeli Bielik i uruchamiania ich lok
 
 [![Code Quality](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/code-quality.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/code-quality.yml)
 [![Unit Tests](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/unit-tests.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/unit-tests.yml)
+[![Component Tests](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/component-tests.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/component-tests.yml)
 
 **[Pobierz APK na telefon](https://github.com/GHRik/bielik_oneclick_launcher/releases)**, zainstaluj i uruchom. Bez Fluttera i Android Studio.
 
@@ -146,6 +147,7 @@ Każdy workflow ma osobny status powyżej. Kliknięcie badge'a otwiera jego hist
 | --- | --- |
 | [Code Quality](.github/workflows/code-quality.yml) | Formatowanie Dart i analiza statyczna. |
 | [Unit Tests](.github/workflows/unit-tests.yml) | UT klas przez rejestr `test/ut_test.dart`. |
+| [Component Tests](.github/workflows/component-tests.yml) | Widoki i współpraca komponentów z `test/component`. |
 
 Automatyczne CI działa na pull requestach do `master` i pushach na `master`, tylko gdy zmieniają się źródła aplikacji, testy, zasoby, zależności lub konfiguracja analizy. Zmiany samych README, dokumentacji, strony `site/` lub plików `.github/` nie uruchamiają tych sprawdzeń. Każdy workflow można też uruchomić ręcznie z Actions.
 
