@@ -1,9 +1,9 @@
-# Wyniki Android E2E
+# Android E2E output
 
-Każde uruchomienie przez `dart run test/e2e/run_android_e2e.dart` tworzy osobny katalog `<timestamp>_<suite>`. Artefakty są ignorowane przez Git; ten opis pozostaje w repozytorium.
+Run the tests using the [E2E quick start](../../README.md). Each run creates a separate `<run-id>_<suite>` directory here. Generated files are ignored by Git; this guide stays in the repository.
 
 ```text
-<timestamp>_<suite>/
+<run-id>_<suite>/
 ├── report.json
 ├── devices.json
 └── <phase>/
@@ -13,15 +13,17 @@ Każde uruchomienie przez `dart run test/e2e/run_android_e2e.dart` tworzy osobny
     └── screenshots/
 ```
 
-Fazy pełnego zestawu: `download`, `cpu`, `create`, `verify`, `delete`.
+The complete suite has five phases: `download`, `cpu`, `create`, `verify`, and `delete`.
 
-- `report.json`: wynik całości, urządzenie, rewizja kodu i wyniki faz.
-- `devices.json`: urządzenia widoczne w chwili startu.
-- `flutter.log`: wyjście budowania i wykonywania danej fazy.
-- `device-report.json`: pomiary i wynik otrzymany od aplikacji testowej.
-- `logcat.txt`: logi filtrowane po UID aplikacji E2E.
-- `screenshots/`: próba zapisu zrzutu po błędzie scenariusza.
+| Artifact | Format | Contents |
+| --- | --- | --- |
+| `report.json` | JSON | Overall status, device, source revision, phase results, and errors |
+| `devices.json` | JSON | Devices discovered by Flutter at startup |
+| `flutter.log` | Plain text | Build and test output for the phase |
+| `device-report.json` | JSON | Scenario result and measurements returned by the test app |
+| `logcat.txt` | Plain text | Android logs filtered by the E2E app UID |
+| `screenshots/*.png` | PNG | Screenshot attempted after a scenario failure |
 
-Raport ze statusem `blocked` oznacza, że testy nie wystartowały, np. przez brak Androida. Samo zbudowanie APK nie jest wynikiem E2E. Przy błędzie budowania lub awarii procesu raport urządzenia i zrzut mogą być niedostępne.
+An overall `blocked` result means the tests did not start, for example because no Android device was connected. Building an APK alone does not count as an E2E pass. A build failure or process crash may prevent the device report and screenshot from being collected.
 
-Artefakty zawierają rozmowy testowe. Nie używaj prywatnych danych jako pytań E2E.
+Logs and screenshots can contain test conversations. Use synthetic prompts rather than private data.

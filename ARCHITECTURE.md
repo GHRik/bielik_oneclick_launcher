@@ -1,89 +1,111 @@
-# Architektura aplikacji
+# Application architecture
 
-Kod aplikacji znajduje się w `lib/src/`. `lib/main.dart` uruchamia aplikację, a widoczne pliki ustawień są w `lib/configuration/`: `bielik_models.dart` zawiera katalog modeli, `llm_configuration.dart` domyślne parametry LLM i nadpisania według nazwy pliku GGUF. Konfiguracja jest przekazywana przez punkt składania aplikacji; warstwy domeny, danych i widoku nie importują tego katalogu.
+## Layout and dependencies
+
+`lib/main.dart` initializes platform services, selects implementations, and injects dependencies into the application. `lib/src/app.dart` configures the app and passes dependencies to screens. Tests can supply alternative implementations.
 
 ```text
-lib/src/
-├── app.dart
-├── presentation/
-│   ├── pages/
-│   ├── widgets/
-│   ├── controllers/
-│   └── sidebars/
-├── domain/
-│   ├── models/
-│   ├── repositories/
-│   └── services/
-└── data/
-    ├── datasources/
-    └── repositories_impl/
+lib/
+├── main.dart
+├── configuration/
+│   ├── bielik_models.dart        # Model catalog and download metadata
+│   ├── llm_configuration.dart    # Default and per-model LLM profiles
+│   ├── system_prompt.dart       # Initial instruction for Bielik
+│   └── database_configuration.dart
+└── src/
+    ├── app.dart
+    ├── presentation/            # Pages, widgets, controllers, sidebars, formatters
+    ├── domain/                  # Models, repository contracts, business services
+    └── data/                    # Data sources and repository implementations
 ```
 
-## Zależności
+| Layer | Responsibility | Allowed dependencies |
+| --- | --- | --- |
+| Domain | Business rules, models, repository contracts | Pure Dart and domain code; `characters` preserves Unicode title boundaries |
+| Presentation | Screens, widgets, and view state | Domain and presentation code |
+| Data | Storage, downloads, inference, and platform readings | Domain and data code; Flutter foundation/platform services as needed |
+| Application setup | Configuration and dependency injection | Connects the implementations to the app |
 
-- `domain` zawiera modele, kontrakty repozytoriów i serwisy czystego Darta. Nie zależy od Fluttera, widoków ani źródeł danych. Jedyna dodatkowa biblioteka domeny, `characters`, zachowuje poprawne granice znaków Unicode w tytułach.
-- `presentation` zawiera ekrany, widgety, panele boczne i kontrolery stanu UI. Zależy od domeny, ale nie importuje warstwy danych.
-- `data` implementuje kontrakty domeny i dostarcza dane ze źródeł. Nie zależy od widoków.
-- `app.dart` składa aplikację: wybiera implementacje repozytoriów i przekazuje dane do ekranów. Testy mogą wstrzyknąć własne implementacje.
+Domain, data, and presentation do not import `lib/configuration/`. Configuration enters through dependency injection. Data does not depend on UI packages, and presentation does not import data implementations.
 
-## Obecne źródła danych
+## Configuration
 
-`ConfiguredModelCatalogRepository` otrzymuje katalog z `configuration/bielik_models.dart` i udostępnia go przez kontrakt domeny. Dane `PreviewStatisticsRepository` są zachowane do podglądów i testów; produkcja wstrzykuje `LocalStatisticsRepository`.
+`ConfiguredModelCatalogRepository` receives the catalog from `configuration/bielik_models.dart`. Adding a model requires its display information, GGUF URL, filename, exact size, SHA-256, and resource requirements. The runtime must support the model's architecture.
 
-`Conversation` jest modelem domenowym. `ConversationController` przechowuje kontroler biblioteki czatu, szkic wiadomości i stan widoku. `ChatWorkspace` zarządza wyborem i cyklem życia rozmów.
+`configuration/llm_configuration.dart` defines shared defaults and optional entries in `modelLlmConfigurations`, keyed by `ModelFile.name`. Without an override, `llmConfigurationFor` returns the default profile. The initial Bielik instruction is in `configuration/system_prompt.dart`.
 
-`ModelFilesRepository` definiuje pobieranie i usuwanie modeli. `FlutterModelDownloadDataSource` przekazuje transfer do `flutter_downloader`, który zapisuje zadania i wykonuje je na Androidzie przez WorkManager. `main.dart` inicjalizuje plugin przed uruchomieniem widoków. `LocalModelFilesRepository` odczytuje stan zapisanych zadań, mierzy przyrost pliku dla prędkości i ETA oraz weryfikuje rozmiar i SHA-256 przed zmianą nazwy `.part` na docelową. Zamknięcie widoku nie anuluje zadania. Po ponownym wyborze modelu kontroler dołącza do istniejącego zadania, również gdy transfer zakończył się podczas nieobecności aplikacji; weryfikacja odbywa się wtedy po jej otwarciu. Gotowe pliki pozostają w prywatnym katalogu aplikacji. Usuwanie kasuje również powiązane zadania pluginu.
+The settings screen edits a presentation-layer draft and validates it before saving. `LlmSettingsRepository` separates persisted configuration from the UI. Its SQLite implementation saves the complete CPU/generation profile atomically in `settings`. Startup loads the profile, and a successful save replaces the configuration used on the next chat opening. Before the first save, the per-model file configuration applies.
 
-`DeviceResourcesRepository` udostępnia dostępny i całkowity RAM oraz wolne miejsce w bajtach. `LocalDeviceResourcesRepository` korzysta z `DeviceResourcesDataSource` i kanału `bielik/device_resources`. Androidowy `DeviceResourcesChannel` odczytuje `ActivityManager.MemoryInfo` oraz `StatFs` dla katalogu aplikacji, w którym przechowujemy modele; pracuje w kolejce tła. Nie wymaga dodatkowych uprawnień. `DeviceResourcesController` odświeża dane przy otwarciu, wznowieniu aplikacji, powrocie z czatu oraz po pobraniu lub usunięciu modelu. Brak obsługi platformy lub błąd daje brak danych. Implementację dla laptopa można dodać przez ten sam kontrakt, bez zmiany widoku. GB oznacza tutaj miliard bajtów, zgodnie z rozmiarami modeli.
+GPU settings are session-only and disabled at startup.
 
-`ModelRequirements.evaluate` jest wspólną regułą domenową oceniającą RAM i miejsce. Zwraca stany zasobów oraz decyzję `requiresConfirmation`. Widgety tylko wyświetlają wyniki i otwierają okno potwierdzenia.
+## Model downloads and resource checks
 
-## Pomiary statystyk
+`ModelFilesRepository` defines downloading, cancellation, readiness, and deletion. `FlutterModelDownloadDataSource` delegates transfers to `flutter_downloader`, which persists tasks and uses WorkManager on Android. The plugin is initialized before the UI starts.
 
-`SamplingStatisticsRepository` rozszerza kontrakt statystyk o asynchroniczny pomiar. `LocalStatisticsRepository` łączy `StatisticsDataSource` i domenowy rejestr `GenerationMetrics`, utrzymując maksymalnie 61 próbek z ostatnich 60 sekund. `StatisticsController` pobiera dane co sekundę na pierwszym planie, także podczas generowania i przed otwarciem statystyk; zatrzymuje timer w tle i przy usuwaniu kontrolera. Wykresy korzystają z rzeczywistych odstępów czasowych, pokazują przerwy dla brakujących pomiarów i nie wypełniają historii sztucznymi zerami. Historia nie jest zapisywana do SQLite.
+`LocalModelFilesRepository` reads task state, measures file growth for speed and ETA, and verifies the exact size and SHA-256 before renaming a `.part` file to its final name. Closing a screen does not cancel the task. Selecting the model again reconnects to a saved task, including a transfer completed while the app was absent. Verification then runs when the app opens. Files remain in the app's private directory; deleting a model also removes associated download tasks.
 
-Androidowy `DeviceStatisticsReader` działa w kolejce tła istniejącego kanału platformowego. Zwraca PSS procesu (RAM aplikacji), CPU procesu z różnicy liczników czasu (procent łącznej mocy rdzeni), temperaturę baterii i temperaturę CPU, jeśli system na to pozwala. Odmowa dostępu do temperatury CPU daje brak danych, a nie temperaturę baterii pod inną nazwą.
+`DeviceResourcesRepository` exposes total/available RAM and free storage in bytes. `LocalDeviceResourcesRepository` uses `DeviceResourcesDataSource` over the `bielik/device_resources` platform channel. Android's `DeviceResourcesChannel` reads `ActivityManager.MemoryInfo` and `StatFs` for the model storage directory on a background queue, without extra permissions. Unsupported platforms or errors produce unavailable readings.
 
-`GpuStatisticsReader` rozszerza ten sam adapter o temperaturę GPU z `HardwarePropertiesManager` i odczyty `GpuSysfsReader`. Źródła sysfs są tylko odczytywane: Adreno KGSL (`gpu_busy_percentage`, `gpubusy`), liczniki `utilisation` urządzeń GPU/Mali w devfreq i strefy thermal oznaczone jako GPU. Temperatura stref thermal jest przeliczana z milistopni Celsjusza. Nie odczytujemy temperatury baterii jako temperatury GPU i nie wyliczamy obciążenia z częstotliwości zegara. Brak pliku, odmowa dostępu, niepoprawna wartość lub brak sensownego mianownika daje brak danych. Pomiar użycia dotyczy całego GPU, a nie procesu aplikacji. Repozytorium przechowuje obie metryki w tej samej historii, a ekran wyświetla je z danych zamiast dodawać puste karty.
+`DeviceResourcesController` refreshes on opening, app resume, return from chat, and model download/deletion. Another platform can implement the same contract without changing the view. Displayed GB values use one billion bytes, matching model sizes.
 
-Android ogranicza dostęp do [HardwarePropertiesManager](https://developer.android.com/reference/android/os/HardwarePropertiesManager). Formaty liczników są zgodne ze źródłami [KGSL](https://android.googlesource.com/kernel/msm/+/730cf84987cc34f1f0e53cbdd4153a2227563dc7/drivers/gpu/msm/kgsl_pwrctrl.c) i [Mali](https://nest-open-source.googlesource.com/manifest_repos/mali-driver/+/268e43036ceb1097d004fa09786438f2319a2a0e/midgard/r13p0/kernel/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_devfreq.c). Dostępność tych ścieżek zależy od telefonu.
+`ModelRequirements.evaluate` owns the RAM/storage decision and `requiresConfirmation` result. Widgets display those results and show confirmation dialogs.
 
-`LocalLlmRepository` rejestruje czas do pierwszego tekstu od rozpoczęcia żądania LLM, razem z ładowaniem. Liczbę tokenów oraz średnią prędkość tokeny / czas żądania pobiera z końcowego raportu silnika, bez utożsamiania fragmentów tekstu z tokenami. Te dwie metryki opisują ostatnie zakończone żądanie i sumę raportowanych tokenów sesji. Przerwane żądanie bez raportu nie zwiększa licznika.
+## Chat and inference
 
-## Konfiguracja modeli
+`Conversation` is a domain model. `ConversationController` holds the chat library controller, draft input, and view state. `ChatWorkspace` manages conversation selection and lifecycle.
 
-`LlmConfiguration` w domenie jest niemutowalnym zestawem parametrów CPU i generowania. `main.dart` wstrzykuje do `LocalLlmRepository` funkcję `llmConfigurationFor`, która wybiera nadpisanie z `modelLlmConfigurations` lub wartości domyślne. `CpuRuntimeAdapter` zachowuje jawne `ComputeDevice.cpu`, `GpuBackend.cpu` i 0 warstw GPU. Oddzielny `GpuInferenceAdapter` mapuje konfigurację GPU na Vulkan/OpenCL i sprawdza raport backendu oraz warstw przed generowaniem. `ComputeRoutingLlmRepository` ma niezależne instancje silnika dla CPU i GPU; tworzy GPU dopiero na jawne żądanie. Zmiana trybu zwalnia poprzedni model. Błąd GPU zwalnia jego silnik i nie powoduje automatycznego ponowienia na CPU. Nie ma zmian globalnych zmiennych środowiskowych Vulkan. GPU pozostaje ustawieniem bieżącej sesji, domyślnie wyłączonym. APK zawiera backendy CPU, Vulkan i OpenCL; opcjonalna biblioteka OpenCL producenta jest deklarowana w manifeście. Ścieżka GPU jest eksperymentalna i nie została sprawdzona na urządzeniu. Zmiana pliku lub profilu przeładowuje silnik. `LlmRuntimeInfo` przekazuje raport działania do widoku. Formularz pod zębatką przechowuje szkic w prezentacji i waliduje pola przed zapisem. `LlmSettingsRepository` oddziela trwałe ustawienia od UI. Implementacja SQLite zapisuje cały profil atomowo w tabeli `settings`; migracja v1 → v2 zachowuje rozmowy. Composition root odczytuje profil przy starcie, a po udanym zapisie podmienia konfigurację używaną przez silnik. Nowy profil obowiązuje przy kolejnym otwarciu czatu. Brak zapisanego profilu zachowuje konfigurację poszczególnych modeli z plików.
+`AssistantMarkdownMessage` renders assistant replies as selectable Markdown in presentation, including streamed updates. User messages remain literal text. Stored messages and LLM context keep the original Markdown source; rendering does not modify the database. Markdown image references are displayed as text rather than fetched from the network.
 
-## Lokalny LLM w czacie
+`ChatService` owns the send operation: derive a title, persist the user message, invoke the LLM, and periodically save the assistant's partial reply as well as its final text. It serializes writes with draft updates and emits `ChatMessageSaved` / `ChatMessageUpdated` events. It does not know Flutter controllers or the chat UI library.
 
-`LlmRepository` w domenie definiuje strumień odpowiedzi, zatrzymanie i zwolnienie modelu. `LocalLlmRepository` korzysta z `llamadart` / `llama.cpp`, otwierając lokalny GGUF wybrany na ekranie głównym. Jeden model pozostaje w pamięci podczas pracy w czacie. Generowanie domyślnie używa CPU, a po jawnym wyborze osobnej instancji GPU, domyślnie z kontekstem 2048 tokenów i limitem odpowiedzi 512 tokenów. `ChatContextPolicy` w domenie scala kolejne wiadomości tej samej roli i wybiera najnowsze tury mieszczące się w budżecie. Adapter LLM dostarcza liczenie tokenów na podstawie rzeczywistego szablonu modelu. Pełna historia w bazie nie jest przycinana.
+`ChatWorkspace` delegates commands and maps events to the appropriate conversation controller, including after switching conversations. Deleting an active conversation waits for generation to stop. Leaving chat or sending the app to the background stops generation and releases the engine after pending writes finish.
 
-`ChatService` w domenie prowadzi wysłanie: tworzy tytuł, zapisuje użytkownika, uruchamia LLM oraz okresowo i na końcu utrwala odpowiedź. Serializuje zapisy ze szkicami i emituje zdarzenia `ChatMessageSaved` / `ChatMessageUpdated`. Nie zna kontrolerów Fluttera ani biblioteki czatu. `ChatWorkspace` przekazuje polecenia i mapuje zdarzenia na stan widoku oraz właściwy `ConversationController`, także po przełączeniu rozmowy. Usunięcie aktywnej rozmowy czeka na zatrzymanie generowania. Wyjście z czatu lub przejście do tła zatrzymuje generowanie i zwalnia silnik po zakończeniu zapisu.
+`LlmRepository` defines streamed replies, stopping, and model release. `LocalLlmRepository` opens the locally downloaded GGUF using `llamadart` / `llama.cpp`. The selected model is loaded on the first request and reused while working in chat. A different model file or profile reloads the engine.
 
-## SQLite — trwała historia rozmów
+`ChatContextPolicy` merges consecutive messages with the same role and selects the newest turns fitting the context budget. The runtime supplies token counts using the actual model chat template. Defaults are a 2048-token context and a 512-token response limit. The complete stored history is preserved.
 
-`AppDatabase` w `data/datasources/local/` otwiera prywatny plik `bielik.db` przy ładowaniu historii. Interfejs może pokazać błąd otwarcia bazy i pozwolić ponowić próbę. Schemat w wersji 2 zawiera tabelę ustawień i tworzy tabele `conversations` i `messages`, indeks wiadomości oraz klucz obcy z `ON DELETE CASCADE`. Rozmowa ma też miejsce na szkic wiadomości. Czas jest przechowywany jako liczba milisekund od epoki UTC.
+### CPU and experimental GPU
 
-Baza jest tworzona przy pierwszym otwarciu; kolejne otwarcia zachowują dane. Zmiany schematu będą wymagać zwiększenia wersji i dodania migracji.
+`CpuRuntimeAdapter` explicitly selects `ComputeDevice.cpu`, `GpuBackend.cpu`, and zero GPU layers. `GpuInferenceAdapter` separately maps GPU settings to Vulkan/OpenCL and checks the reported backend and offloaded layers before generation.
 
-Kontrakt `ChatRepository` jest w domenie. `SqliteChatRepository` mapuje rekordy SQLite na modele domenowe, a `SqliteChatDataSource` wykonuje zapytania. `main.dart` wstrzykuje repozytorium do aplikacji; prezentacja nie importuje SQLite.
+`ComputeRoutingLlmRepository` keeps separate CPU and GPU engine instances. GPU is created only on explicit selection; switching mode releases the previous model. A GPU error releases its engine and is surfaced without silently retrying on CPU. No global Vulkan environment variables are changed.
 
-`ChatWorkspace` ładuje rozmowy, wiadomości i szkice z bazy. Przy pustej historii tworzy pierwszą rozmowę. Po restarcie domyślnie otwiera najnowszą utworzoną rozmowę; pozostałe są dostępne na liście.
+Android bundles CPU, Vulkan, and OpenCL backends. The manifest declares the optional vendor OpenCL library. GPU inference is experimental and has not been validated on a device with this implementation; earlier attempts produced corrupted text. `LlmRuntimeInfo` reports the active runtime to the view. Hardware GPU statistics are independent of inference routing.
 
-`ChatService` jawnie przekazuje `clearDraft: true` dla wiadomości użytkownika i `false` dla asystenta. SQLite nie rozpoznaje autora ani nie podejmuje tej decyzji. Zapis wiadomości, aktualizacja tytułu i ewentualne wyczyszczenie szkicu pozostają jedną transakcją. UI pokazuje wiadomość dopiero po zapisie. Identyfikatory wiadomości są generowane w SQLite, więc nie resetują się po uruchomieniu aplikacji.
+## Statistics
 
-Zmiany szkiców i operacje rozmów są kolejkowane w kolejności wykonania. Nowszy szkic nie jest czyszczony przez kończący się zapis wcześniejszej wiadomości. Błędy odczytu i zapisu są pokazywane w czacie; nieudane wysłanie pozostawia tekst w polu wpisywania.
+`SamplingStatisticsRepository` extends the statistics contract with asynchronous sampling. `LocalStatisticsRepository` combines `StatisticsDataSource` with domain-level `GenerationMetrics`, retaining at most 61 samples from the last 60 seconds. `PreviewStatisticsRepository` remains available for previews and tests.
 
-Usunięcie rozmowy jest trwałe, wraz z jej wiadomościami. Po usunięciu ostatniej rozmowy tworzona jest nowa. Nie zmieniono wersji schematu ani nie usunięto istniejących danych.
+`StatisticsController` samples once per second in the foreground, including during generation and before the statistics screen opens. It stops its timer in the background and on disposal. Charts use actual timestamps, show gaps for unavailable readings, and do not invent zero-valued history. Samples are held in memory rather than SQLite.
 
-`lib/configuration/database_configuration.dart` zawiera jedną funkcję `createAppDatabase`, która wybiera gotową `DatabaseFactory`: Android/iOS/macOS korzystają z `sqflite`, a Windows/Linux z `sqflite_common_ffi`. Fabryka jest wstrzykiwana bezpośrednio do `AppDatabase`, bez własnych klas adapterów i bez podmieniania globalnej fabryki. Desktop zapisuje bazę w katalogu wsparcia aplikacji. Lokalizacja bazy na Androidzie, schemat i migracje pozostają zachowane.
+Android's `DeviceStatisticsReader` runs on the platform channel's background queue. It reads process PSS for app RAM, CPU utilization from process time deltas as a percentage of combined core capacity, battery temperature, and CPU temperature when accessible. A denied CPU temperature reading remains unavailable; battery temperature is not substituted.
 
-`AppDatabase` zarządza schematem, migracjami, współdzieleniem połączenia i zamknięciem. Testy korzystają z fabryki FFI i tymczasowych plików SQLite; sprawdzają migracje, trwałość rozmów i ustawień, współdzielenie połączenia oraz ponowienie po błędzie otwarcia.
+`GpuStatisticsReader` adds GPU temperature from `HardwarePropertiesManager` and read-only `GpuSysfsReader` sources: Adreno KGSL counters, GPU/Mali devfreq utilization, and GPU thermal zones. Thermal zone values are converted from millidegrees Celsius. Invalid counters, missing files, or denied access produce unavailable data. Utilization describes the whole GPU, not only the app; clock frequency is not treated as utilization.
 
-Zmiana sterownika SQLite nie wymaga nowych repozytoriów. Zastąpienie SQLite inną bazą, np. PostgreSQL, wymaga implementacji kontraktów `ChatRepository` i `LlmSettingsRepository` oraz migracji danych. Sam wybór fabryki SQLite nie oznacza ukończenia portu całej aplikacji na desktop.
+Availability depends on device permissions and drivers. References: [HardwarePropertiesManager](https://developer.android.com/reference/android/os/HardwarePropertiesManager), [KGSL counter implementation](https://android.googlesource.com/kernel/msm/+/730cf84987cc34f1f0e53cbdd4153a2227563dc7/drivers/gpu/msm/kgsl_pwrctrl.c), and [Mali devfreq implementation](https://nest-open-source.googlesource.com/manifest_repos/mali-driver/+/268e43036ceb1097d004fa09786438f2319a2a0e/midgard/r13p0/kernel/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_devfreq.c).
 
-## Weryfikacja
+`GenerationMetrics` records time to first text from request start, including loading. Token counts and average token speed come from the engine's final usage report; streamed text chunks are not counted as tokens. Interrupted requests without a usage report do not increase the token total.
 
-`flutter analyze --no-pub` oraz `flutter test --no-pub`.
+## SQLite persistence
 
-Test architektury pilnuje kierunków zależności, jawnej listy bibliotek domeny i zakazu bibliotek UI w `data`. Serwis rozmowy, polityka kontekstu i ocena wymagań mają testy niezależne od widgetów. Test wstrzykiwania repozytoriów sprawdza, czy ekrany faktycznie korzystają z przekazanych implementacji.
+`AppDatabase` manages the private `bielik.db` file, shared opening, schema creation, migrations, and closing. Schema version 2 includes `conversations`, `messages`, a message index, and `settings`. Messages reference conversations with `ON DELETE CASCADE`. Conversations store drafts; timestamps use UTC epoch milliseconds. The v1 → v2 migration preserves existing chats, including databases where the settings table already exists.
+
+`ChatRepository` is the domain contract. `SqliteChatRepository` maps records to domain objects; `SqliteChatDataSource` executes queries. Presentation does not import SQLite.
+
+On startup, `ChatWorkspace` restores conversations, messages, and drafts. An empty database gets an initial conversation. After restart, the most recently created conversation is selected; others remain in the sidebar.
+
+`ChatService` explicitly requests `clearDraft: true` for user messages and `false` for assistant messages. The data source does not infer business rules from authors. Inserting a message, updating the title, and optionally clearing the draft form one transaction. Messages appear after persistence succeeds; SQLite-generated IDs survive app restarts.
+
+Draft changes and chat operations are queued in order. An older send does not clear a newer draft. Read/write failures are exposed in chat, and a failed send leaves the input text available. Deleting a conversation permanently removes its messages; deleting the last conversation creates a new empty one.
+
+### Platform database factory
+
+`configuration/database_configuration.dart` selects a ready-made `DatabaseFactory`: `sqflite` on Android/iOS/macOS and `sqflite_common_ffi` on Windows/Linux. The factory is injected directly into `AppDatabase`, without custom database adapters or a global factory override. Desktop uses the application support directory; the Android database location is preserved.
+
+Switching SQLite drivers does not require new repositories. Replacing SQLite with a different database requires implementations of `ChatRepository` and `LlmSettingsRepository`, plus data migration. Database portability alone does not complete an iOS or desktop port.
+
+## Verification
+
+See [test/README.md](test/README.md) for commands, test levels, and directory conventions.
+
+Architecture tests enforce layer dependencies, allowed domain libraries, and the absence of UI dependencies in data. Unit tests cover individual classes with private fakes; component tests cover collaborators and views; integration tests use temporary SQLite files and fake inference/download backends. Manual [Android E2E tests](test/e2e/README.md) verify real downloads, CPU generation, and persistence across process restarts.

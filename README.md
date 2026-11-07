@@ -1,7 +1,3 @@
-# Bielik OneClick Launcher
-
-Aplikacja Flutter na Androida do pobierania modeli Bielik i uruchamiania ich lokalnie na telefonie. Lokalny czat generuje odpowiedzi fragmentami i zapisuje rozmowy w SQLite.
-
 [![Code Quality](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/code-quality.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/code-quality.yml)
 [![Unit Tests](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/unit-tests.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/unit-tests.yml)
 [![Component Tests](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/component-tests.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/component-tests.yml)
@@ -10,164 +6,129 @@ Aplikacja Flutter na Androida do pobierania modeli Bielik i uruchamiania ich lok
 [![Android Build](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/android-build.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/android-build.yml)
 [![Release APK](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/build-apk.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/build-apk.yml)
 
-**[Pobierz APK na telefon](https://github.com/GHRik/bielik_oneclick_launcher/releases)**, zainstaluj i uruchom. Bez Fluttera i Android Studio.
+# Bielik OneClick Launcher
 
-## Co już działa
+A one-click Android launcher for running Bielik language models locally on your phone, with chat, live statistics, and configurable model parameters, including experimental GPU acceleration.
 
-- Wybór Bielika 1.5B lub 4.5B v3.0 Instruct w formacie GGUF Q8.
-- Pobieranie przez `flutter_downloader`, postęp, prędkość, ETA i anulowanie. Odczyt zapisanych zadań po ponownym otwarciu aplikacji.
-- Sprawdzanie rozmiaru i SHA-256 przed oznaczeniem modelu jako pobrany; usuwanie lokalnych plików modeli.
-- Tworzenie i usuwanie rozmów z potwierdzeniem. Wiadomości i szkice pozostają w SQLite po zamknięciu aplikacji.
-- Przybliżony rozmiar treści każdej rozmowy na liście.
-- Odpowiedzi LLM w czacie przez `llamadart` / `llama.cpp`: strumieniowanie, historia jako kontekst i zatrzymywanie generowania.
-- Wybrany na ekranie głównym model jest ładowany przy pierwszej wiadomości. Wyjście z czatu lub przejście aplikacji do tła zatrzymuje generowanie i zwalnia model.
-- Częściowa odpowiedź jest zapisywana także po zatrzymaniu generowania.
+- Download and manage Bielik 1.5B and 4.5B GGUF models inside the app.
+- Chat with streamed Markdown replies, including bold text, lists, and code; conversations and message drafts are saved in SQLite.
+- View resource usage, available device temperatures, and model generation statistics.
+- Adjust CPU threads, context size, response length, and sampling parameters.
+- Experiment with GPU acceleration through a separate Vulkan/OpenCL adapter.
 
-RAM i wolne miejsce są odczytywane z Androida i porównywane z wymaganiami modelu. Statystyki zbierają historię ostatnich 60 sekund: RAM i CPU aplikacji, użycie całego GPU telefonu, temperatury CPU/GPU/baterii dostępne w systemie oraz rzeczywiste metryki LLM. Odczyty GPU zależą od sterownika i uprawnień Androida; brak dostępu jest pokazywany jako „Brak danych”. Prędkość i liczba tokenów aktualizują się po raporcie silnika na końcu odpowiedzi. Temperatura CPU może być niedostępna; temperatura baterii jest pokazywana osobno. Pomiary pozostają tylko w pamięci bieżącej sesji.
+CPU is the default. GPU inference is experimental and has not been validated on a device with this implementation; earlier attempts produced corrupted text. GPU settings apply only to the current app session. Hardware statistics depend on what the device exposes.
 
-## Archiwalny etap: jedna odpowiedź
+## Model attribution
 
-Integracja `llamadart` / `llama.cpp` została sprawdzona na fizycznym telefonie CPH2747 z Androidem 16 (ARM64). Próba korzysta z CPU, kontekstu 512 tokenów i limitu odpowiedzi 64 tokenów.
+Bielik models are developed by **SpeakLeash (Spichlerz)** and **ACK Cyfronet AGH**. This repository provides an independent launcher, not the models themselves. Rights to the models remain with their respective authors and rights holders; use is subject to each model's license and terms.
 
-Pytanie:
+Official model cards and licenses: [Bielik 1.5B v3.0 Instruct GGUF](https://huggingface.co/speakleash/Bielik-1.5B-v3.0-Instruct-GGUF) and [Bielik 4.5B v3.0 Instruct GGUF](https://huggingface.co/speakleash/Bielik-4.5B-v3.0-Instruct-GGUF).
 
-> Odpowiedz jednym krótkim zdaniem po polsku: czym jest sztuczna inteligencja?
+## Download and install
 
-Uzyskana odpowiedź:
+1. Open [Releases](https://github.com/GHRik/bielik_oneclick_launcher/releases) and download a `bielik-arm64-….apk` from the release's **Assets**.
+2. Install the APK on your Android phone. Allow installation from your browser or file manager if prompted.
+3. Open the app, select and download a model, then open the chat.
 
-> Sztuczna inteligencja to dziedzina nauki zajmująca się tworzeniem maszyn i systemów, które mogą wykonywać zadania wymagające inteligencji ludzkiej.
+No Flutter or Android Studio installation is needed. Models are downloaded separately inside the app: approximately 1.7 GB for 1.5B and 5.06 GB for 4.5B. Running a model also requires sufficient RAM.
 
-Branch **`Bielik1-5-one-generation-test-done`** zachowuje ten etap razem z dokumentacją. Aby do niego wrócić:
+The APK is currently a debug build for ARM64 phones. A stable signing key for updates is still planned; CI builds may have different signatures.
 
-```sh
-git fetch origin
-git switch Bielik1-5-one-generation-test-done
-```
+## Adding models
 
-Powrót do dalszego rozwoju:
+The app currently offers these models:
 
-```sh
-git switch master
-```
+| Model | Download | Required free RAM |
+| --- | --- | --- |
+| Bielik 1.5B v3.0 Instruct · Q8_0 | About 1.7 GB | 4 GB |
+| Bielik 4.5B v3.0 Instruct · Q8_0 | About 5.06 GB | 8 GB |
 
-## Instalacja na telefonie
+RAM requirements are estimates and depend on the context and runtime settings.
 
-Wystarczy pobrać APK na telefon z Androidem, zainstalować je i otworzyć aplikację. Flutter i Android Studio nie są potrzebne.
+To extend the dropdown, edit **[lib/configuration/bielik_models.dart](lib/configuration/bielik_models.dart)** and add another `BielikModel` to `bielikModels`. Copy an existing entry as a template and replace:
 
-1. Otwórz [wydania z APK](https://github.com/GHRik/bielik_oneclick_launcher/releases).
-2. W wybranym wydaniu rozwiń **Assets** i pobierz plik `bielik-arm64-….apk`.
-3. Otwórz plik na telefonie. Jeśli Android o to poprosi, zezwól przeglądarce lub menedżerowi plików na instalację aplikacji.
-4. Uruchom Bielika, wybierz **Bielik 1.5B v3.0 · Q8** i pobierz model.
-5. Naciśnij **Otwórz czat** i wyślij wiadomość. Przycisk **Zatrzymaj** kończy bieżącą odpowiedź.
+| Field | Value to provide |
+| --- | --- |
+| `name` | Display name in the model selector |
+| `file.name` | Unique local GGUF filename |
+| `file.url` | Direct HTTPS download URL for the GGUF; use a fixed repository revision for stable metadata |
+| `file.sizeBytes` / `file.sha256` | Exact byte size and SHA-256 of that file |
+| `downloadSizeMb` / `diskSpace` | Download size in decimal MB and storage description |
+| `requiredFreeRamGb` / `ram` | Numeric free RAM threshold in decimal GB and a readable estimate |
 
-Czat używa kontekstu 2048 tokenów i limitu odpowiedzi 512 tokenów. Do modelu trafia najnowsza historia mieszcząca się w tym limicie; pełna historia pozostaje w SQLite. Starsze wydania APK, w tym branch archiwalny, zachowują ekran próby zamiast pełnego czatu.
-
-APK jest wersją testową `debug` dla telefonów ARM64. Podpis instalacji z GitHub Actions może różnić się od lokalnej wersji developerskiej i między buildami CI; stałe podpisywanie aktualizacji jest kolejnym krokiem.
-
-## Ręczne generowanie APK
-
-Na GitHubie otwórz **Actions → Release APK → Run workflow**, wybierz branch i uruchom workflow. Działa wyłącznie na żądanie.
-
-Workflow sprawdza kod i testy, buduje APK z dokładnego commita wybranego brancha i publikuje je jako testowe wydanie w **Releases**. Dołącza sumę SHA-256 oraz plik `BUILD.txt` z identyfikatorem commita. Kopia plików jest też dostępna przez 30 dni jako artefakt uruchomienia. Pliki APK nie trafiają do historii kodu.
-
-Konfiguracja: [.github/workflows/build-apk.yml](.github/workflows/build-apk.yml). Używana wersja Fluttera: **3.47.9**.
-
-## Uruchomienie ze źródeł
-
-Dla programistów: potrzebny jest Flutter z Dartem zgodnym z `pubspec.yaml` (`^3.13.7`), Android SDK i telefon z Androidem.
-
-```sh
-flutter pub get
-flutter devices
-flutter run -d <identyfikator-telefonu>
-```
-
-Pliki modeli pobiera użytkownik podczas działania aplikacji — nie są dołączone do APK. Wariant 1.5B zajmuje około 1,7 GB, a 4.5B około 5,06 GB; pamięć potrzebna do uruchomienia jest większa od samego pliku. Dotychczasowy test generowania dotyczy wyłącznie wariantu 1.5B.
-
-## Modele i ustawienia LLM
-
-Pliki edytowane przy dodawaniu modeli są w `lib/configuration/`, obok `main.dart`:
-
-- [bielik_models.dart](lib/configuration/bielik_models.dart) — lista modeli w interfejsie: nazwa, adres GGUF, nazwa pliku, dokładny rozmiar w bajtach, SHA-256 oraz wymagania RAM i miejsca.
-- [llm_configuration.dart](lib/configuration/llm_configuration.dart) — wspólne ustawienia silnika: wątki CPU, kontekst, limit odpowiedzi, batch, temperatura i parametry losowania.
-
-Aby dodać model, dopisz `BielikModel` do `bielikModels`, z własną nazwą pliku GGUF i jego prawidłowymi metadanymi. Model musi być obsługiwany przez używany silnik llama.cpp. Lista na ekranie głównym korzysta bezpośrednio z tego katalogu.
-
-Jeśli model wymaga innych parametrów, dodaj wpis do `modelLlmConfigurations` w pliku konfiguracji LLM. Kluczem jest dokładna wartość `ModelFile.name`, np.:
+For example, an entry has this shape; replace every example value with the actual model metadata:
 
 ```dart
-final modelLlmConfigurations = <String, LlmConfiguration>{
-  'Bielik-4.5B-v3.0-Instruct.Q8_0.gguf':
-      defaultLlmConfiguration.copyWith(numberOfThreads: 4, contextSize: 2048),
-};
+BielikModel(
+  name: 'My Bielik · Q8',
+  file: ModelFile(
+    name: 'my-bielik.Q8_0.gguf',
+    url: 'https://huggingface.co/<owner>/<repo>/resolve/<commit>/<file>.gguf',
+    sizeBytes: 1234567890,
+    sha256: '<exact 64-character SHA-256>',
+  ),
+  diskSpace: 'about 1.24 GB',
+  downloadSizeMb: 1234.57,
+  ram: 'at least 4 GB of free RAM',
+  requiredFreeRamGb: 4,
+),
 ```
 
-Brak wpisu oznacza użycie `defaultLlmConfiguration`. Domyślna ścieżka CPU używa 4 wątków, kontekstu 2048 i odpowiedzi do 512 tokenów. Eksperymentalna akceleracja ma osobny adapter GPU z wyborem Vulkan/OpenCL, limitem warstw, mikropartią i Flash Attention. GPU jest wyłączone po każdym restarcie aplikacji; jego ustawienia działają tylko w bieżącej sesji po zapisaniu formularza. CPU oraz GPU mają osobne instancje silnika, a zmiana trybu zwalnia poprzednią. Błąd GPU nie uruchamia automatycznej próby CPU. Ta integracja GPU nie została zweryfikowana na telefonie; wcześniejsze próby dawały błędny tekst. Statystyki GPU są niezależnymi odczytami telefonu.
+Use a GGUF architecture supported by the bundled `llamadart` / `llama.cpp` runtime. An arbitrary GGUF file is not guaranteed to work. Incorrect size or SHA-256 prevents the download from being accepted.
 
-Zębatka na ekranie głównym otwiera konfigurację LLM. Przycisk „Zapisz” sprawdza wartości i zapisuje wspólne ustawienia CPU oraz generowania w SQLite. Obowiązują przy kolejnym otwarciu czatu i pozostają po restarcie aplikacji. Powrót bez zapisu odrzuca edycję. Zapisany profil ma pierwszeństwo przed konfiguracją z plików; przed pierwszym zapisem działają profile z `lib/configuration/`.
+Rebuild the APK using the [quick start](#quick-start-from-source). The new entry appears automatically and the user downloads its weights inside the app. This changes the catalog in source code; installed APKs do not have a custom-model import screen.
 
-## Kolejne plany
+A catalog entry uses the shared model settings. Only if it needs different defaults, add an optional filename-keyed override in [llm_configuration.dart](lib/configuration/llm_configuration.dart). A profile saved in the app's settings takes precedence over file defaults.
 
-1. Sprawdzić generowanie dla Bielika 4.5B i dobrać parametry do możliwości telefonu.
-2. Porównać wydajność CPU i opcjonalnej akceleracji GPU na rzeczywistych urządzeniach.
-3. Rozszerzyć testy pobierania i pracy LLM na różnych urządzeniach.
-4. Dodać stałe podpisywanie APK do wygodnych aktualizacji.
-
-## Struktura projektu
+## Project layout
 
 ```text
 lib/
-├── main.dart                     # Inicjalizacja i wstrzykiwanie repozytoriów
-├── configuration/
-│   ├── bielik_models.dart         # Katalog modeli do pobrania
-│   └── llm_configuration.dart     # Domyślne i indywidualne parametry LLM
+├── main.dart              # Startup and dependency injection
+├── configuration/         # Model catalog, LLM defaults, system prompt, database setup
 └── src/
-    ├── app.dart                  # Konfiguracja aplikacji
-    ├── presentation/
-    │   ├── pages/                # Ekrany: główny, czat, statystyki
-    │   ├── controllers/          # Stan widoków
-    │   ├── widgets/              # Elementy interfejsu
-    │   ├── sidebars/             # Lista rozmów i jej elementy
-    │   └── formatters/           # Formatowanie danych do wyświetlenia
-    ├── domain/
-    │   ├── models/               # Czyste modele Dart
-    │   ├── repositories/         # Kontrakty danych i operacji
-    │   └── services/             # Wysyłanie, zapis odpowiedzi i polityka kontekstu
-    └── data/
-        ├── datasources/          # SQLite, pliki, downloader, dane przykładowe
-        └── repositories_impl/    # Implementacje kontraktów, w tym silnik LLM
+    ├── app.dart           # Application setup and screen dependencies
+    ├── presentation/      # Pages, widgets, state controllers, sidebars, formatters
+    ├── domain/            # Models, repository contracts, business services
+    └── data/              # Data sources, repository implementations, runtime adapters
 
-test/                             # Testy logiki, SQLite, widoków i architektury
+android/                   # Android host, resource/statistics channels, build setup
+test/                      # Component, integration, architecture, and manual E2E tests
+site/                      # Polish GitHub Pages landing page
+.github/workflows/         # Separate CI checks, APK releases, Pages deployment
 ```
 
-Szczegóły zależności warstw i zapisu rozmów: [ARCHITECTURE.md](ARCHITECTURE.md).
-Podział testów, zakres funkcjonalności i polecenia uruchomienia: [test/README.md](test/README.md).
+Unit tests live in `ut/` directories beside their production classes under `lib/`. See [testing](test/README.md) and [architecture](ARCHITECTURE.md) for details.
 
-## CI/CD
+## Quick start from source
 
-Każdy workflow ma osobny status powyżej. Kliknięcie badge'a otwiera jego historię uruchomień.
-
-| Workflow | Zakres |
-| --- | --- |
-| [Code Quality](.github/workflows/code-quality.yml) | Formatowanie Dart i analiza statyczna. |
-| [Unit Tests](.github/workflows/unit-tests.yml) | UT klas przez rejestr `test/ut_test.dart`. |
-| [Component Tests](.github/workflows/component-tests.yml) | Widoki i współpraca komponentów z `test/component`. |
-| [Integration Tests](.github/workflows/integration-tests.yml) | SQLite, pliki i integracje z `test/integration`; osobny job Java adaptera GPU ze sztucznym sysfs. |
-| [Architecture](.github/workflows/architecture.yml) | Granice warstw i kompletność rejestru UT. |
-| [Android Build](.github/workflows/android-build.yml) | Budowanie APK debug dla ARM64; artefakt dostępny przez 7 dni. |
-| [Release APK](.github/workflows/build-apk.yml) | Ręczna publikacja testowego APK, SHA-256 i `BUILD.txt` w Releases. |
-
-Automatyczne CI działa na pull requestach do `master` i pushach na `master`, tylko gdy zmieniają się źródła aplikacji, testy, zasoby, zależności lub konfiguracja analizy. Zmiany samych README, dokumentacji, strony `site/` lub plików `.github/` nie uruchamiają tych sprawdzeń. Każdy workflow można też uruchomić ręcznie z Actions.
-
-Raporty testów JSON i logi są dostępne przez 14 dni w artefaktach danego uruchomienia. E2E Androida pozostają ręczne i nie są wykonywane przez GitHub Actions. Osobny workflow Pages obsługuje publikację strony.
-
-Workflowów pomijanych przez filtry ścieżek nie należy ustawiać jako bezwarunkowo wymaganych sprawdzeń: PR zmieniający samą dokumentację mógłby czekać na ich wynik bez końca. Szczegóły: [GitHub — pomijane workflowy](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/skip-workflow-runs).
-
-## Weryfikacja lokalna
+Use Flutter **3.47.9** with Dart **3.13.7**, Android SDK, and an Android device with USB debugging enabled.
 
 ```sh
-dart format --output=none --set-exit-if-changed lib test
-flutter analyze --no-pub
-flutter test --no-pub
+git clone https://github.com/GHRik/bielik_oneclick_launcher.git
+cd bielik_oneclick_launcher
+flutter pub get
+flutter devices
+flutter run -d <android-device-id>
+```
+
+To build an ARM64 APK locally:
+
+```sh
 flutter build apk --debug --no-pub --target-platform android-arm64
 ```
+
+The APK is written to `build/app/outputs/flutter-apk/app-debug.apk`. Model files are not bundled with it.
+
+## Checks and releases
+
+The badges above link to separate workflows for code quality, unit tests, component tests, integration tests, architecture, Android builds, and APK releases.
+
+Automatic checks run on pull requests to `master` and pushes to `master` when application code, tests, assets, dependencies, or analysis configuration change. Documentation-only and `.github/`-only changes do not trigger these checks. E2E tests remain manual.
+
+To publish a downloadable test APK, open **Actions → Release APK → Run workflow** and select a branch. The workflow publishes the APK, SHA-256 checksum, and source commit details to Releases.
+
+- [Test quick start and directory guide](test/README.md)
+- [Manual Android E2E tests](test/e2e/README.md)
+- [Architecture and configuration](ARCHITECTURE.md)
+- [Polish landing page maintenance](site/README.md)

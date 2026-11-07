@@ -1,66 +1,73 @@
-# Android end-to-end
+# Android end-to-end tests
 
-Trzy wykonywalne scenariusze z rzeczywistym SQLite, plikami, `flutter_downloader` i silnikiem CPU. Nie korzystają z atrap repozytoriów ani modelu. Weryfikacja na urządzeniu jest oddzielna od analizy kodu i zbudowania APK.
+## Quick start
 
-## Izolacja
-
-Runner zawsze buduje aplikację z `BIELIK_E2E=true`. Gradle nadaje jej osobny identyfikator `bielik.ai.bielik_oneclick_launcher.e2e`. Test dodatkowo sprawdza ścieżkę prywatnego katalogu aplikacji przed otwarciem bazy i downloadera. Zwykła aplikacja zachowuje dotychczasowy identyfikator i dane.
-
-Używany jest pierwszy model z katalogu aplikacji: Bielik 1.5B Q8, około 1,7 GB. Potrzebne są sieć, miejsce na plik tymczasowy i RAM do uruchomienia modelu. Profil E2E używa CPU, kontekstu 512, maksymalnie 32 tokenów odpowiedzi i dwóch wątków. Odpowiedź musi być niepusta i widoczna w UI; nie wymagamy identycznej treści.
-
-## Scenariusze
-
-| Plik | Sprawdzane zachowanie |
-| --- | --- |
-| `android/model_lifecycle_scenario.dart` | Pobranie przez UI, potwierdzenie wymagań, rzeczywisty transfer, gotowość, niezależne sprawdzenie rozmiaru i SHA; później usunięcie przez UI oraz brak pliku, części i zadania |
-| `android/cpu_generation_scenario.dart` | Nowa rozmowa przez UI, rzeczywista odpowiedź CPU ze streama, widoczny tekst i zapis odpowiedzi w SQLite |
-| `android/chat_persistence_scenario.dart` | Wysłanie pytania, odpowiedź i szkic; ponowny start w innym procesie, odtworzenie tej samej rozmowy i tekstów; anulowanie usunięcia oraz potwierdzone usunięcie |
-
-Pełny przebieg składa się z pięciu faz: `download → cpu → create → verify → delete`. Model jest pobierany raz i współdzielony przez fazy, a na końcu usuwany. Po każdej fazie runner wykonuje `adb shell am force-stop` wyłącznie dla aplikacji E2E. Faza `verify` sprawdza również, czy PID różni się od zapisanego przed restartem.
-
-## Uruchamianie
-
-Z głównego katalogu projektu, z Flutter SDK i ADB:
+From the repository root, with Flutter 3.47.9, ADB on PATH, and an Android device connected with USB debugging enabled:
 
 ```sh
 flutter pub get
+flutter devices
 dart run test/e2e/run_android_e2e.dart --device <android-serial> --scenario all
 ```
 
-Dostępne zestawy: `all`, `model`, `cpu`, `chat`. Każdy przygotowuje model przez rzeczywiste pobranie i kończy jego usunięciem. Można pominąć `--device`, jeżeli Flutter widzi dokładnie jednego Androida.
+Use an ARM64 Android phone capable of running Bielik 1.5B. The tests need network access, storage for a roughly 1.7 GB model and its temporary download, and enough RAM for inference. The CPU test profile uses a 512-token context, at most 32 response tokens, and two threads.
 
-Jeżeli ADB lub Flutter nie są dostępne w PATH:
+You can omit `--device` when exactly one supported Android device is connected. To select tools outside PATH:
 
 ```sh
 dart run test/e2e/run_android_e2e.dart --scenario all --adb <path-to-adb> --flutter <path-to-flutter>
 ```
 
-Runner używa `flutter drive --keep-app-running` z jawnym celem i hostowym driverem. Flaga zapobiega domyślnemu odinstalowaniu aplikacji przez Flutter Driver; proces zatrzymuje runner, zachowując bazę i pliki pomiędzy fazami. Nie uruchamiaj osobno faz z ręcznie zmienianym identyfikatorem aplikacji. Pliki `*_scenario.dart` nie są wykrywane przez zwykłe `flutter test`, więc lokalne UT i workflow APK pozostają oddzielne.
+| Suite | Phases |
+| --- | --- |
+| `all` | download → cpu → create → verify → delete |
+| `model` | download → delete |
+| `cpu` | download → cpu → delete |
+| `chat` | download → create → verify → delete |
 
-Uruchomienie buduje i instaluje oddzielny APK E2E. Model, baza i rozmowy testowe należą do aplikacji E2E; nie wykonujemy `pm clear`, odinstalowania ani czyszczenia danych zwykłej aplikacji.
+Every suite downloads the model through the app and removes it at the end of a successful run. These tests are manual; neither ordinary `flutter test` nor GitHub Actions runs them.
 
-## Wyniki
+## What these tests verify
 
-Artefakty trafiają do [output/android](output/android/README.md):
+These scenarios exercise user flows with real SQLite, files, `flutter_downloader`, and the CPU inference engine. They check behavior that fakes and a successful APK build cannot establish.
+
+| Scenario | Checks |
+| --- | --- |
+| [Model lifecycle](android/model_lifecycle_scenario.dart) | Download through the UI, confirm resource warnings when shown, verify file size and SHA-256, then delete the model and its associated task |
+| [CPU generation](android/cpu_generation_scenario.dart) | Create a conversation, send a message, display a real streamed reply, and persist the response |
+| [Chat persistence](android/chat_persistence_scenario.dart) | Save messages and a draft, restore them in a new Android process, cancel deletion, then confirm deletion |
+
+The reply must be nonempty and visible; it does not need to match a fixed sentence.
+
+## Isolation and process restart
+
+The runner builds with `BIELIK_E2E=true`, which selects the separate application ID `bielik.ai.bielik_oneclick_launcher.e2e`. Before opening the database or downloader, the test verifies that it is inside this app's private directory. The regular app's data is preserved.
+
+The runner uses `flutter drive --keep-app-running` to prevent Flutter Driver from uninstalling the app between phases. After each phase, it force-stops only the E2E app. The persistence scenario checks that verification runs with a different process ID and restores the original data. Run complete suites through the host runner rather than invoking individual phases manually.
+
+## Output
+
+The runner prints the artifact directory and final status. Each run creates:
 
 ```text
-<run-id>_<suite>/
-├── report.json
-├── devices.json
-├── download/
-│   ├── flutter.log
-│   ├── logcat.txt
-│   └── device-report.json
-├── cpu/
-├── create/
-├── verify/
-└── delete/
+test/e2e/output/android/<run-id>_<suite>/
+├── report.json                  # Overall status, source revision, device, phase results
+├── devices.json                 # Flutter device discovery result
+└── <phase>/
+    ├── flutter.log              # Build and test output
+    ├── device-report.json       # Scenario result, model, process ID, elapsed time
+    ├── logcat.txt               # Android logs filtered by the E2E app UID
+    └── screenshots/             # PNG screenshot attempted on scenario failure
 ```
 
-Przy błędzie test próbuje zapisać zrzut do `<phase>/screenshots/`. Jeżeli aplikacja nie uruchomi się lub proces ulegnie awarii, raport może nie zawierać zrzutu ani odpowiedzi urządzenia. Logcat jest filtrowany po UID aplikacji E2E.
+JSON reports can be inspected directly or parsed by tools. Logs are plain text; screenshots are PNG. Device reports and screenshots may be absent if the app cannot start or its process crashes. Generated artifacts are ignored by Git.
 
-Status całości jest `passed` tylko wtedy, gdy wszystkie fazy zwrócą sukces, raport z urządzenia zawiera `passed`, a zatrzymanie aplikacji powiedzie się. Brak Androida daje `blocked` i kod wyjścia 2; błąd testu daje `failed` i kod 1. Raport jest zapisywany także wtedy, gdy nie da się rozpocząć testów.
+| Final status | Exit code | Meaning |
+| --- | --- | --- |
+| `passed` | 0 | Every phase, device report, and process stop succeeded |
+| `failed` | 1 | A scenario, build, or runner operation failed |
+| `blocked` | 2 | No suitable device was selected or connected |
 
-Limity: każda faza ma limit hosta 40 minut, samo pobieranie 30 minut, a generowanie odpowiedzi 10 minut. Wygenerowane artefakty są ignorowane przez Git. Testy uruchamiamy ręcznie; nie są podpięte do automatycznego workflow.
+Invalid arguments return exit code 64. A phase has a 40-minute host timeout; downloading has a 30-minute timeout and generation a 10-minute timeout. Failed runs stop at the failing phase and may leave test files in the isolated E2E app.
 
-Framework: [Flutter integration_test](https://github.com/flutter/flutter/tree/master/packages/integration_test).
+See the [output directory guide](output/android/README.md) for artifact details.
