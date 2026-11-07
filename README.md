@@ -6,6 +6,7 @@ Aplikacja Flutter na Androida do pobierania modeli Bielik i uruchamiania ich lok
 [![Unit Tests](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/unit-tests.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/unit-tests.yml)
 [![Component Tests](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/component-tests.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/component-tests.yml)
 [![Integration Tests](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/integration-tests.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/integration-tests.yml)
+[![Architecture](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/architecture.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/architecture.yml)
 
 **[Pobierz APK na telefon](https://github.com/GHRik/bielik_oneclick_launcher/releases)**, zainstaluj i uruchom. Bez Fluttera i Android Studio.
 
@@ -150,6 +151,7 @@ Każdy workflow ma osobny status powyżej. Kliknięcie badge'a otwiera jego hist
 | [Unit Tests](.github/workflows/unit-tests.yml) | UT klas przez rejestr `test/ut_test.dart`. |
 | [Component Tests](.github/workflows/component-tests.yml) | Widoki i współpraca komponentów z `test/component`. |
 | [Integration Tests](.github/workflows/integration-tests.yml) | SQLite, pliki i integracje z `test/integration`; osobny job Java adaptera GPU ze sztucznym sysfs. |
+| [Architecture](.github/workflows/architecture.yml) | Granice warstw i kompletność rejestru UT. |
 
 Automatyczne CI działa na pull requestach do `master` i pushach na `master`, tylko gdy zmieniają się źródła aplikacji, testy, zasoby, zależności lub konfiguracja analizy. Zmiany samych README, dokumentacji, strony `site/` lub plików `.github/` nie uruchamiają tych sprawdzeń. Każdy workflow można też uruchomić ręcznie z Actions.
 
