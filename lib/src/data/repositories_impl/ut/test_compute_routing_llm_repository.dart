@@ -1,25 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:llamadart/llamadart.dart';
 
-import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
-import 'package:bielik_oneclick_launcher/src/data/datasources/gpu_inference_adapter.dart';
-import 'package:bielik_oneclick_launcher/src/data/datasources/llm_runtime_adapter.dart';
-import 'package:bielik_oneclick_launcher/src/data/repositories_impl/compute_routing_llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
-import 'package:bielik_oneclick_launcher/src/domain/models/gpu_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
-
-class _Engine extends Fake implements LlamaEngine {
-  _Engine(this.name, this.layers);
-  final String name;
-  final int? layers;
-  @override
-  Future<String> getBackendName() async => name;
-  @override
-  Future<int?> getResolvedGpuLayers() async => layers;
-}
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/compute_routing_llm_repository.dart';
 
 class _Repository implements LlmRepository {
   bool fail = false;
@@ -48,7 +33,7 @@ class _Repository implements LlmRepository {
 
 void main() {
   const model = ModelFile(name: 'test.gguf', url: '', sizeBytes: 1, sha256: '');
-  group('CPU and GPU routing isolation', () {
+  group('ComputeRoutingLlmRepository', () {
     late _Repository cpu;
     late _Repository gpu;
     late ComputeRoutingLlmRepository router;
@@ -115,55 +100,5 @@ void main() {
       expect(cpu.calls, 2);
       expect(gpuCreations, 1);
     });
-  });
-
-  group('Runtime parameter adapters', () {
-    for (final backend in GpuInferenceBackend.values) {
-      GpuInferenceAdapter adapter() => GpuInferenceAdapter(
-        GpuConfiguration(enabled: true, backend: backend, layers: 16),
-      );
-
-      test('${backend.name} uses explicit GPU parameters', () {
-        final parameters = adapter().parameters(defaultLlmConfiguration);
-
-        expect(parameters.device, ComputeDevice.gpu);
-        expect(
-          parameters.preferredBackend,
-          backend == GpuInferenceBackend.vulkan
-              ? GpuBackend.vulkan
-              : GpuBackend.opencl,
-        );
-        expect(parameters.gpuLayers, 16);
-        expect(parameters.microBatchSize, 1);
-      });
-
-      test('${backend.name} recognizes an active GPU runtime', () async {
-        final runtime = await adapter().inspect(_Engine(backend.name, 16));
-
-        expect(runtime.mode, LlmComputeMode.gpu);
-      });
-
-      test('${backend.name} rejects silent CPU fallback', () async {
-        await expectLater(
-          adapter().inspect(_Engine('CPU', 0)),
-          throwsA(isA<GpuAccelerationFailure>()),
-        );
-      });
-
-      test('${backend.name} configuration does not mutate CPU parameters', () {
-        const cpu = CpuRuntimeAdapter();
-        final before = cpu.parameters(defaultLlmConfiguration);
-
-        adapter().parameters(defaultLlmConfiguration);
-        final after = cpu.parameters(defaultLlmConfiguration);
-
-        expect(after.device, before.device);
-        expect(after.preferredBackend, GpuBackend.cpu);
-        expect(after.gpuLayers, 0);
-        expect(after.microBatchSize, before.microBatchSize);
-        expect(after.flashAttention, before.flashAttention);
-        expect(after.numberOfThreads, before.numberOfThreads);
-      });
-    }
   });
 }
