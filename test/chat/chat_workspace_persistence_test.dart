@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
 
-import 'support/in_memory_chat_repository.dart';
+import '../support/in_memory_chat_repository.dart';
 
 void main() {
   group('Chat persistence failure recovery', () {

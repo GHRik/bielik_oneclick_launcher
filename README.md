@@ -133,6 +133,7 @@ test/                             # Testy logiki, SQLite, widoków i architektur
 ```
 
 Szczegóły zależności warstw i zapisu rozmów: [ARCHITECTURE.md](ARCHITECTURE.md).
+Podział testów, zakres funkcjonalności i polecenia uruchomienia: [test/README.md](test/README.md).
 
 ## Weryfikacja
 

@@ -4,7 +4,7 @@ import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/model_download_controller.dart';
 
-import 'support/in_memory_model_files_repository.dart';
+import '../support/in_memory_model_files_repository.dart';
 
 class _BackgroundRepository extends InMemoryModelFilesRepository {
   int cancellations = 0;
