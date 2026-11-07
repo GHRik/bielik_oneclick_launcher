@@ -17,160 +17,232 @@ import 'package:bielik_oneclick_launcher/src/presentation/pages/llm_settings_pag
 void main() {
   setUpAll(sqfliteFfiInit);
 
-  test(
-    'Migrates v1 without losing chats and persists all LLM settings',
-    () async {
-      final directory = await Directory.systemTemp.createTemp('settings-test');
-      final file = path.join(directory.path, 'app.db');
-      final old = await databaseFactoryFfi.openDatabase(
-        file,
-        options: OpenDatabaseOptions(
-          version: 1,
-          onCreate: (db, version) async {
-            await AppDatabaseSchema.create(db, version);
-            await db.execute('DROP TABLE settings');
-            await db.insert('conversations', {
-              'title': 'Zachowaj',
-              'created_at': 1,
-              'updated_at': 1,
-            });
-          },
-        ),
+  group('LLM settings persistence', () {
+    late Directory directory;
+    late AppDatabase database;
+    late SqliteLlmSettingsRepository repository;
+
+    setUp(() async {
+      directory = await Directory.systemTemp.createTemp('settings-test');
+      database = AppDatabase(
+        factory: databaseFactoryFfi,
+        databasePath: path.join(directory.path, 'app.db'),
       );
-      await old.close();
-      final db = AppDatabase(factory: databaseFactoryFfi, databasePath: file);
-      final repository = SqliteLlmSettingsRepository(LlmSettingsDataSource(db));
+      repository = SqliteLlmSettingsRepository(LlmSettingsDataSource(database));
+    });
+    tearDown(() async {
+      await database.close();
+      await directory.delete(recursive: true);
+    });
+
+    test('Returns no configuration before the first save', () async {
       expect(await repository.load(), isNull);
-      final draft = LlmSettingsDraft(defaultLlmConfiguration);
-      draft.fields['numberOfThreads']!.text = '2';
-      draft.fields['temperature']!.text = '0,5';
-      draft.fields['seed']!.text = '42';
-      final configuration = draft.configuration();
+    });
+
+    test('Preserves all configuration fields after reopening', () async {
+      const configuration = LlmConfiguration(
+        contextSize: 4096,
+        responseTokens: 1000,
+        safetyTokens: 48,
+        numberOfThreads: 2,
+        batchSize: 64,
+        temperature: 0.5,
+        topK: 20,
+        topP: 0.8,
+        minP: 0.1,
+        repeatPenalty: 1.2,
+        seed: 42,
+      );
       await repository.save(configuration);
-      await db.close();
-      final restored = await repository.load();
-      expect(restored!.numberOfThreads, 2);
-      expect(restored.temperature, 0.5);
-      expect(restored.seed, 42);
+      await database.close();
+
+      final restored = (await repository.load())!;
+
       expect(restored.contextSize, configuration.contextSize);
       expect(restored.responseTokens, configuration.responseTokens);
       expect(restored.safetyTokens, configuration.safetyTokens);
+      expect(restored.numberOfThreads, configuration.numberOfThreads);
       expect(restored.batchSize, configuration.batchSize);
+      expect(restored.temperature, configuration.temperature);
       expect(restored.topK, configuration.topK);
       expect(restored.topP, configuration.topP);
       expect(restored.minP, configuration.minP);
       expect(restored.repeatPenalty, configuration.repeatPenalty);
-      expect(
-        (await (await db.open()).query('conversations')).single['title'],
-        'Zachowaj',
-      );
-      draft.fields['seed']!.text = '';
-      await repository.save(draft.configuration());
-      expect((await repository.load())!.seed, isNull);
-      draft.dispose();
-      await db.close();
-      await directory.delete(recursive: true);
-    },
-  );
+      expect(restored.seed, configuration.seed);
+    });
 
-  test(
-    'Migrates v1 when settings already exists and preserves all data',
-    () async {
-      final directory = await Directory.systemTemp.createTemp(
-        'existing-settings-test',
-      );
-      final file = path.join(directory.path, 'app.db');
-      addTearDown(() => directory.delete(recursive: true));
-      final old = await databaseFactoryFfi.openDatabase(
-        file,
-        options: OpenDatabaseOptions(
-          version: 1,
-          onCreate: AppDatabaseSchema.create,
-        ),
-      );
-      await old.insert('settings', {'key': 'llm', 'value': '{"seed":42}'});
-      final id = await old.insert('conversations', {
-        'title': 'Zachowaj rozmowę',
-        'draft': 'Mój szkic',
-        'created_at': 1,
-        'updated_at': 2,
-      });
-      await old.insert('messages', {
-        'id': 'saved-message',
-        'conversation_id': id,
-        'author_id': 'local-user',
-        'text': 'Zachowaj wiadomość',
-        'created_at': 1,
-      });
-      await old.close();
+    test(
+      'Clears a previously saved seed when the seed field is empty',
+      () async {
+        final draft = LlmSettingsDraft(defaultLlmConfiguration);
+        addTearDown(draft.dispose);
+        draft.fields['seed']!.text = '42';
+        await repository.save(draft.configuration());
 
-      final database = AppDatabase(
-        factory: databaseFactoryFfi,
-        databasePath: file,
-      );
-      addTearDown(database.close);
-      for (var attempt = 0; attempt < 2; attempt++) {
-        final connection = await database.open();
-        expect(await connection.getVersion(), 2);
-        expect((await connection.query('settings')).single, {
-          'key': 'llm',
-          'value': '{"seed":42}',
-        });
-        final conversation = (await connection.query('conversations')).single;
-        expect(conversation['title'], 'Zachowaj rozmowę');
-        expect(conversation['draft'], 'Mój szkic');
-        expect(
-          (await connection.query('messages')).single['text'],
-          'Zachowaj wiadomość',
-        );
-        await database.close();
-      }
-    },
-  );
+        draft.fields['seed']!.text = '';
+        await repository.save(draft.configuration());
 
-  test(
-    'Rejects invalid budgets, non-finite values and fractional thread counts',
-    () {
-      final draft = LlmSettingsDraft(defaultLlmConfiguration);
-      for (final entry in {
-        'responseTokens': '2048',
-        'temperature': 'NaN',
-        'numberOfThreads': '1.5',
-        'seed': '-1',
-        'topP': '0',
-      }.entries) {
-        draft.reset();
-        draft.fields[entry.key]!.text = entry.value;
-        expect(draft.configuration, throwsFormatException);
-      }
-      draft.dispose();
-    },
-  );
-
-  testWidgets('Save validates before invoking persistence', (tester) async {
-    final draft = LlmSettingsDraft(defaultLlmConfiguration);
-    LlmConfiguration? saved;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: LlmSettingsPage(
-          draft: draft,
-          onSave: (configuration) async {
-            saved = configuration;
-          },
-        ),
-      ),
+        expect((await repository.load())!.seed, isNull);
+      },
     );
-    draft.fields['contextSize']!.text = 'invalid';
-    await tester.tap(find.text('Zapisz'));
-    await tester.pumpAndSettle();
-    expect(saved, isNull);
-    draft.fields['contextSize']!.text = '4096';
-    draft.fields['numberOfThreads']!.text = '2';
-    await tester.tap(find.text('Zapisz'));
-    await tester.pumpAndSettle();
-    expect(saved!.contextSize, 4096);
-    expect(saved!.numberOfThreads, 2);
-    await tester.pumpWidget(const SizedBox.shrink());
-    draft.dispose();
+  });
+
+  group('Version 1 database migration', () {
+    for (final hasSettings in [false, true]) {
+      group(
+        hasSettings
+            ? 'With an existing settings table'
+            : 'Without a settings table',
+        () {
+          late AppDatabase database;
+
+          setUp(() async {
+            final directory = await Directory.systemTemp.createTemp(
+              'settings-migration-test',
+            );
+            addTearDown(() => directory.delete(recursive: true));
+            final file = path.join(directory.path, 'app.db');
+            final old = await databaseFactoryFfi.openDatabase(
+              file,
+              options: OpenDatabaseOptions(
+                version: 1,
+                onCreate: (db, version) async {
+                  await AppDatabaseSchema.create(db, version);
+                  if (!hasSettings) await db.execute('DROP TABLE settings');
+                },
+              ),
+            );
+            if (hasSettings) {
+              await old.insert('settings', {
+                'key': 'llm',
+                'value': '{"seed":42}',
+              });
+            }
+            final id = await old.insert('conversations', {
+              'title': 'Saved conversation',
+              'draft': 'Saved draft',
+              'created_at': 1,
+              'updated_at': 2,
+            });
+            await old.insert('messages', {
+              'id': 'saved-message',
+              'conversation_id': id,
+              'author_id': 'local-user',
+              'text': 'Saved message',
+              'created_at': 1,
+            });
+            await old.close();
+            database = AppDatabase(
+              factory: databaseFactoryFfi,
+              databasePath: file,
+            );
+            addTearDown(database.close);
+          });
+
+          test('Upgrades the schema to version 2', () async {
+            final connection = await database.open();
+
+            expect(await connection.getVersion(), 2);
+          });
+
+          test('Preserves conversation data', () async {
+            final connection = await database.open();
+            final conversation = (await connection.query('conversations'))
+                .single;
+
+            expect(conversation['title'], 'Saved conversation');
+            expect(conversation['draft'], 'Saved draft');
+          });
+
+          test('Preserves saved messages', () async {
+            final connection = await database.open();
+
+            expect(
+              (await connection.query('messages')).single['text'],
+              'Saved message',
+            );
+          });
+
+          test('Preserves settings rows after reopening', () async {
+            await database.open();
+            await database.close();
+
+            final connection = await database.open();
+            final rows = await connection.query('settings');
+
+            expect(
+              rows,
+              hasSettings
+                  ? [
+                      {'key': 'llm', 'value': '{"seed":42}'},
+                    ]
+                  : isEmpty,
+            );
+          });
+        },
+      );
+    }
+  });
+
+  group('LLM settings input validation', () {
+    for (final entry in <String, String>{
+      'responseTokens': '2048',
+      'temperature': 'NaN',
+      'numberOfThreads': '1.5',
+      'seed': '-1',
+      'topP': '0',
+    }.entries) {
+      test('Rejects ${entry.key} = ${entry.value}', () {
+        final draft = LlmSettingsDraft(defaultLlmConfiguration);
+        addTearDown(draft.dispose);
+        draft.fields[entry.key]!.text = entry.value;
+
+        expect(draft.configuration, throwsFormatException);
+      });
+    }
+
+    test('Accepts a decimal comma in temperature', () {
+      final draft = LlmSettingsDraft(defaultLlmConfiguration);
+      addTearDown(draft.dispose);
+      draft.fields['temperature']!.text = '0,5';
+
+      expect(draft.configuration().temperature, 0.5);
+    });
+  });
+
+  group('Settings save action', () {
+    for (final valid in [false, true]) {
+      testWidgets(
+        valid ? 'Saves valid settings' : 'Does not save invalid settings',
+        (tester) async {
+          final draft = LlmSettingsDraft(defaultLlmConfiguration);
+          LlmConfiguration? saved;
+          await tester.pumpWidget(
+            MaterialApp(
+              home: LlmSettingsPage(
+                draft: draft,
+                onSave: (configuration) async {
+                  saved = configuration;
+                },
+              ),
+            ),
+          );
+          draft.fields['contextSize']!.text = valid ? '4096' : 'invalid';
+          draft.fields['numberOfThreads']!.text = '2';
+
+          await tester.tap(find.text('Zapisz'));
+          await tester.pumpAndSettle();
+
+          if (valid) {
+            expect(saved!.contextSize, 4096);
+            expect(saved!.numberOfThreads, 2);
+          } else {
+            expect(saved, isNull);
+          }
+          await tester.pumpWidget(const SizedBox.shrink());
+          draft.dispose();
+        },
+      );
+    }
   });
 }
