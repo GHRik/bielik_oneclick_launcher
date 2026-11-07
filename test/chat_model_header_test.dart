@@ -4,12 +4,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/chat_model_header.dart';
 
 void main() {
-  testWidgets(
-    'Model and status fit inside the toolbar at narrow widths and large text',
-    (tester) async {
-      for (final width in [320.0, 600.0]) {
-        await tester.binding.setSurfaceSize(Size(width, 800));
-        for (final scale in [1.0, 2.0]) {
+  for (final width in [320.0, 600.0]) {
+    for (final scale in [1.0, 2.0]) {
+      testWidgets(
+        'Chat header fits a ${width}px toolbar at ${scale}x text scale',
+        (tester) async {
+          addTearDown(() => tester.binding.setSurfaceSize(null));
+          await tester.binding.setSurfaceSize(Size(width, 800));
           await tester.pumpWidget(
             MaterialApp(
               builder: (context, child) => MediaQuery(
@@ -44,9 +45,8 @@ void main() {
             tester.getTopLeft(find.text('Treść rozmowy')).dy,
             toolbarBottom,
           );
-        }
-      }
-      await tester.binding.setSurfaceSize(null);
-    },
-  );
+        },
+      );
+    }
+  }
 }
