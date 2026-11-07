@@ -32,75 +32,111 @@ class PendingResources implements DeviceResourcesRepository {
 }
 
 void main() {
-  test(
-    'Maps native byte counts into decimal GB and preserves missing fields',
-    () async {
-      final source = FakeSource()
-        ..values = {
-          'totalRamBytes': 8000000000,
-          'availableRamBytes': 3500000000,
-          'freeStorageBytes': 20000000000,
-        };
-      final repository = LocalDeviceResourcesRepository(source);
-      final result = await repository.read();
-      expect(result.totalRamGb, 8);
-      expect(result.availableRamGb, 3.5);
-      expect(result.freeStorageGb, 20);
-      source.values = {'availableRamBytes': 0, 'freeStorageBytes': -1};
-      final partial = await repository.read();
-      expect(partial.totalRamGb, isNull);
-      expect(partial.availableRamGb, 0);
-      expect(partial.freeStorageGb, isNull);
-    },
-  );
+  group('Native device resource conversion', () {
+    final fields = <String, double>{
+      'totalRamBytes': 8,
+      'availableRamBytes': 3.5,
+      'freeStorageBytes': 20,
+    };
+    double? value(DeviceResources result, String field) => switch (field) {
+      'totalRamBytes' => result.totalRamGb,
+      'availableRamBytes' => result.availableRamGb,
+      _ => result.freeStorageGb,
+    };
+    for (final entry in fields.entries) {
+      test('Converts ${entry.key} from bytes to decimal GB', () async {
+        final source = FakeSource()
+          ..values = {entry.key: (entry.value * 1000000000).toInt()};
 
-  test(
-    'Unsupported platforms and native failures report unknown resources',
-    () async {
-      final source = FakeSource();
-      final repository = LocalDeviceResourcesRepository(source);
-      for (final failure in [
-        MissingPluginException(),
-        PlatformException(code: 'unavailable'),
-      ]) {
-        source.failure = failure;
-        final result = await repository.read();
+        final result = await LocalDeviceResourcesRepository(source).read();
+
+        expect(value(result, entry.key), entry.value);
+      });
+    }
+
+    test('Preserves a missing total RAM reading', () async {
+      final result = await LocalDeviceResourcesRepository(FakeSource()).read();
+
+      expect(result.totalRamGb, isNull);
+    });
+
+    test('Preserves zero available RAM as a valid reading', () async {
+      final source = FakeSource()..values = {'availableRamBytes': 0};
+
+      final result = await LocalDeviceResourcesRepository(source).read();
+
+      expect(result.availableRamGb, 0);
+    });
+
+    test('Treats negative free storage as unknown', () async {
+      final source = FakeSource()..values = {'freeStorageBytes': -1};
+
+      final result = await LocalDeviceResourcesRepository(source).read();
+
+      expect(result.freeStorageGb, isNull);
+    });
+
+    final failures = <String, Exception>{
+      'missing platform implementation': MissingPluginException(),
+      'native failure': PlatformException(code: 'unavailable'),
+    };
+    for (final entry in failures.entries) {
+      test('Reports unknown resources after a ${entry.key}', () async {
+        final source = FakeSource()..failure = entry.value;
+
+        final result = await LocalDeviceResourcesRepository(source).read();
+
         expect(result.availableRamGb, isNull);
         expect(result.freeStorageGb, isNull);
-      }
-    },
-  );
+      });
+    }
+  });
 
-  test(
-    'Controller coalesces reads and ignores completion after disposal',
-    () async {
+  group('Device resource controller', () {
+    test('Coalesces concurrent refresh requests', () async {
+      final repository = PendingResources();
+      final controller = DeviceResourcesController(repository);
+      addTearDown(controller.dispose);
+
+      final first = controller.refresh();
+      final second = controller.refresh();
+      final readsWhilePending = repository.reads;
+      repository.pending.complete(const DeviceResources(availableRamBytes: 1));
+      await Future.wait([first, second]);
+
+      expect(readsWhilePending, 1);
+    });
+
+    test('Does not notify listeners after disposal', () async {
       final repository = PendingResources();
       final controller = DeviceResourcesController(repository);
       var notifications = 0;
       controller.addListener(() => notifications++);
-      final first = controller.refresh();
-      final second = controller.refresh();
-      expect(repository.reads, 1);
+      final refresh = controller.refresh();
       controller.dispose();
-      repository.pending.complete(const DeviceResources(availableRamBytes: 1));
-      await Future.wait([first, second]);
-      expect(notifications, 0);
-    },
-  );
 
-  test('Controller exposes readings to the view', () async {
-    final repository = PendingResources();
-    final controller = DeviceResourcesController(repository);
-    final refresh = controller.refresh();
-    repository.pending.complete(
-      const DeviceResources(
-        availableRamBytes: 4000000000,
-        freeStorageBytes: 10000000000,
-      ),
-    );
-    await refresh;
-    expect(controller.resources.availableRamGb, 4);
-    expect(controller.resources.freeStorageGb, 10);
-    controller.dispose();
+      repository.pending.complete(const DeviceResources(availableRamBytes: 1));
+      await refresh;
+
+      expect(notifications, 0);
+    });
+
+    test('Exposes refreshed readings to the view', () async {
+      final repository = PendingResources();
+      final controller = DeviceResourcesController(repository);
+      addTearDown(controller.dispose);
+      final refresh = controller.refresh();
+      repository.pending.complete(
+        const DeviceResources(
+          availableRamBytes: 4000000000,
+          freeStorageBytes: 10000000000,
+        ),
+      );
+
+      await refresh;
+
+      expect(controller.resources.availableRamGb, 4);
+      expect(controller.resources.freeStorageGb, 10);
+    });
   });
 }
