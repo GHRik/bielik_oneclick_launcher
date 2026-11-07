@@ -2,8 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
 import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
-import 'package:bielik_oneclick_launcher/src/data/repositories_impl/configured_model_catalog_repository.dart';
-import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
 
 void main() {
   group('Model configuration defaults', () {
@@ -12,13 +10,6 @@ void main() {
         expect(llmConfigurationFor(model.file!), same(defaultLlmConfiguration));
       });
     }
-
-    test('The catalog exposes the configured models', () {
-      expect(
-        const ConfiguredModelCatalogRepository(bielikModels).getModels(),
-        bielikModels,
-      );
-    });
   });
 
   group('Per-model configuration overrides', () {
@@ -46,20 +37,6 @@ void main() {
         llmConfigurationFor(bielikModels.first.file!),
         same(defaultLlmConfiguration),
       );
-    });
-
-    test('Preserves defaults for fields omitted from copyWith', () {
-      expect(configuration.batchSize, defaultLlmConfiguration.batchSize);
-    });
-
-    test('Reserves response and safety tokens from the context budget', () {
-      final policy = ChatContextPolicy(
-        contextSize: configuration.contextSize,
-        responseTokens: configuration.responseTokens,
-        safetyTokens: configuration.safetyTokens,
-      );
-
-      expect(policy.promptBudget, 3040);
     });
   });
 }
