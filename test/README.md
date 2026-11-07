@@ -47,6 +47,8 @@ Wspólny plik `analysis_options_ut.yaml` w głównym katalogu dziedziczy ustawie
 
 Próby porównujące dwa adaptery CPU/GPU są w komponentowych. O poziomie decyduje zakres i zależności, nie samo użycie `test()` lub `testWidgets()`.
 
+Szkielet Android E2E jest w [e2e/README.md](e2e/README.md). Zawiera trzy oczekujące scenariusze: trwałość rozmów, pobranie/usunięcie modelu i generowanie na CPU. Pliki mają końcówkę `_scenario.dart`, aby zwykłe `flutter test` ich nie wykrywało. Uruchamianie E2E jest ręczne przez `flutter drive`; miejsce na przyszłe artefakty to `test/e2e/output/android/`.
+
 ## Uruchamianie
 
 Z głównego katalogu projektu, po `flutter pub get`:

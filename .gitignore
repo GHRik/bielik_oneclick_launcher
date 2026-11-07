@@ -36,3 +36,6 @@ app.*.map.json
 
 .widget_preview/
 .agent-staging/
+
+/test/e2e/output/android/*
+!/test/e2e/output/android/README.md
