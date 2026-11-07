@@ -18,6 +18,10 @@ A one-click Android launcher for running Bielik language models locally on your 
 
 CPU is the default. GPU inference is experimental and has not been validated on a device with this implementation; earlier attempts produced corrupted text. GPU settings apply only to the current app session. Hardware statistics depend on what the device exposes.
 
+## License
+
+The launcher code and original project assets are available under the [MIT License](LICENSE): free to use, modify, and distribute, including commercially, while retaining the license and copyright notice. Third-party dependencies and Bielik model weights retain their own licenses and terms.
+
 ## Model attribution
 
 Bielik models are developed by **SpeakLeash (Spichlerz)** and **ACK Cyfronet AGH**. This repository provides an independent launcher, not the models themselves. Rights to the models remain with their respective authors and rights holders; use is subject to each model's license and terms.
