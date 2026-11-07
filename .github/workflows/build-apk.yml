@@ -98,7 +98,7 @@ jobs:
           fi
           "$apksigner" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk > dist/SIGNING.txt
           cat dist/SIGNING.txt
-          actual="$(awk '/^Signer #1 certificate SHA-256 digest:/ {sub(/^Signer #1 certificate SHA-256 digest:[[:space:]]*/, ""); gsub(/[[:space:]]/, ""); print tolower($0)}' dist/SIGNING.txt | sort -u)"
+          actual="$(awk '/^(Signer #[0-9]+|V[0-9.]+ Signer):? certificate SHA-256 digest:/ {sub(/^.* certificate SHA-256 digest:[[:space:]]*/, ""); gsub(/[[:space:]]/, ""); print tolower($0)}' dist/SIGNING.txt | sort -u)"
           expected="$(tr -d '[:space:]' < android/release-signing.sha256 | tr '[:upper:]' '[:lower:]')"
           printf 'Expected certificate SHA-256: %s\n' "$expected"
           printf 'Actual certificate SHA-256: %s\n' "${actual:-<not found>}"
