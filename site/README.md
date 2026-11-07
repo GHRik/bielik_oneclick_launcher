@@ -2,6 +2,10 @@
 
 A static Polish landing page in `index.html` and `styles.css`. Open `index.html` in a browser to preview it; no dependencies or build step are required. Keep the public page copy in Polish.
 
+## Visual palette
+
+Colors are adapted from [bielik.ai](https://www.bielik.ai/): paper `#FFF9F5`, coral `#F66953`, deep coral `#B8371E`, ink `#25251E`, and dark olive `#424237`. Deep coral is used for readable text accents; coral buttons use dark text. The layout and independent launcher identity remain specific to this project.
+
 ## Content
 
 The page presents the current Android app: local chat, model download and resource checks, live statistics, and configurable LLM parameters. Android GPU inference is labeled experimental.
