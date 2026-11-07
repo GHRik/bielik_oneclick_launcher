@@ -40,26 +40,42 @@ class _StatisticsRepository implements StatisticsRepository {
   ];
 }
 
+Future<void> _openApp(WidgetTester tester) async {
+  await tester.pumpWidget(
+    MyApp(
+      modelFilesRepository: InMemoryModelFilesRepository(),
+      chatRepository: InMemoryChatRepository(),
+      modelRepository: _ModelRepository(),
+      statisticsRepository: _StatisticsRepository(),
+    ),
+  );
+}
+
 void main() {
-  testWidgets('Views receive models and charts through repository contracts', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MyApp(
-        modelFilesRepository: InMemoryModelFilesRepository(),
-        chatRepository: InMemoryChatRepository(),
-        modelRepository: _ModelRepository(),
-        statisticsRepository: _StatisticsRepository(),
-      ),
-    );
-    expect(find.text('Testowy model'), findsOneWidget);
-    await tester.tap(find.text('Otwórz czat'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Statystyki'));
-    await tester.pumpAndSettle();
-    expect(find.text('Testowa metryka'), findsOneWidget);
-    expect(find.text('Prędkość generowania'), findsNothing);
-    expect(tester.takeException(), isNull);
-    await tester.pumpWidget(const SizedBox.shrink());
+  group('Repository injection into views', () {
+    testWidgets('Home displays models supplied by the catalog contract', (
+      tester,
+    ) async {
+      await _openApp(tester);
+
+      expect(find.text('Testowy model'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('Statistics displays only series supplied by its repository', (
+      tester,
+    ) async {
+      await _openApp(tester);
+      await tester.tap(find.text('Otwórz czat'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Statystyki'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Testowa metryka'), findsOneWidget);
+      expect(find.text('Prędkość generowania'), findsNothing);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
   });
 }
