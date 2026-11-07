@@ -1,8 +1,23 @@
-import 'support/pending_scenario.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'support/test_application.dart';
 
 void main() {
-  registerPendingAndroidScenario(
-    'Downloads a model, verifies readiness and deletes the local model',
-    timeout: const Duration(minutes: 30),
-  );
+  androidScenario('Model download, verification and deletion ($e2ePhase)', (
+    tester,
+    app,
+  ) async {
+    switch (e2ePhase) {
+      case 'download':
+        await app.downloadModel(tester, requireTransfer: true);
+      case 'delete':
+        await app.verifyModel();
+        await app.deleteModel(tester);
+      default:
+        throw StateError(
+          'Model lifecycle requires E2E_PHASE=download or delete.',
+        );
+    }
+    expect(tester.takeException(), isNull);
+  });
 }
