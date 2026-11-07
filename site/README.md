@@ -1,26 +1,41 @@
-# Strona Bielik OneClick
+# Bielik OneClick landing page
 
-Statyczna strona reklamowa: `index.html` i `styles.css`. Bez instalowania zależności i bez kroku budowania. Podgląd lokalny: otwórz `index.html` w przeglądarce.
+A static Polish landing page in `index.html` and `styles.css`. Open `index.html` in a browser to preview it; no dependencies or build step are required. Keep the public page copy in Polish.
 
-## Podmiana podglądów na obrazy
+## Content
 
-Trzy ilustracje są celowo schematyczne, a podpisy oznaczają je jako podglądy:
+The page presents the current Android app: local chat, model download and resource checks, live statistics, and configurable LLM parameters. Android GPU inference is labeled experimental.
 
-| Obraz | Miejsce |
+The roadmap is limited to an iOS version with GPU acceleration. Desktop support and in-app model importing are not advertised as planned features.
+
+The model section lists both bundled catalog entries and links to the root README's `#adding-models` instructions. Adding a model means editing `lib/configuration/bielik_models.dart` and rebuilding the APK, not importing a file through the UI.
+
+Attribution near the top and bottom credits SpeakLeash (Spichlerz) and ACK Cyfronet AGH, identifies OneClick as an independent launcher, and links to the official model cards and licenses.
+
+## Real device screenshots
+
+| File | Screen |
 | --- | --- |
-| `assets/chat-preview.svg` | Telefon w pierwszej sekcji |
-| `assets/models-preview.svg` | Wybór i pobieranie modelu |
-| `assets/settings-preview.svg` | Rozmowy i ustawienia |
+| `assets/chat-android.png` | Actual Bielik 1.5B CPU response in chat |
+| `assets/models-android.png` | Model selection, download controls, RAM and storage readings |
+| `assets/statistics-android.png` | Live resource charts from the device |
+| `assets/settings-android.png` | Context, response, and performance settings |
 
-Dodaj swoje PNG/WebP do `assets/`, a następnie zmień odpowiednie `src` w `index.html` i opis `alt`. Dla pionowego ekranu telefonu zachowaj proporcje około 340 × 650. Podglądy w pozostałych sekcjach mają proporcje 4:3. Dostosuj podpisy po wstawieniu rzeczywistych zrzutów. Wszystkie ścieżki są względne, więc działają pod adresem repozytorium GitHub Pages.
+These are direct captures from a CPH2747 running Android 16, using a profile build of the app. The conversation uses a synthetic prompt. Screen contents are not reconstructed or retouched; the phone frames and background decorations are CSS.
 
-Przyciski pobierania prowadzą do listy wydań, ponieważ workflow APK tworzy wydania testowe oznaczone jako prerelease, bez znacznika latest.
+To refresh the captures, run the current app on an Android device, open the relevant screen, and capture it as PNG. Keep the full portrait screenshot and update the HTML dimensions if its resolution differs from 1272 × 2772. Review every capture for private content before publishing. Update the device caption when using a different phone.
 
-## GitHub Pages
+Static screenshots are used instead of animated GIFs to keep the page light and readable. All asset paths are relative for GitHub Pages repository hosting.
 
-1. W repozytorium otwórz **Settings → Pages → Build and deployment → Source → GitHub Actions**.
-2. Wypchnij stronę oraz workflow `.github/workflows/deploy-pages.yml` na `master`.
-3. Workflow publikuje tylko katalog `site/`. Można go też uruchomić ręcznie w Actions.
-4. Adres domyślny: https://ghrik.github.io/bielik_oneclick_launcher/ — będzie aktywny po poprawnym wdrożeniu.
+## Downloads
 
-Zmiany w aplikacji i budowanie APK nie są wymagane do wdrożenia strony.
+Download buttons link to the releases list because the APK workflow publishes prereleases without marking them as latest. The page explains that the APK is a test build for Android ARM64 and models are downloaded separately.
+
+## Deploy to GitHub Pages
+
+1. Open **Settings → Pages → Build and deployment → Source → GitHub Actions** in the repository.
+2. Push the page and `.github/workflows/deploy-pages.yml` to `master`.
+3. The workflow publishes only `site/`; it can also be started manually from Actions.
+4. The default URL is [ghrik.github.io/bielik_oneclick_launcher](https://ghrik.github.io/bielik_oneclick_launcher/), available after a successful deployment.
+
+Deploying the page does not require rebuilding the Android app.

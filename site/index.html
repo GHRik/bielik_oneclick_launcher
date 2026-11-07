@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f6f2">
-  <meta name="description" content="Bielik w Twoim telefonie. Pobierz model, rozmawiaj po polsku i korzystaj z lokalnej AI na Androidzie.">
+  <meta name="description" content="Bielik OneClick: pobierz model i rozmawiaj z polską AI na telefonie. Lokalne czaty, statystyki i ustawienia. Android teraz, iOS z GPU w planach.">
   <meta property="og:title" content="Bielik OneClick — Twój Bielik. Twoje zasady.">
-  <meta property="og:description" content="Polska AI na Twoim urządzeniu. Android już teraz. iOS i desktop w planach.">
+  <meta property="og:description" content="Polska AI na Twoim telefonie. Zobacz prawdziwe ekrany aplikacji i pobierz APK na Androida.">
   <meta property="og:type" content="website">
   <title>Bielik OneClick — Twój Bielik. Twoje zasady.</title>
   <link rel="icon" type="image/svg+xml" href="assets/mark.svg">
@@ -26,91 +26,126 @@
     </nav>
   </header>
 
+  <p class="attribution wrap">Modele Bielik tworzą <a href="https://speakleash.org/">SpeakLeash (Spichlerz)</a> i <a href="https://www.cyfronet.pl/">ACK Cyfronet AGH</a>. OneClick to niezależny launcher. Prawa do modeli pozostają przy ich twórcach i uprawnionych podmiotach.</p>
+
   <main id="main">
     <section class="hero wrap zig" aria-labelledby="hero-title">
       <div class="hero-copy">
         <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> ANDROID · DOSTĘPNY TERAZ</p>
         <h1 id="hero-title">Twój Bielik.<br><span>Twoje zasady.</span></h1>
-        <p class="lead">Polska AI, która mieszka<br class="desktop-break"> w Twoim telefonie.</p>
-        <p class="hero-detail">Pobierz model raz. Rozmawiaj offline.</p>
+        <p class="lead">Polska AI.<br>Na Twoim telefonie.</p>
+        <p class="hero-detail">Pobierz model raz. Potem rozmawiaj offline.<br>Bez konta. Bez wysyłania rozmów do chmury.</p>
         <div class="hero-actions">
           <a class="button" href="https://github.com/GHRik/bielik_oneclick_launcher/releases">Pobierz na Androida <span aria-hidden="true">↗</span></a>
-          <a class="text-link" href="#mozliwosci">Poznaj aplikację <span aria-hidden="true">↓</span></a>
+          <a class="text-link" href="#mozliwosci">Zobacz, jak działa <span aria-hidden="true">↓</span></a>
         </div>
-        <p class="download-note">Bezpłatnie · bez konta · testowe APK</p>
+        <p class="download-note">Bezpłatnie · testowe APK · Android ARM64</p>
       </div>
       <figure class="hero-preview preview">
         <div class="hero-orbit" aria-hidden="true"></div>
-        <span class="orbit-word" aria-hidden="true">PO SWOJEMU.</span>
-        <img class="hero-phone" src="assets/chat-preview.svg" width="340" height="650" alt="Schematyczny podgląd czatu Bielika na telefonie">
-        <span class="floating-note"><span aria-hidden="true">✳</span> Mniej chmury.<br>Więcej Twojej przestrzeni.</span>
-        <figcaption>Podgląd interfejsu</figcaption>
+        <span class="orbit-word" aria-hidden="true">LOKALNIE. PO POLSKU.</span>
+        <img class="hero-phone phone-screen" src="assets/chat-android.png" width="1272" height="2772" fetchpriority="high" alt="Prawdziwy czat z Bielikiem 1.5B uruchomionym lokalnie na CPU telefonu">
+        <span class="floating-note"><span aria-hidden="true">✳</span> Twoje pytania.<br>Twój telefon.</span>
+        <figcaption>Prawdziwa aplikacja · Android 16</figcaption>
       </figure>
     </section>
 
     <section class="feature-strip" id="mozliwosci" aria-label="Pięć możliwości aplikacji">
       <div class="wrap feature-grid">
-        <div><span aria-hidden="true">↳</span><h2>Działa offline</h2></div>
-        <div><span aria-hidden="true">ą</span><h2>Rozmawia po polsku</h2></div>
-        <div><span aria-hidden="true">⇄</span><h2>Wybierasz model</h2></div>
-        <div><span aria-hidden="true">◷</span><h2>Pamięta rozmowy</h2></div>
-        <div><span aria-hidden="true">☷</span><h2>Ty ustawiasz</h2></div>
+        <div><span aria-hidden="true">↳</span><h2>Rozmowy offline</h2></div>
+        <div><span aria-hidden="true">⇄</span><h2>Wybór modelu</h2></div>
+        <div><span aria-hidden="true">◷</span><h2>Zapisane czaty</h2></div>
+        <div><span aria-hidden="true">▥</span><h2>Żywe statystyki</h2></div>
+        <div><span aria-hidden="true">☷</span><h2>Własne ustawienia</h2></div>
       </div>
     </section>
 
     <section class="wrap zig feature-section reverse" aria-labelledby="models-title">
       <div class="section-copy">
-        <p class="eyebrow">01 / DOBIERZ SWOJEGO BIELIKA</p>
-        <h2 id="models-title">Mały czy większy?<br><span>Ty wybierasz.</span></h2>
-        <p>Bielik 1.5B lub 4.5B. Sprawdź RAM i miejsce,<br class="desktop-break"> pobierz model i zacznij rozmowę.</p>
-        <div class="micro-labels"><span>Postęp pobierania</span><span>Prędkość i ETA</span></div>
+        <p class="eyebrow">01 / WYBIERZ I POBIERZ</p>
+        <h2 id="models-title">Bielik na miarę<br><span>Twojego telefonu.</span></h2>
+        <p>Dwa modele na start. Sprawdź RAM i wolne miejsce,<br class="desktop-break"> a potem pobierz wybranego Bielika.</p>
+        <ul class="model-options" aria-label="Dostępne modele">
+          <li><strong>Bielik 1.5B v3.0 Instruct</strong><span>Q8_0 · około 1,7 GB · 4 GB wolnego RAM*</span></li>
+          <li><strong>Bielik 4.5B v3.0 Instruct</strong><span>Q8_0 · około 5,06 GB · 8 GB wolnego RAM*</span></li>
+        </ul>
+        <p class="fine-print">*Szacunkowy RAM. Zużycie zależy od kontekstu i ustawień.</p>
+        <a class="button button-outline" href="https://github.com/GHRik/bielik_oneclick_launcher/blob/master/README.md#adding-models">Nie ma Twojego modelu? <span aria-hidden="true">↗</span></a>
+        <p class="fine-print">Dodaj go w <code>bielik_models.dart</code> i zbuduj APK ponownie. Instrukcja w README.</p>
+        <div class="micro-labels"><span>Postęp, prędkość i ETA</span><span>Kontrola pliku SHA-256</span></div>
       </div>
-      <figure class="preview model-preview">
-        <img src="assets/models-preview.svg" width="560" height="420" loading="lazy" alt="Schematyczny podgląd wyboru modelu, wymagań i pobierania">
-        <figcaption>Podgląd wyboru modelu</figcaption>
+      <figure class="preview screenshot-stage stage-lavender">
+        <span class="stage-label" aria-hidden="true">WYBIERASZ. POBIERASZ. GOTOWE.</span>
+        <img class="phone-screen" src="assets/models-android.png" width="1272" height="2772" loading="lazy" alt="Ekran wyboru Bielika z przyciskami pobierania i usuwania oraz odczytem dostępnego RAM i miejsca">
+        <figcaption>Wybór modelu i zasoby telefonu</figcaption>
       </figure>
     </section>
 
-    <section class="wrap zig feature-section" aria-labelledby="control-title">
+    <section class="wrap zig feature-section" aria-labelledby="stats-title">
       <div class="section-copy">
-        <p class="eyebrow">02 / PO TWOJEMU</p>
-        <h2 id="control-title">Rozmowy zostają.<br><span>Kontrola też.</span></h2>
-        <p>Wracaj do zapisanych czatów.<br>Dopasuj kontekst, długość odpowiedzi i ustawienia modelu.</p>
-        <a class="text-link" href="https://github.com/GHRik/bielik_oneclick_launcher">Zajrzyj do projektu <span aria-hidden="true">↗</span></a>
+        <p class="eyebrow">02 / WIESZ, CO SIĘ DZIEJE</p>
+        <h2 id="stats-title">Mniej zgadywania.<br><span>Więcej konkretów.</span></h2>
+        <p>Obserwuj zużycie zasobów i tempo odpowiedzi.<br class="desktop-break"> Na wykresach, w trakcie rozmowy.</p>
+        <div class="micro-labels"><span>RAM i CPU</span><span>GPU i temperatury*</span><span>Metryki modelu</span></div>
+        <p class="fine-print">*Dostępność odczytów zależy od telefonu. Brak pomiaru jest oznaczony w aplikacji.</p>
       </div>
-      <figure class="preview settings-preview">
-        <img src="assets/settings-preview.svg" width="560" height="420" loading="lazy" alt="Schematyczny podgląd zapisanych rozmów i konfiguracji modelu">
-        <figcaption>Podgląd rozmów i ustawień</figcaption>
+      <figure class="preview screenshot-stage stage-sage">
+        <span class="stage-label" aria-hidden="true">TWÓJ TELEFON. PRAWDZIWE POMIARY.</span>
+        <img class="phone-screen" src="assets/statistics-android.png" width="1272" height="2772" loading="lazy" alt="Ekran statystyk aplikacji z rzeczywistymi wykresami zużycia zasobów telefonu">
+        <figcaption>Statystyki z prawdziwego urządzenia</figcaption>
+      </figure>
+    </section>
+
+    <section class="wrap zig feature-section reverse" aria-labelledby="settings-title">
+      <div class="section-copy">
+        <p class="eyebrow">03 / DOSTRÓJ PO SWOJEMU</p>
+        <h2 id="settings-title">To Ty ustawiasz<br><span>tempo rozmowy.</span></h2>
+        <p>Zmień kontekst, długość odpowiedzi i wątki CPU.<br class="desktop-break"> Dopasuj parametry generowania do siebie.</p>
+        <div class="micro-labels"><span>Zapis ustawień</span><span>Eksperymentalne GPU</span></div>
+        <p class="fine-print">CPU jest domyślne. Akceleracja Vulkan/OpenCL na Androidzie jest eksperymentalna.</p>
+      </div>
+      <figure class="preview screenshot-stage stage-peach">
+        <span class="stage-label" aria-hidden="true">MNIEJ GOTOWCÓW. WIĘCEJ KONTROLI.</span>
+        <img class="phone-screen" src="assets/settings-android.png" width="1272" height="2772" loading="lazy" alt="Ekran konfiguracji LLM z parametrami kontekstu, odpowiedzi i wydajności oraz przyciskiem Zapisz">
+        <figcaption>Ustawienia modelu w aplikacji</figcaption>
       </figure>
     </section>
 
     <section class="roadmap" id="dalej" aria-labelledby="roadmap-title">
       <div class="wrap">
         <div class="roadmap-heading">
-          <div><p class="eyebrow">TO DOPIERO POCZĄTEK</p><h2 id="roadmap-title">Bielik idzie dalej<span>.</span></h2></div>
-          <span class="roadmap-tag">W planach</span>
+          <div><p class="eyebrow">NASTĘPNY KROK</p><h2 id="roadmap-title">Teraz Android.<br>Dalej iPhone<span>.</span></h2></div>
+          <span class="roadmap-tag">W planach · bez daty premiery</span>
         </div>
         <div class="roadmap-grid">
-          <article><span class="roadmap-number">01</span><h3>iOS</h3><p>Twój Bielik, także na iPhonie.</p></article>
-          <article><span class="roadmap-number">02</span><h3>Desktop</h3><p>Więcej przestrzeni. Windows i Linux.</p></article>
-          <article><span class="roadmap-number">03</span><h3>Własne modele</h3><p>Dodawanie nowych modeli Bielika w aplikacji.</p></article>
-          <article><span class="roadmap-number">04</span><h3>Łatwiejsze aktualizacje</h3><p>Wygodniejsza droga do kolejnych wersji.</p></article>
+          <article><span class="roadmap-number">01 / iOS</span><h3>Bielik na iPhonie</h3><p>Lokalny czat i znana wygoda. Kolejna platforma to iOS.</p></article>
+          <article><span class="roadmap-number">02 / GPU NA iOS</span><h3>Z mocą Twojego urządzenia</h3><p>Wsparcie akceleracji GPU w planowanej wersji na iOS.</p></article>
         </div>
       </div>
     </section>
 
     <section class="download-section wrap" id="pobierz" aria-labelledby="download-title">
       <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> ZACZNIJ NA ANDROIDZIE</p>
-      <h2 id="download-title">Zrób miejsce<br>na własną AI<span>.</span></h2>
+      <h2 id="download-title">Własna AI.<br>Trzy proste kroki<span>.</span></h2>
+      <ol class="download-steps">
+        <li><span>01</span>Pobierz APK</li>
+        <li><span>02</span>Zainstaluj aplikację</li>
+        <li><span>03</span>Pobierz model i rozmawiaj</li>
+      </ol>
       <a class="button" href="https://github.com/GHRik/bielik_oneclick_launcher/releases">Pobierz APK z GitHuba <span aria-hidden="true">↗</span></a>
-      <p class="download-note">Otwórz Releases → Assets → wybierz plik .apk.<br>Wersja testowa · Android ARM64 · modele pobierasz osobno w aplikacji.</p>
+      <p class="download-note">Releases → Assets → plik bielik-arm64-….apk.<br>Model pobierasz osobno: 1.5B ≈ 1,7 GB, 4.5B ≈ 5,06 GB. Potrzebny jest też wolny RAM.</p>
+      <p class="capture-note">Zrzuty z aplikacji na telefonie CPH2747 · Android 16 · wersja testowa</p>
     </section>
   </main>
 
   <footer class="site-footer wrap">
     <a class="brand" href="./"><img src="assets/mark.svg" width="28" height="28" alt=""><span>Bielik<span class="brand-sub">ONECLICK</span></span></a>
     <p>Niezależny launcher modeli Bielik.</p>
-    <a href="https://github.com/GHRik/bielik_oneclick_launcher">Kod na GitHubie <span aria-hidden="true">↗</span></a>
+    <a href="https://github.com/GHRik/bielik_oneclick_launcher">Rozwijaj z nami <span aria-hidden="true">↗</span></a>
   </footer>
+  <div class="attribution attribution-bottom wrap">
+    <p>Bielik to modele SpeakLeash (Spichlerz) i ACK Cyfronet AGH. Ta aplikacja jest wyłącznie niezależnym launcherem do ich uruchamiania i nie jest oficjalnym produktem twórców modeli. Prawa do modeli pozostają przy ich twórcach i uprawnionych podmiotach.</p>
+    <p>Licencje i warunki użycia: <a href="https://huggingface.co/speakleash/Bielik-1.5B-v3.0-Instruct-GGUF">Bielik 1.5B</a> · <a href="https://huggingface.co/speakleash/Bielik-4.5B-v3.0-Instruct-GGUF">Bielik 4.5B</a>.</p>
+  </div>
 </body>
 </html>
