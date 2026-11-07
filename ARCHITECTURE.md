@@ -76,7 +76,11 @@ Zmiany szkiców i operacje rozmów są kolejkowane w kolejności wykonania. Nows
 
 Usunięcie rozmowy jest trwałe, wraz z jej wiadomościami. Po usunięciu ostatniej rozmowy tworzona jest nowa. Nie zmieniono wersji schematu ani nie usunięto istniejących danych.
 
-Testy używają `sqflite_common_ffi` z rzeczywistym tymczasowym plikiem SQLite. Produkcja na Androidzie korzysta z `sqflite`.
+`lib/configuration/database_configuration.dart` zawiera jedną funkcję `createAppDatabase`, która wybiera gotową `DatabaseFactory`: Android/iOS/macOS korzystają z `sqflite`, a Windows/Linux z `sqflite_common_ffi`. Fabryka jest wstrzykiwana bezpośrednio do `AppDatabase`, bez własnych klas adapterów i bez podmieniania globalnej fabryki. Desktop zapisuje bazę w katalogu wsparcia aplikacji. Lokalizacja bazy na Androidzie, schemat i migracje pozostają zachowane.
+
+`AppDatabase` zarządza schematem, migracjami, współdzieleniem połączenia i zamknięciem. Testy korzystają z fabryki FFI i tymczasowych plików SQLite; sprawdzają migracje, trwałość rozmów i ustawień, współdzielenie połączenia oraz ponowienie po błędzie otwarcia.
+
+Zmiana sterownika SQLite nie wymaga nowych repozytoriów. Zastąpienie SQLite inną bazą, np. PostgreSQL, wymaga implementacji kontraktów `ChatRepository` i `LlmSettingsRepository` oraz migracji danych. Sam wybór fabryki SQLite nie oznacza ukończenia portu całej aplikacji na desktop.
 
 ## Weryfikacja
 

@@ -1,10 +1,11 @@
 import 'dart:io';
 
+import 'package:sqflite_common_ffi/sqflite_ffi.dart'
+    show databaseFactoryFfi, sqfliteFfiInit;
+
 import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
-import 'package:sqflite_common_ffi/sqflite_ffi.dart'
-    show databaseFactoryFfi, sqfliteFfiInit;
 
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/app_database.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/sqlite_chat_datasource.dart';
@@ -12,11 +13,11 @@ import 'package:bielik_oneclick_launcher/src/data/repositories_impl/sqlite_chat_
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
 
 void main() {
+  setUpAll(sqfliteFfiInit);
   late Directory directory;
   late AppDatabase database;
   late SqliteChatRepository repository;
 
-  setUpAll(sqfliteFfiInit);
   setUp(() async {
     directory = await Directory.systemTemp.createTemp('bielik-chat-test-');
     database = AppDatabase(
@@ -64,12 +65,14 @@ void main() {
       clearDraft: true,
     );
     expect(next.id, isNot(message.id));
+    expect((await repository.getMessages(first.id)).map((item) => item.text), [
+      'Cześć 👋',
+      'Kolejna wiadomość',
+    ]);
     expect(
-      (await repository.getMessages(first.id)).map((item) => item.text),
-      ['Cześć 👋', 'Kolejna wiadomość'],
-    );
-    expect(
-      (await repository.getConversations()).singleWhere((chat) => chat.id == first.id).draft,
+      (await repository.getConversations())
+          .singleWhere((chat) => chat.id == first.id)
+          .draft,
       '',
     );
 
@@ -79,70 +82,85 @@ void main() {
     expect(await repository.getMessages(first.id), isEmpty);
   });
 
-  test('Assistant updates survive restart and preserve the next user draft', () async {
-    final conversation = await repository.createConversation();
-    await repository.saveDraft(conversation.id, 'Następne pytanie');
-    final assistant = await repository.addMessage(
-      conversationId: conversation.id, authorId: 'bielik', text: 'Pierwszy',
-    );
-    await repository.updateMessage(assistant.id, 'Pierwszy i drugi fragment');
-    await reopen();
-    final restored = (await repository.getMessages(conversation.id)).single;
-    expect(restored.id, assistant.id);
-    expect(restored.authorId, 'bielik');
-    expect(restored.text, 'Pierwszy i drugi fragment');
-    expect((await repository.getConversations()).single.draft, 'Następne pytanie');
-  });
-
-  testWidgets('Restores workspace history and drafts after a database restart',
-      (tester) async {
-    await tester.runAsync(() async {
-      final workspace = ChatWorkspace(repository);
-      await workspace.initialize();
-      final firstId = workspace.selected.id;
-      workspace.selected.draft.text = 'Trwała wiadomość';
-      await workspace.sendMessage('Trwała wiadomość');
-      final firstSize = workspace.selected.contentSizeBytes;
-      await workspace.newChat();
-      final secondId = workspace.selected.id;
-      workspace.selected.draft.text = 'Szkic drugiej rozmowy';
-      final secondSize = workspace.selected.contentSizeBytes;
-      workspace.dispose();
-      await workspace.flush();
-      await reopen();
-
-      final restored = ChatWorkspace(repository);
-      await restored.initialize();
-      expect(restored.error, isNull);
-      expect(restored.conversations.map((chat) => chat.id), [secondId, firstId]);
-      expect(restored.selected.draft.text, 'Szkic drugiej rozmowy');
-      expect(restored.selected.contentSizeBytes, secondSize);
-      restored.selectConversation(restored.conversations.last);
-      expect(
-        restored.selected.controller.messages.whereType<TextMessage>().map((item) => item.text),
-        ['Trwała wiadomość'],
+  test(
+    'Assistant updates survive restart and preserve the next user draft',
+    () async {
+      final conversation = await repository.createConversation();
+      await repository.saveDraft(conversation.id, 'Następne pytanie');
+      final assistant = await repository.addMessage(
+        conversationId: conversation.id,
+        authorId: 'bielik',
+        text: 'Pierwszy',
       );
-      expect(restored.selected.title, 'Trwała wiadomość');
-      expect(restored.selected.contentSizeBytes, firstSize);
-      restored.selected.draft.text = 'Po restarcie';
-      await restored.sendMessage('Po restarcie');
-      expect(restored.selected.draft.text, '');
-      expect(
-        (await repository.getMessages(firstId)).map((item) => item.text),
-        ['Trwała wiadomość', 'Po restarcie'],
-      );
-      await restored.deleteConversation(restored.selected);
-      expect(restored.selected.id, secondId);
-      await restored.deleteConversation(restored.selected);
-      expect(restored.conversations, hasLength(1));
-      expect(restored.selected.id, isNot(anyOf(firstId, secondId)));
-      restored.dispose();
-      await restored.flush();
+      await repository.updateMessage(assistant.id, 'Pierwszy i drugi fragment');
       await reopen();
-      expect(await repository.getMessages(firstId), isEmpty);
-      expect((await repository.getConversations()).single.draft, '');
-    });
-    await tester.pump();
-    expect(tester.takeException(), isNull);
-  });
+      final restored = (await repository.getMessages(conversation.id)).single;
+      expect(restored.id, assistant.id);
+      expect(restored.authorId, 'bielik');
+      expect(restored.text, 'Pierwszy i drugi fragment');
+      expect(
+        (await repository.getConversations()).single.draft,
+        'Następne pytanie',
+      );
+    },
+  );
+
+  testWidgets(
+    'Restores workspace history and drafts after a database restart',
+    (tester) async {
+      await tester.runAsync(() async {
+        final workspace = ChatWorkspace(repository);
+        await workspace.initialize();
+        final firstId = workspace.selected.id;
+        workspace.selected.draft.text = 'Trwała wiadomość';
+        await workspace.sendMessage('Trwała wiadomość');
+        final firstSize = workspace.selected.contentSizeBytes;
+        await workspace.newChat();
+        final secondId = workspace.selected.id;
+        workspace.selected.draft.text = 'Szkic drugiej rozmowy';
+        final secondSize = workspace.selected.contentSizeBytes;
+        workspace.dispose();
+        await workspace.flush();
+        await reopen();
+
+        final restored = ChatWorkspace(repository);
+        await restored.initialize();
+        expect(restored.error, isNull);
+        expect(restored.conversations.map((chat) => chat.id), [
+          secondId,
+          firstId,
+        ]);
+        expect(restored.selected.draft.text, 'Szkic drugiej rozmowy');
+        expect(restored.selected.contentSizeBytes, secondSize);
+        restored.selectConversation(restored.conversations.last);
+        expect(
+          restored.selected.controller.messages.whereType<TextMessage>().map(
+            (item) => item.text,
+          ),
+          ['Trwała wiadomość'],
+        );
+        expect(restored.selected.title, 'Trwała wiadomość');
+        expect(restored.selected.contentSizeBytes, firstSize);
+        restored.selected.draft.text = 'Po restarcie';
+        await restored.sendMessage('Po restarcie');
+        expect(restored.selected.draft.text, '');
+        expect(
+          (await repository.getMessages(firstId)).map((item) => item.text),
+          ['Trwała wiadomość', 'Po restarcie'],
+        );
+        await restored.deleteConversation(restored.selected);
+        expect(restored.selected.id, secondId);
+        await restored.deleteConversation(restored.selected);
+        expect(restored.conversations, hasLength(1));
+        expect(restored.selected.id, isNot(anyOf(firstId, secondId)));
+        restored.dispose();
+        await restored.flush();
+        await reopen();
+        expect(await repository.getMessages(firstId), isEmpty);
+        expect((await repository.getConversations()).single.draft, '');
+      });
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

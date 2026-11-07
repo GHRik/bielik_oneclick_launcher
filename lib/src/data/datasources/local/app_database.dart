@@ -4,12 +4,11 @@ import 'package:sqflite/sqflite.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/app_database_schema.dart';
 
 class AppDatabase {
-  AppDatabase({DatabaseFactory? factory, this.databasePath})
-      : _factory = factory ?? databaseFactory;
+  AppDatabase({required this.factory, this.databasePath});
 
   static const fileName = 'bielik.db';
 
-  final DatabaseFactory _factory;
+  final DatabaseFactory factory;
   final String? databasePath;
   Future<Database>? _opening;
 
@@ -17,9 +16,9 @@ class AppDatabase {
 
   Future<Database> _openDatabase() async {
     try {
-      final resolvedPath = databasePath ??
-          path.join(await _factory.getDatabasesPath(), fileName);
-      return await _factory.openDatabase(
+      final resolvedPath =
+          databasePath ?? path.join(await factory.getDatabasesPath(), fileName);
+      return await factory.openDatabase(
         resolvedPath,
         options: OpenDatabaseOptions(
           version: AppDatabaseSchema.version,

@@ -7,6 +7,7 @@ import 'package:bielik_oneclick_launcher/src/data/datasources/gpu_inference_adap
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/compute_routing_llm_repository.dart';
 
 import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
+import 'package:bielik_oneclick_launcher/configuration/database_configuration.dart';
 import 'package:bielik_oneclick_launcher/configuration/system_prompt.dart';
 import 'package:bielik_oneclick_launcher/src/app.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/llm_settings_datasource.dart';
@@ -16,7 +17,6 @@ import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_statis
 import 'package:bielik_oneclick_launcher/src/domain/services/generation_metrics.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/device_resources_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_device_resources_repository.dart';
-import 'package:bielik_oneclick_launcher/src/data/datasources/local/app_database.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/model_file_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/sqlite_chat_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/model_download_datasource.dart';
@@ -33,7 +33,7 @@ Future<void> main() async {
     );
   }
   await FlutterModelDownloadDataSource.initialize();
-  final database = AppDatabase();
+  final database = await createAppDatabase();
   final settings = SqliteLlmSettingsRepository(LlmSettingsDataSource(database));
   var activeConfiguration = await settings.load();
   var gpuConfiguration = const GpuConfiguration();
