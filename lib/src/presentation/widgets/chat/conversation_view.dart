@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/conversation_controller.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/assistant_markdown_message.dart';
 
 class ConversationView extends StatelessWidget {
   const ConversationView({
@@ -34,9 +35,11 @@ class ConversationView extends StatelessWidget {
               index, {
               required bool isSentByMe,
               MessageGroupStatus? groupStatus,
-            }) => SelectionArea(
-              child: SimpleTextMessage(message: message, index: index),
-            ),
+            }) => isSentByMe
+            ? SelectionArea(
+                child: SimpleTextMessage(message: message, index: index),
+              )
+            : AssistantMarkdownMessage(message: message),
         emptyChatListBuilder: (context) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),

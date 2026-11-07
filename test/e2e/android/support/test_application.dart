@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:path_provider/path_provider.dart';
@@ -300,9 +301,18 @@ Future<String> sendAndGenerate(
     isNot(contains('\uFFFD')),
     reason: 'Response must not contain broken UTF-8.',
   );
-  expect(find.text(reply, findRichText: true), findsWidgets);
+  expectRenderedReply(reply);
   await workspace.flush();
   return reply;
+}
+
+void expectRenderedReply(String reply) {
+  expect(
+    find.byWidgetPredicate(
+      (widget) => widget is MarkdownBody && widget.data == reply,
+    ),
+    findsOneWidget,
+  );
 }
 
 Future<void> deleteConversation(

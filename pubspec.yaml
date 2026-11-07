@@ -17,6 +17,7 @@ dependencies:
   flutter_chat_core: ^2.0.0
   flutter_chat_ui: ^2.12.0
   flutter_downloader: ^1.12.1
+  flutter_markdown_plus: ^1.0.12
   llamadart: ^0.17.5
   material_ui: ^1.10.0
   path: ^1.9.1

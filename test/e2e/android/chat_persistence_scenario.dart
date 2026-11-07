@@ -77,10 +77,7 @@ void main() {
             state['reply'],
           ]);
           expect(workspace.selected.draft.text, state['draft']);
-          expect(
-            find.text(state['reply'] as String, findRichText: true),
-            findsWidgets,
-          );
+          expectRenderedReply(state['reply'] as String);
           expect(
             tester.widget<TextField>(find.byType(TextField)).controller!.text,
             state['draft'],

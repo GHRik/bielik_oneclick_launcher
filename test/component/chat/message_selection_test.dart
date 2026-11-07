@@ -33,7 +33,7 @@ void main() {
                 id: 'message',
                 conversationId: 1,
                 authorId: ChatAuthors.assistant,
-                text: 'Bielik',
+                text: '**Bielik**',
                 createdAt: date,
               ),
             ],
@@ -50,7 +50,7 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
-          await tester.longPress(find.text('Bielik').first);
+          await tester.longPress(find.text('Bielik', findRichText: true).first);
           await tester.pumpAndSettle();
           expect(find.text('Copy'), findsOneWidget);
           if (copy) {
