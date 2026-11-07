@@ -1,69 +1,66 @@
 # Android end-to-end
 
-Szkielet rzadko uruchamianych testów pełnej aplikacji na Androidzie, oparty na Flutter `integration_test`.
+Trzy wykonywalne scenariusze z rzeczywistym SQLite, plikami, `flutter_downloader` i silnikiem CPU. Nie korzystają z atrap repozytoriów ani modelu. Weryfikacja na urządzeniu jest oddzielna od analizy kodu i zbudowania APK.
 
-```text
-test/e2e/
-├── android/
-│   ├── chat_persistence_scenario.dart
-│   ├── model_lifecycle_scenario.dart
-│   ├── cpu_generation_scenario.dart
-│   └── support/
-│       ├── pending_scenario.dart
-│       └── driver.dart
-└── output/
-    └── android/
-        └── README.md
-```
+## Izolacja
 
-Pliki mają końcówkę `_scenario.dart`, dzięki czemu zwykłe `flutter test` nie wykrywa E2E i nie inicjalizuje ich wiązania urządzenia.
+Runner zawsze buduje aplikację z `BIELIK_E2E=true`. Gradle nadaje jej osobny identyfikator `bielik.ai.bielik_oneclick_launcher.e2e`. Test dodatkowo sprawdza ścieżkę prywatnego katalogu aplikacji przed otwarciem bazy i downloadera. Zwykła aplikacja zachowuje dotychczasowy identyfikator i dane.
 
-## Stan
+Używany jest pierwszy model z katalogu aplikacji: Bielik 1.5B Q8, około 1,7 GB. Potrzebne są sieć, miejsce na plik tymczasowy i RAM do uruchomienia modelu. Profil E2E używa CPU, kontekstu 512, maksymalnie 32 tokenów odpowiedzi i dwóch wątków. Odpowiedź musi być niepusta i widoczna w UI; nie wymagamy identycznej treści.
 
-**Wszystkie trzy scenariusze są obecnie pomijane przez `skip: true`.** To struktura do dalszej implementacji, nie gotowe testy E2E. Pusty scenariusz rzuci `UnimplementedError`, jeśli ktoś usunie pomijanie przed dopisaniem kroków. Pominięcie nie potwierdza działania funkcji.
+## Scenariusze
 
-| Plik | Scenariusz | Limit |
-| --- | --- | --- |
-| `android/chat_persistence_scenario.dart` | Utworzenie rozmowy, wysłanie i zapis wiadomości, rzeczywisty restart aplikacji, odtworzenie danych, usunięcie z potwierdzeniem | 3 min |
-| `android/model_lifecycle_scenario.dart` | Pobranie modelu przez rzeczywisty downloader, gotowość po weryfikacji, usunięcie pliku | 30 min |
-| `android/cpu_generation_scenario.dart` | Załadowanie pobranego modelu na CPU, pytanie, niepusta odpowiedź ze streama, zatrzymanie i zwolnienie modelu | 10 min |
+| Plik | Sprawdzane zachowanie |
+| --- | --- |
+| `android/model_lifecycle_scenario.dart` | Pobranie przez UI, potwierdzenie wymagań, rzeczywisty transfer, gotowość, niezależne sprawdzenie rozmiaru i SHA; później usunięcie przez UI oraz brak pliku, części i zadania |
+| `android/cpu_generation_scenario.dart` | Nowa rozmowa przez UI, rzeczywista odpowiedź CPU ze streama, widoczny tekst i zapis odpowiedzi w SQLite |
+| `android/chat_persistence_scenario.dart` | Wysłanie pytania, odpowiedź i szkic; ponowny start w innym procesie, odtworzenie tej samej rozmowy i tekstów; anulowanie usunięcia oraz potwierdzone usunięcie |
 
-`android/support/pending_scenario.dart` zawiera wspólną inicjalizację i rejestrację oczekujących scenariuszy. `driver.dart` jest hostowym punktem wejścia dla `flutter drive`.
+Pełny przebieg składa się z pięciu faz: `download → cpu → create → verify → delete`. Model jest pobierany raz i współdzielony przez fazy, a na końcu usuwany. Po każdej fazie runner wykonuje `adb shell am force-stop` wyłącznie dla aplikacji E2E. Faza `verify` sprawdza również, czy PID różni się od zapisanego przed restartem.
 
-## Wymagania docelowe
+## Uruchamianie
 
-- Android: emulator dla zapisu i pobierania, rzeczywisty telefon dla próby z LLM.
-- Rzeczywista baza, pliki, downloader i silnik CPU; bez repozytoriów w pamięci ani atrap LLM.
-- Ustalony mały model z katalogu aplikacji, znany rozmiar i SHA, sieć do pobrania oraz odpowiednia ilość RAM i wolnego miejsca.
-- Osobny profil lub urządzenie testowe. Przyszłe scenariusze powinny usuwać wyłącznie własne rozmowy i pliki oraz sprzątać po błędach.
-- Dla rozmów trzeba ustalić przygotowanie modelu, ponieważ wysyłanie może uruchamiać generowanie. Przygotowanie należy oddzielić od sprawdzania trwałości.
-- Rzeczywisty restart procesu wymaga sterowania spoza aplikacji. Ponowne zbudowanie widgetu lub wywołanie `main()` nie zastępuje restartu.
-- Odpowiedź LLM sprawdzamy po obecności tekstu, bez wymagania identycznej treści. GPU pozostaje poza zakresem.
-
-## Ręczne uruchamianie
-
-Po implementacji kroków i usunięciu pomijania wybranego scenariusza, z głównego katalogu projektu:
+Z głównego katalogu projektu, z Flutter SDK i ADB:
 
 ```sh
 flutter pub get
-flutter drive --driver=test/e2e/android/support/driver.dart --target=test/e2e/android/model_lifecycle_scenario.dart -d <android-device-id>
-flutter drive --driver=test/e2e/android/support/driver.dart --target=test/e2e/android/cpu_generation_scenario.dart -d <android-device-id>
+dart run test/e2e/run_android_e2e.dart --device <android-serial> --scenario all
 ```
 
-Te polecenia mogą budować, instalować i uruchamiać aplikację na wskazanym urządzeniu. Nie są częścią zwykłego lokalnego uruchomienia testów ani obecnego workflow budowania APK. Dla tej lokalizacji używamy `flutter drive` z jawną ścieżką celu.
+Dostępne zestawy: `all`, `model`, `cpu`, `chat`. Każdy przygotowuje model przez rzeczywiste pobranie i kończy jego usunięciem. Można pominąć `--device`, jeżeli Flutter widzi dokładnie jednego Androida.
 
-Test trwałości rozmów będzie dodatkowo potrzebował sterowania restartem procesu z komputera. Podstawowy driver jeszcze tego nie realizuje.
+Jeżeli ADB lub Flutter nie są dostępne w PATH:
 
-Dokumentacja frameworka: [Flutter integration_test](https://github.com/flutter/flutter/tree/master/packages/integration_test).
+```sh
+dart run test/e2e/run_android_e2e.dart --scenario all --adb <path-to-adb> --flutter <path-to-flutter>
+```
 
-## Wyniki i dalsza implementacja
+Runner używa `flutter drive --keep-app-running` z jawnym celem i hostowym driverem. Flaga zapobiega domyślnemu odinstalowaniu aplikacji przez Flutter Driver; proces zatrzymuje runner, zachowując bazę i pliki pomiędzy fazami. Nie uruchamiaj osobno faz z ręcznie zmienianym identyfikatorem aplikacji. Pliki `*_scenario.dart` nie są wykrywane przez zwykłe `flutter test`, więc lokalne UT i workflow APK pozostają oddzielne.
 
-Katalog wyników na komputerze: [output/android](output/android/README.md).
+Uruchomienie buduje i instaluje oddzielny APK E2E. Model, baza i rozmowy testowe należą do aplikacji E2E; nie wykonujemy `pm clear`, odinstalowania ani czyszczenia danych zwykłej aplikacji.
 
-Docelowe zbieranie artefaktów powinno zapisywać osobno dla każdego uruchomienia:
-- wynik i czas scenariusza oraz wersję kodu, urządzenie i model w `report.json`;
-- wyjście Fluttera w `flutter.log`;
-- logi Androida w `logcat.txt`;
-- zrzut po błędzie w `screenshots/`.
+## Wyniki
 
-Obecnie przygotowany jest katalog i opis formatu. Zbieranie tych artefaktów, restart procesu i wykonywalne kroki scenariuszy pozostają do dopisania. Szkielet nie jest podpięty do automatycznego uruchamiania na każdym commicie.
+Artefakty trafiają do [output/android](output/android/README.md):
+
+```text
+<run-id>_<suite>/
+├── report.json
+├── devices.json
+├── download/
+│   ├── flutter.log
+│   ├── logcat.txt
+│   └── device-report.json
+├── cpu/
+├── create/
+├── verify/
+└── delete/
+```
+
+Przy błędzie test próbuje zapisać zrzut do `<phase>/screenshots/`. Jeżeli aplikacja nie uruchomi się lub proces ulegnie awarii, raport może nie zawierać zrzutu ani odpowiedzi urządzenia. Logcat jest filtrowany po UID aplikacji E2E.
+
+Status całości jest `passed` tylko wtedy, gdy wszystkie fazy zwrócą sukces, raport z urządzenia zawiera `passed`, a zatrzymanie aplikacji powiedzie się. Brak Androida daje `blocked` i kod wyjścia 2; błąd testu daje `failed` i kod 1. Raport jest zapisywany także wtedy, gdy nie da się rozpocząć testów.
+
+Limity: każda faza ma limit hosta 40 minut, samo pobieranie 30 minut, a generowanie odpowiedzi 10 minut. Wygenerowane artefakty są ignorowane przez Git. Testy uruchamiamy ręcznie; nie są podpięte do automatycznego workflow.
+
+Framework: [Flutter integration_test](https://github.com/flutter/flutter/tree/master/packages/integration_test).
