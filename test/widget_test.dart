@@ -7,102 +7,173 @@ import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'support/in_memory_chat_repository.dart';
 import 'support/in_memory_model_files_repository.dart';
 
-void main() {
-  testWidgets(
-    'Selects a model and keeps chat below requirements on small screens',
-    (tester) async {
-      tester.view.physicalSize = const Size(360, 640);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+Future<void> _openHome(
+  WidgetTester tester, {
+  Size size = const Size(360, 640),
+}) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  await tester.pumpWidget(
+    MyApp(
+      modelFilesRepository: InMemoryModelFilesRepository(),
+      chatRepository: InMemoryChatRepository(),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
 
-      await tester.pumpWidget(
-        MyApp(
-          modelFilesRepository: InMemoryModelFilesRepository(),
-          chatRepository: InMemoryChatRepository(),
-        ),
-      );
-      await tester.pumpAndSettle();
+Future<void> _startDownload(WidgetTester tester) async {
+  await tester.tap(find.text('Pobierz'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Pobierz mimo to'));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _selectLargerModel(WidgetTester tester) async {
+  await tester.ensureVisible(find.byType(DropdownButtonFormField<BielikModel>));
+  await tester.tap(find.byType(DropdownButtonFormField<BielikModel>));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Bielik 4.5B v3.0 · Q8').last);
+  await tester.pumpAndSettle();
+}
+
+void main() {
+  group('Home model management', () {
+    testWidgets('Displays requirements for the initially selected model', (
+      tester,
+    ) async {
+      await _openHome(tester);
+
       expect(find.text('Miejsce na dysku: około 1,7 GB'), findsOneWidget);
-      await tester.tap(find.text('Pobierz'));
-      await tester.pumpAndSettle();
-      expect(find.byType(AlertDialog), findsOneWidget);
-      await tester.tap(find.text('Pobierz mimo to'));
-      await tester.pumpAndSettle();
+    });
+
+    testWidgets('Shows percentage, speed and ETA for an active download', (
+      tester,
+    ) async {
+      await _openHome(tester);
+
+      await _startDownload(tester);
+
       expect(find.text('Pobieranie · 0%'), findsOneWidget);
       expect(find.text('Prędkość: 0,0 MB/s'), findsOneWidget);
       expect(find.text('Pozostało (ETA): Obliczanie…'), findsOneWidget);
-      await tester.ensureVisible(find.text('Anuluj pobieranie'));
-      await tester.tap(find.text('Anuluj pobieranie'));
-      await tester.pumpAndSettle();
-      expect(find.byType(LinearProgressIndicator), findsNothing);
-      expect(
-        tester
-            .widget<OutlinedButton>(find.widgetWithText(OutlinedButton, 'Usuń'))
-            .onPressed,
-        isNull,
-      );
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
 
-      await tester.ensureVisible(
-        find.byType(DropdownButtonFormField<BielikModel>),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.byType(DropdownButtonFormField<BielikModel>));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Bielik 4.5B v3.0 · Q8').last);
-      await tester.pumpAndSettle();
+    testWidgets(
+      'Cancelling a download removes progress and leaves deletion disabled',
+      (tester) async {
+        await _openHome(tester);
+        await _startDownload(tester);
+
+        await tester.ensureVisible(find.text('Anuluj pobieranie'));
+        await tester.tap(find.text('Anuluj pobieranie'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(LinearProgressIndicator), findsNothing);
+        expect(
+          tester
+              .widget<OutlinedButton>(
+                find.widgetWithText(OutlinedButton, 'Usuń'),
+              )
+              .onPressed,
+          isNull,
+        );
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+
+    testWidgets('Updates requirements when selecting the larger model', (
+      tester,
+    ) async {
+      await _openHome(tester);
+
+      await _selectLargerModel(tester);
+
       expect(find.text('Miejsce na dysku: około 5,06 GB'), findsOneWidget);
       expect(find.textContaining('12 GB RAM'), findsOneWidget);
-      expect(
-        tester.getBottomLeft(find.text('Otwórz czat')).dy,
-        greaterThan(550),
-      );
-      expect(tester.takeException(), isNull);
+    });
 
-      ScaffoldMessenger.of(tester.element(find.text('Usuń')))
-          .removeCurrentSnackBar();
-      await tester.pumpAndSettle();
+    testWidgets(
+      'Keeps the open-chat button near the bottom on a small screen',
+      (tester) async {
+        await _openHome(tester);
+        await _selectLargerModel(tester);
+
+        expect(
+          tester.getBottomLeft(find.text('Otwórz czat')).dy,
+          greaterThan(550),
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets('Keeps the open-chat button accessible in landscape', (
+      tester,
+    ) async {
+      await _openHome(tester);
+      await _selectLargerModel(tester);
+
       tester.view.physicalSize = const Size(640, 360);
       await tester.pumpAndSettle();
+
       expect(find.text('Otwórz czat').hitTestable(), findsOneWidget);
       expect(tester.takeException(), isNull);
-      await tester.pumpWidget(const SizedBox.shrink());
-    },
-  );
+    });
+  });
 
-  testWidgets('Opens chat, sends a message and preserves it after returning', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MyApp(
-        modelFilesRepository: InMemoryModelFilesRepository(),
-        chatRepository: InMemoryChatRepository(),
-      ),
-    );
+  group('Chat entry from home', () {
+    Future<void> openChat(WidgetTester tester) async {
+      await _openHome(tester, size: const Size(800, 600));
+      await tester.tap(find.text('Otwórz czat'));
+      await tester.pumpAndSettle();
+    }
 
-    await tester.tap(find.text('Otwórz czat'));
-    await tester.pumpAndSettle();
+    Future<void> send(WidgetTester tester) async {
+      await tester.enterText(find.byType(TextField), 'Cześć Bielik!');
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.send));
+      await tester.pumpAndSettle();
+    }
 
-    expect(find.text('Bielik 1.5B v3.0 · Q8'), findsOneWidget);
-    expect(find.text('CPU · niezaładowany'), findsOneWidget);
-    expect(find.byType(TextField), findsOneWidget);
+    testWidgets('Shows the selected model with its initial CPU status', (
+      tester,
+    ) async {
+      await openChat(tester);
 
-    await tester.enterText(find.byType(TextField), 'Cześć Bielik!');
-    await tester.pump();
-    await tester.tap(find.byIcon(Icons.send));
-    await tester.pumpAndSettle();
+      expect(find.text('Bielik 1.5B v3.0 · Q8'), findsOneWidget);
+      expect(find.text('CPU · niezaładowany'), findsOneWidget);
+      expect(find.byType(TextField), findsOneWidget);
+    });
 
-    expect(find.text('Cześć Bielik!'), findsOneWidget);
-    expect(
-      tester.widget<TextField>(find.byType(TextField)).controller!.text,
-      '',
-    );
+    testWidgets('Sending a message displays it and clears the input', (
+      tester,
+    ) async {
+      await openChat(tester);
 
-    await tester.pageBack();
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Otwórz czat'));
-    await tester.pumpAndSettle();
+      await send(tester);
 
-    expect(find.text('Cześć Bielik!'), findsOneWidget);
+      expect(find.text('Cześć Bielik!'), findsOneWidget);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        '',
+      );
+    });
+
+    testWidgets('Returning from home preserves the sent message', (
+      tester,
+    ) async {
+      await openChat(tester);
+      await send(tester);
+
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Otwórz czat'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cześć Bielik!'), findsOneWidget);
+    });
   });
 }
