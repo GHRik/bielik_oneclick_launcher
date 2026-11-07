@@ -20,7 +20,7 @@ class _Llm implements LlmRepository {
     void Function(LlmRuntimeInfo)? onLoaded,
   }) {
     this.history = history;
-    return Stream.fromIterable(['Pierwszy', ' i drugi']);
+    return Stream.fromIterable(['First', ' and second']);
   }
 
   @override
@@ -30,72 +30,140 @@ class _Llm implements LlmRepository {
 }
 
 void main() {
-  test('Pure service persists both roles and preserves a draft typed during the reply', () async {
-    final repository = InMemoryChatRepository();
-    final conversation = await repository.createConversation();
-    final llm = _Llm();
-    final service = ChatService(repository, llmRepository: llm);
-    final updates = <ChatUpdate>[];
-    await service.saveDraft(conversation.id, 'Pytanie');
-    await service.send(
-      conversationId: conversation.id,
-      text: '  Pytanie  ',
+  group('Chat service message submission', () {
+    late InMemoryChatRepository repository;
+    late _Llm llm;
+    late ChatService service;
+    late int conversationId;
+    const model = ModelFile(
+      name: 'test.gguf',
+      url: 'https://example.com',
+      sizeBytes: 1,
+      sha256: '',
+    );
+
+    setUp(() async {
+      repository = InMemoryChatRepository();
+      conversationId = (await repository.createConversation()).id;
+      llm = _Llm();
+      service = ChatService(repository, llmRepository: llm);
+    });
+
+    Future<void> send({void Function(ChatUpdate)? onUpdate}) => service.send(
+      conversationId: conversationId,
+      text: '  Question  ',
       history: [],
-      model: const ModelFile(
-        name: 'test.gguf',
-        url: 'https://example.com',
-        sizeBytes: 1,
-        sha256: '',
-      ),
-      onUpdate: (update) async {
-        updates.add(update);
-        if (update is ChatMessageSaved &&
-            update.message.role == ChatRole.user) {
-          expect((await repository.getConversations()).single.draft, '');
-          await service.saveDraft(conversation.id, 'Następne pytanie');
-        }
+      model: model,
+      onUpdate: onUpdate ?? (_) {},
+    );
+
+    test(
+      'Stores the trimmed user message and assembled assistant reply',
+      () async {
+        await send();
+
+        final messages = await repository.getMessages(conversationId);
+        expect(messages.map((m) => m.text), ['Question', 'First and second']);
+        expect(messages.map((m) => m.role), [
+          ChatRole.user,
+          ChatRole.assistant,
+        ]);
       },
     );
-    final messages = await repository.getMessages(conversation.id);
-    expect(messages.map((m) => m.text), ['Pytanie', 'Pierwszy i drugi']);
-    expect(messages.map((m) => m.role), [ChatRole.user, ChatRole.assistant]);
-    expect(llm.history!.single.text, 'Pytanie');
-    expect(
-      (await repository.getConversations()).single.draft,
-      'Następne pytanie',
-    );
-    expect(
-      updates.whereType<ChatMessageUpdated>().last.text,
-      'Pierwszy i drugi',
-    );
-  });
 
-  test('Title preserves grapheme boundaries and failed storage does not poison the queue', () async {
-    final repository = InMemoryChatRepository();
-    final conversation = await repository.createConversation();
-    final service = ChatService(repository);
-    repository.failSend = true;
-    await expectLater(
-      service.send(
-        conversationId: conversation.id,
-        text: 'Pytanie',
+    test('Passes the submitted question to the model', () async {
+      await send();
+
+      expect(llm.history!.single.text, 'Question');
+    });
+
+    test('Clears the submitted draft when the user message is saved', () async {
+      await service.saveDraft(conversationId, 'Question');
+      String? draftAfterSave;
+
+      await service.send(
+        conversationId: conversationId,
+        text: 'Question',
         history: [],
+        model: model,
+        onUpdate: (update) async {
+          if (update is ChatMessageSaved &&
+              update.message.role == ChatRole.user) {
+            draftAfterSave = (await repository.getConversations()).single.draft;
+          }
+        },
+      );
+
+      expect(draftAfterSave, '');
+    });
+
+    test('Preserves a new draft typed during the reply', () async {
+      await service.saveDraft(conversationId, 'Question');
+      await service.send(
+        conversationId: conversationId,
+        text: 'Question',
+        history: [],
+        model: model,
+        onUpdate: (update) async {
+          if (update is ChatMessageSaved &&
+              update.message.role == ChatRole.user) {
+            await service.saveDraft(conversationId, 'Next question');
+          }
+        },
+      );
+
+      expect(
+        (await repository.getConversations()).single.draft,
+        'Next question',
+      );
+    });
+
+    test('Publishes the accumulated streamed reply', () async {
+      final updates = <ChatUpdate>[];
+
+      await send(onUpdate: updates.add);
+
+      expect(
+        updates.whereType<ChatMessageUpdated>().last.text,
+        'First and second',
+      );
+    });
+
+    test('Reports user message storage failures', () async {
+      repository.failSend = true;
+
+      await expectLater(send(), throwsA(isA<UserMessageSaveFailure>()));
+    });
+
+    test('Allows another send after a storage failure', () async {
+      repository.failSend = true;
+      await expectLater(send(), throwsA(isA<UserMessageSaveFailure>()));
+      repository.failSend = false;
+
+      await send();
+
+      expect(
+        (await repository.getMessages(conversationId)).first.text,
+        'Question',
+      );
+    });
+
+    test('Truncates conversation titles at grapheme boundaries', () async {
+      final text = List.filled(41, '👨‍👩‍👧‍👦').join();
+
+      await service.send(
+        conversationId: conversationId,
+        text: text,
+        history: [],
+        model: model,
         onUpdate: (_) {},
-      ),
-      throwsA(isA<UserMessageSaveFailure>()),
-    );
-    repository.failSend = false;
-    final text = List.filled(41, '👨‍👩‍👧‍👦').join();
-    await service.send(
-      conversationId: conversation.id,
-      text: text,
-      history: [],
-      onUpdate: (_) {},
-    );
-    expect(
-      (await repository.getConversations()).single.title,
-      List.filled(40, '👨‍👩‍👧‍👦').join(),
-    );
-    expect((await repository.getMessages(conversation.id)).single.text, text);
+      );
+
+      expect(
+        (await repository.getConversations()).single.title,
+        List.filled(40, '👨‍👩‍👧‍👦').join(),
+      );
+      expect((await repository.getMessages(conversationId)).first.text, text);
+    });
   });
 }
