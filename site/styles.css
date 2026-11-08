@@ -55,7 +55,8 @@ h1 em{color:var(--display-ink);font-weight:500}
 .terminal-cross{position:absolute;inset:40px 0 0;width:100%;height:calc(100% - 40px);pointer-events:none}
 .terminal-cross path{fill:none;stroke:var(--coral);stroke-width:3;stroke-linecap:round;opacity:.7}
 .setup-phone{position:absolute;right:105px;top:5px;width:205px;padding:5px;background:#3a3d31;border:1px solid #696b59;border-radius:28px;box-shadow:0 28px 60px #0006;overflow:hidden}
-.setup-phone img{width:100%;border-radius:22px}
+.setup-phone img,.setup-phone video{display:block;width:100%;height:auto;border-radius:22px}
+.generation-toggle{min-height:44px;min-width:44px;padding:8px 12px;border:1px solid var(--strong-line);border-radius:7px;background:var(--surface);color:var(--ink);font-size:11px}
 .setup-caption{position:absolute;bottom:2px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:9px;font-size:11px;color:var(--muted)}
 .setup-caption span{color:var(--accent)}
 .features{padding-block:40px 46px;border-top:1px solid var(--line)}

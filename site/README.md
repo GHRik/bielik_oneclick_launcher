@@ -43,7 +43,7 @@ These are direct captures from a CPH2747 running Android 16, using a profile bui
 
 To refresh the captures, run the current app on an Android device, open the relevant screen, and capture it as PNG. Keep the full portrait screenshot and update the HTML dimensions if its resolution differs from 1272 × 2772. Review every capture for private content before publishing. Update the device caption when using a different phone.
 
-Static screenshots are used instead of animated GIFs to keep the page light and readable. All asset paths are relative for GitHub Pages repository hosting.
+The carousel uses static screenshots. The phone in the introduction plays `assets/chat-generation.mp4`: a five-second, silent excerpt (78.7–83.7 seconds) from the author's [YouTube demo](https://www.youtube.com/shorts/5ruxjgcFAZc), showing a real streamed reply at the original speed. It is encoded as H.264 at 392 × 854 and 20 fps (about 62 KB) rather than a large GIF. `chat-generation-poster.jpg` provides a still frame. `generation-preview.js` loops playback only while visible, pauses in background tabs, respects reduced-motion preferences, and offers a play/pause button. All asset paths are relative for GitHub Pages repository hosting.
 
 ## Video demo
 
