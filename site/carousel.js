@@ -13,8 +13,10 @@
   let hovered = false;
 
   function updatePause() {
-    pause.textContent = paused ? 'Wznów' : 'Wstrzymaj';
-    pause.setAttribute('aria-label', paused ? 'Wznów automatyczne slajdy' : 'Wstrzymaj automatyczne slajdy');
+    pause.dataset.paused = String(paused);
+    const label = paused ? 'Wznów automatyczne slajdy' : 'Wstrzymaj automatyczne slajdy';
+    pause.setAttribute('aria-label', label);
+    pause.title = label;
   }
 
   function show(next, manual = false) {

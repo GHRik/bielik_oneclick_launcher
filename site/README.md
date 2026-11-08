@@ -4,11 +4,19 @@ A static Polish landing page in `index.html` and `styles.css`. Open `index.html`
 
 ## Feature carousel
 
-Four slides pair a real screenshot with a plain feature description: chat, model downloads, statistics, and settings. `carousel.js` advances every seven seconds while visible. Arrows, dots, and keyboard navigation allow manual selection; manual selection pauses rotation. Hover, keyboard focus, and a hidden tab suspend rotation. A pause/resume button is available, and reduced-motion preferences disable automatic rotation initially. Without JavaScript, all feature descriptions remain visible. Screenshots sit beside descriptions on desktop and above them on phones.
+Four slides pair a real screenshot with a plain feature description: chat, model downloads, statistics, and settings. `carousel.js` advances every seven seconds while visible. Arrows, dots, and keyboard navigation allow manual selection; manual selection pauses rotation. Hover, keyboard focus, and a hidden tab suspend rotation. Round 48px arrow and pause/resume icon buttons sit above a separate row of 44px dot targets, and reduced-motion preferences disable automatic rotation initially. Without JavaScript, all feature descriptions remain visible. Screenshots sit beside descriptions on desktop and above them on phones.
 
 ## Visual palette
 
 The Organic Tech variant uses warm charcoal `#151613`, raised surfaces `#1C1D1A`, amber `#E67E22`, and cream text. Fraunces headings and Plus Jakarta Sans body text load from Google Fonts with local serif/sans-serif fallbacks; technical data uses system monospace. The centered introduction layers an actual app screenshot over a muted terminal, with subtle feather-like vector lines behind it. Motion respects reduced-motion preferences.
+
+## Color themes
+
+Three round header buttons (sun, moon, half-filled circle) select light, dark (Organic Tech), and high-contrast themes. Accessible names, tooltips, and pressed states identify each option. `theme.js` applies the saved choice before the stylesheet loads and stores changes in local storage. Without a saved choice, dark is used unless the visitor requests increased contrast. Storage failures do not prevent switching themes. Screenshots and embedded YouTube content retain their own colors.
+
+## Page navigation
+
+The introduction has one download button and a demo link. Installation steps appear as a horizontal timeline in the download section instead of repeating navigation in the introduction.
 
 ## Content
 
