@@ -15,10 +15,6 @@
   let scrollTimer;
   let trackWidth = 0;
 
-  function updateHeight() {
-    track.style.height = `${slides[index].getBoundingClientRect().height}px`;
-  }
-
   function updatePause() {
     pause.dataset.paused = String(paused);
     const label = paused ? 'Wznów automatyczne slajdy' : 'Wstrzymaj automatyczne slajdy';
@@ -28,7 +24,6 @@
 
   function updateSelection(next, announce = false) {
     index = next;
-    updateHeight();
     slides.forEach((slide, i) => { slide.inert = i !== index; });
     dots.forEach((dot, i) => {
       if (i === index) dot.setAttribute('aria-current', 'true');
@@ -78,11 +73,8 @@
   new ResizeObserver(() => {
     if (trackWidth === track.clientWidth) return;
     trackWidth = track.clientWidth;
-    updateHeight();
     track.scrollTo({ left: index * trackWidth, behavior: 'instant' });
   }).observe(track);
-  const slideObserver = new ResizeObserver(updateHeight);
-  slides.forEach(slide => slideObserver.observe(slide));
   new IntersectionObserver(entries => { visible = entries[0].isIntersecting; }, { threshold: 0.25 }).observe(region);
   setInterval(() => {
     if (!paused && visible && !hovered && !document.hidden && !region.contains(document.activeElement)) show(index + 1);
