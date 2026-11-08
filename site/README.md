@@ -8,7 +8,7 @@ Four slides pair a real screenshot with a plain feature description: chat, model
 
 ## Visual palette
 
-Colors are adapted from [bielik.ai](https://www.bielik.ai/): paper `#FFF9F5`, coral `#F66953`, deep coral `#B8371E`, ink `#25251E`, and dark olive `#424237`. Deep coral is used for readable text accents; coral buttons use dark text. The layout and independent launcher identity remain specific to this project.
+The Organic Tech variant uses warm charcoal `#151613`, raised surfaces `#1C1D1A`, amber `#E67E22`, and cream text. Fraunces headings and Plus Jakarta Sans body text load from Google Fonts with local serif/sans-serif fallbacks; technical data uses system monospace. The centered introduction layers an actual app screenshot over a muted terminal, with subtle feather-like vector lines behind it. Motion respects reduced-motion preferences.
 
 ## Content
 
