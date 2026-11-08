@@ -4,11 +4,11 @@ A static Polish landing page in `index.html` and `styles.css`. Open `index.html`
 
 ## Feature carousel
 
-Four slides pair a real screenshot with a plain feature description: chat, model downloads, statistics, and settings. `carousel.js` advances every seven seconds while visible. A horizontal scroll-snap slider supports touch swipes and trackpad scrolling alongside arrows, dots, and keyboard navigation; manual selection pauses rotation. Only the selected slide is interactive, and slide changes preserve a consistent track height. Hover, keyboard focus, and a hidden tab suspend rotation. Round 48px arrow and pause/resume icon buttons sit above a separate row of 44px dot targets, and reduced-motion preferences disable automatic rotation initially. Without JavaScript, all feature descriptions remain visible. Screenshots sit beside descriptions on desktop and above them on phones.
+Four slides pair a real screenshot with a plain feature description: chat, model downloads, statistics, and settings. `carousel.js` advances every seven seconds while visible. A horizontal scroll-snap slider supports touch swipes and trackpad scrolling alongside arrows, dots, and keyboard navigation; manual selection pauses rotation. Only the selected slide is interactive. The track height follows the active slide, including image and font loading, so the longer download description does not stretch the other slides. Screenshots are up to 300px wide on desktop and 260px on phones. Hover, keyboard focus, and a hidden tab suspend rotation. Round 48px arrow and pause/resume icon buttons sit above a separate row of 44px dot targets, and reduced-motion preferences disable automatic rotation initially. Without JavaScript, all feature descriptions remain visible. Screenshots sit beside descriptions on desktop and above them on phones.
 
 ## Visual palette
 
-The Organic Tech variant uses warm charcoal `#151613`, olive surfaces `#1C211A`, muted sage accents `#9EAF87`, and cream text. The light theme retains its warm terracotta accents. Fraunces headings and Plus Jakarta Sans body text load from Google Fonts with local serif/sans-serif fallbacks; technical data uses system monospace. The centered introduction layers an actual app screenshot over a muted terminal, with subtle feather-like vector lines behind it. Motion respects reduced-motion preferences.
+The Organic Tech variant uses warm charcoal `#151613`, olive surfaces `#1C211A`, muted sage accents `#9EAF87`, and cream text. The light theme retains its warm terracotta accents. Fraunces headings and Plus Jakarta Sans body text load from Google Fonts with local serif/sans-serif fallbacks; technical data uses system monospace. The centered introduction uses a three-line heading (Bielik, Edge-AI, One Click). A larger phone preview, tilted 4° clockwise, sits over a muted terminal, with subtle feather-like vector lines behind it. Motion respects reduced-motion preferences.
 
 ## Color themes
 
@@ -22,9 +22,9 @@ The introduction has one download button and a demo link. Installation steps app
 
 The page presents the current Android app: local chat, model download and resource checks, live statistics, and configurable LLM parameters. Android GPU inference is labeled experimental.
 
-The roadmap is limited to an iOS version with GPU acceleration. Desktop support and in-app model importing are not advertised as planned features.
+The roadmap sits below the YouTube demo. An icon row marks Android and CPU as available with checkmarks, GPU as experimental with a laboratory flask, and iOS as ongoing. The future platform scope is limited to iOS with GPU acceleration. Desktop support and in-app model importing are not advertised as planned features.
 
-The model section lists both bundled catalog entries and links to the root README's `#adding-models` instructions. Adding a model means editing `lib/configuration/bielik_models.dart` and rebuilding the APK, not importing a file through the UI.
+Feature captions use short phrases. The model section names both bundled models and links to the root README's `#adding-models` instructions. Adding a model means editing `lib/configuration/bielik_models.dart` and rebuilding the APK, not importing a file through the UI.
 
 Attribution near the top and bottom credits SpeakLeash (Spichlerz) and ACK Cyfronet AGH, identifies OneClick as an independent launcher, and links to the official model cards and licenses.
 
