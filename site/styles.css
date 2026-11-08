@@ -29,6 +29,7 @@ nav{display:flex;gap:24px;align-items:center;font-size:13px}
 .intro{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);align-items:center;gap:56px;padding-block:48px}
 h1{font-size:clamp(38px,5vw,60px);letter-spacing:-1.7px;line-height:1.08;margin-block:14px 22px}
 .intro-copy>p:not(.eyebrow){max-width:540px;color:var(--muted);font-size:16px}
+.intro-copy>p+p:not(.intro-steps){margin-top:12px}
 .intro-copy>p.intro-steps{display:flex;flex-wrap:wrap;gap:9px;font-size:12px;margin-block:22px 14px}
 .intro-steps span{color:var(--accent)}
 .setup-visual{min-width:0}
