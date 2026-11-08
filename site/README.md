@@ -2,6 +2,10 @@
 
 A static Polish landing page in `index.html` and `styles.css`. Open `index.html` in a browser to preview it; no dependencies or build step are required. Keep the public page copy in Polish.
 
+## Feature carousel
+
+Four slides pair a real screenshot with a plain feature description: chat, model downloads, statistics, and settings. `carousel.js` advances every seven seconds while visible. Arrows, dots, and keyboard navigation allow manual selection; manual selection pauses rotation. Hover, keyboard focus, and a hidden tab suspend rotation. A pause/resume button is available, and reduced-motion preferences disable automatic rotation initially. Without JavaScript, all feature descriptions remain visible. Screenshots sit beside descriptions on desktop and above them on phones.
+
 ## Visual palette
 
 Colors are adapted from [bielik.ai](https://www.bielik.ai/): paper `#FFF9F5`, coral `#F66953`, deep coral `#B8371E`, ink `#25251E`, and dark olive `#424237`. Deep coral is used for readable text accents; coral buttons use dark text. The layout and independent launcher identity remain specific to this project.
