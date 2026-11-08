@@ -1,14 +1,15 @@
 (() => {
   const video = document.querySelector('#generation-preview');
-  const toggle = document.querySelector('.generation-toggle');
-  if (!video || !toggle) return;
+  if (!video) return;
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   let userPaused = motion.matches;
   let visible = false;
   video.muted = true;
+  video.tabIndex = 0;
+  video.setAttribute('role', 'button');
 
   function updateLabel() {
-    toggle.textContent = video.paused ? 'Odtwórz animację' : 'Zatrzymaj animację';
+    video.setAttribute('aria-label', video.paused ? 'Odtwórz nagranie rozmowy' : 'Wstrzymaj nagranie rozmowy');
   }
 
   function updatePlayback() {
@@ -16,13 +17,19 @@
     else video.play().catch(updateLabel);
   }
 
-  toggle.addEventListener('click', () => {
+  function togglePlayback() {
     userPaused = !video.paused;
     updatePlayback();
+  }
+
+  video.addEventListener('click', togglePlayback);
+  video.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    togglePlayback();
   });
   video.addEventListener('play', updateLabel);
   video.addEventListener('pause', updateLabel);
-  video.addEventListener('error', () => { toggle.hidden = true; });
   document.addEventListener('visibilitychange', updatePlayback);
   motion.addEventListener('change', event => {
     if (event.matches) userPaused = true;
@@ -33,5 +40,4 @@
     updatePlayback();
   }, { threshold: 0.2 }).observe(video);
   updateLabel();
-  toggle.hidden = false;
 })();

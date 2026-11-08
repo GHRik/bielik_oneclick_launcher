@@ -56,9 +56,11 @@ h1 em{color:var(--display-ink);font-weight:500}
 .terminal-cross path{fill:none;stroke:var(--coral);stroke-width:3;stroke-linecap:round;opacity:.7}
 .setup-phone{position:absolute;right:105px;top:5px;width:205px;padding:5px;background:#3a3d31;border:1px solid #696b59;border-radius:28px;box-shadow:0 28px 60px #0006;overflow:hidden}
 .setup-phone img,.setup-phone video{display:block;width:100%;height:auto;border-radius:22px}
-.generation-toggle{min-height:44px;min-width:44px;padding:8px 12px;border:1px solid var(--strong-line);border-radius:7px;background:var(--surface);color:var(--ink);font-size:11px}
-.setup-caption{position:absolute;bottom:2px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:9px;font-size:11px;color:var(--muted)}
-.setup-caption span{color:var(--accent)}
+.setup-phone video{cursor:pointer}
+.setup-phone video:focus-visible{outline:3px solid var(--accent);outline-offset:-4px}
+.slides.slider-ready{position:relative;display:flex;align-items:stretch;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
+.slides.slider-ready::-webkit-scrollbar{display:none}
+.slider-ready .feature-slide{flex:0 0 100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always}
 .features{padding-block:40px 46px;border-top:1px solid var(--line)}
 .section-heading{margin-bottom:26px}
 h2{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:34px;letter-spacing:-.6px;line-height:1.25}
