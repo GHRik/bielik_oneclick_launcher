@@ -47,7 +47,7 @@ The carousel uses static screenshots. The introduction plays `assets/chat-live.m
 
 ## Video demo
 
-The section before downloads embeds YouTube Shorts `5ruxjgcFAZc` in a responsive 9:16 player. It uses `youtube-nocookie.com`, loads lazily, and does not autoplay. Playback starts with the visitor's Play click; a separate YouTube link is available if embedding is blocked. Keep the iframe referrer policy so YouTube receives the embedding origin.
+The demo section embeds YouTube Shorts `5ruxjgcFAZc` (chat demo) and `RHUtO30IqOo` (airplane-mode test) in responsive 9:16 players. They sit side by side on larger screens and stack on phones, above the roadmap. Both use `youtube-nocookie.com`, load lazily, and do not autoplay. Playback starts with the visitor's Play click; each film has a separate YouTube link if embedding is blocked. Keep the iframe referrer policy so YouTube receives the embedding origin.
 
 ## Downloads
 
