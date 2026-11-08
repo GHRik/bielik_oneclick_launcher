@@ -8,7 +8,7 @@ Four slides pair a real screenshot with a plain feature description: chat, model
 
 ## Visual palette
 
-The Organic Tech variant uses warm charcoal `#151613`, raised surfaces `#1C1D1A`, amber `#E67E22`, and cream text. Fraunces headings and Plus Jakarta Sans body text load from Google Fonts with local serif/sans-serif fallbacks; technical data uses system monospace. The centered introduction layers an actual app screenshot over a muted terminal, with subtle feather-like vector lines behind it. Motion respects reduced-motion preferences.
+The Organic Tech variant uses warm charcoal `#151613`, olive surfaces `#1C211A`, muted sage accents `#9EAF87`, and cream text. The light theme retains its warm terracotta accents. Fraunces headings and Plus Jakarta Sans body text load from Google Fonts with local serif/sans-serif fallbacks; technical data uses system monospace. The centered introduction layers an actual app screenshot over a muted terminal, with subtle feather-like vector lines behind it. Motion respects reduced-motion preferences.
 
 ## Color themes
 
