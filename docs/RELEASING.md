@@ -2,9 +2,9 @@
 
 ## Publish a build
 
-Open **Actions → Release APK → Run workflow**, select the branch, and run it. Publishing remains manual. The workflow analyzes the code, runs local Flutter tests, builds a signed ARM64 release APK, verifies its certificate, and publishes a prerelease on GitHub.
+Open **Actions → Release APK → Run workflow**, select the branch, and run it. Publishing remains manual. The workflow analyzes the code, runs local Flutter tests, builds a signed ARM64 release APK, verifies its certificate, and publishes a stable GitHub release marked Latest when run from `master`. Builds from other branches remain prereleases and never replace Latest.
 
-Download the APK from **Releases → Assets**. Each release also includes its SHA-256 checksum, `BUILD.txt`, `SIGNING.txt`, and the MIT license. An artifact copy is retained for 30 days. The ARM64 debug build workflow is a separate CI check; use Release APK for distribution.
+Download `bielik-arm64.apk` directly from [the latest stable release](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk), or use **Releases → Assets**. Keep the asset name unchanged: the landing page uses GitHub's permanent latest-asset URL. Each release also includes its SHA-256 checksum, `BUILD.txt`, `SIGNING.txt`, and the MIT license. An artifact copy is retained for 30 days. The ARM64 debug build workflow is a separate CI check; use Release APK for distribution.
 
 ## Updating an installation
 

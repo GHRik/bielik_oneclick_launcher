@@ -30,7 +30,7 @@ Official model cards and licenses: [Bielik 1.5B v3.0 Instruct GGUF](https://hugg
 
 ## Download and install
 
-1. Open [Releases](https://github.com/GHRik/bielik_oneclick_launcher/releases) and download a `bielik-arm64-….apk` from the release's **Assets**.
+1. [Download the latest APK](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk), or view the [latest stable release](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest).
 2. Install the APK on your Android phone. Allow installation from your browser or file manager if prompted.
 3. Open the app, select and download a model, then open the chat.
 

@@ -35,7 +35,7 @@ Static screenshots are used instead of animated GIFs to keep the page light and 
 
 ## Downloads
 
-Download buttons link to the releases list because the APK workflow publishes prereleases without marking them as latest. The page explains that the APK is a test build for Android ARM64 and models are downloaded separately.
+Download buttons link directly to `/releases/latest/download/bielik-arm64.apk`. The release workflow keeps this asset name fixed, marks `master` builds as Latest, and leaves other branches as prereleases. The two prominent “Rozwijaj z nami!” buttons open the source repository. Models are downloaded separately inside the app.
 
 ## Deploy to GitHub Pages
 
