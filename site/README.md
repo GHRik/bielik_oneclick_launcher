@@ -33,6 +33,10 @@ To refresh the captures, run the current app on an Android device, open the rele
 
 Static screenshots are used instead of animated GIFs to keep the page light and readable. All asset paths are relative for GitHub Pages repository hosting.
 
+## Video demo
+
+The section before downloads embeds YouTube Shorts `5ruxjgcFAZc` in a responsive 9:16 player. It uses `youtube-nocookie.com`, loads lazily, and does not autoplay. Playback starts with the visitor's Play click; a separate YouTube link is available if embedding is blocked. Keep the iframe referrer policy so YouTube receives the embedding origin.
+
 ## Downloads
 
 The header and hero download buttons scroll to the download section. Only that section's APK button links directly to `/releases/latest/download/bielik-arm64.apk`. The release workflow keeps this asset name fixed, marks `master` builds as Latest, and leaves other branches as prereleases. The two prominent “Rozwijaj z nami!” buttons open the source repository. Models are downloaded separately inside the app.
