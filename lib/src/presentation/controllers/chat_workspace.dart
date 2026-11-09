@@ -18,6 +18,7 @@ import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/chat_service.dart';
+import 'package:bielik_oneclick_launcher/src/domain/services/model_memory_guard.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/conversation_controller.dart';
 
 class ChatWorkspace extends ChangeNotifier {
@@ -469,6 +470,16 @@ class ChatWorkspace extends ChangeNotifier {
     } on UserMessageSaveFailure {
       _error =
           'Nie udało się zapisać wiadomości. Tekst pozostał w polu wpisywania.';
+    } on InsufficientModelMemory catch (error) {
+      _runtimeInfo = null;
+      if (!_stopRequested) {
+        String gb(double value) =>
+            value.toStringAsFixed(2).replaceAll('.', ',');
+        _error =
+            'Za mało dostępnej pamięci RAM. Model nie został załadowany. '
+            'Wymagane: ${gb(error.requiredGb)} GB, dostępne: ${gb(error.availableGb)} GB. '
+            'Wybierz mniejszy model lub spróbuj ponownie później.';
+      }
     } on GpuAccelerationFailure catch (error) {
       _runtimeInfo = null;
       if (!_stopRequested) {
@@ -476,7 +487,9 @@ class ChatWorkspace extends ChangeNotifier {
             'Błąd akceleracji GPU. Wyłącz GPU w konfiguracji, aby użyć CPU. ${error.reason}';
       }
     } on ChatContextTooLong {
-      _error = 'Wiadomość lub załącznik przekracza kontekst modelu. Skróć tekst albo wybierz mniejszy plik.';
+      _error =
+          'Wiadomość lub załącznik przekracza kontekst modelu. '
+          'Treść pozostała do edycji. Skróć tekst albo wybierz mniejszy plik.';
     } on EmptyModelReply {
       if (!_stopRequested) _error = 'Model nie zwrócił odpowiedzi.';
     } catch (error) {

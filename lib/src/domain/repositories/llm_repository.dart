@@ -13,6 +13,7 @@ abstract interface class LlmRepository {
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
     void Function(ContextUsage)? onContext,
+    Future<void> Function()? onPromptAccepted,
   });
   void stop();
   Future<void> unload();

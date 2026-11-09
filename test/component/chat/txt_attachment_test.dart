@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+
+import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/app.dart';
@@ -32,6 +34,7 @@ class _Attachments implements AttachmentRepository {
 }
 
 class _Llm implements LlmRepository {
+  bool rejectContext = false;
   int unloads = 0;
   final inputs = <List<ChatMessage>>[];
   @override
@@ -42,9 +45,12 @@ class _Llm implements LlmRepository {
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
     void Function(ContextUsage)? onContext,
-  }) {
+    Future<void> Function()? onPromptAccepted,
+  }) async* {
     inputs.add(history);
-    return Stream.value('Odpowiedź');
+    if (rejectContext) throw ChatContextTooLong();
+    await onPromptAccepted?.call();
+    yield 'Odpowiedź';
   }
 
   @override
@@ -94,6 +100,37 @@ void main() {
     await tester.tap(find.byIcon(Icons.send));
     await tester.pumpAndSettle();
   }
+
+  testWidgets(
+    'A rejected summary keeps the attachment and original draft editable',
+    (tester) async {
+      await open(tester);
+      await tester.enterText(find.byType(TextField), 'Original request');
+      await pick(tester);
+      llm.rejectContext = true;
+
+      await tester.tap(find.text('Streść'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Original request',
+      );
+      expect(find.byKey(const ValueKey('pending-attachment')), findsOneWidget);
+      final conversation = (await chats.getConversations()).single;
+      expect(await chats.getMessages(conversation.id), isEmpty);
+    },
+  );
+
+  testWidgets('Adding a TXT does not display a context assessment', (
+    tester,
+  ) async {
+    await open(tester);
+    await pick(tester);
+
+    expect(find.textContaining('mieści się'), findsNothing);
+    expect(find.textContaining('przekraczać kontekst'), findsNothing);
+  });
 
   testWidgets('Adding a TXT file offers actions without sending', (
     tester,

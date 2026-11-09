@@ -25,7 +25,9 @@ class _Llm implements LlmRepository {
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
     void Function(ContextUsage)? onContext,
-  }) {
+    Future<void> Function()? onPromptAccepted,
+  }) async* {
+    await onPromptAccepted?.call();
     onLoaded?.call(
       const LlmRuntimeInfo(
         mode: LlmComputeMode.cpu,
@@ -33,7 +35,7 @@ class _Llm implements LlmRepository {
         gpuLayers: 0,
       ),
     );
-    return pending?.stream ?? Stream.value('Reply');
+    yield* pending?.stream ?? Stream.value('Reply');
   }
 
   @override

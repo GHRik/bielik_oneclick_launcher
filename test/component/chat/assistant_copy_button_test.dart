@@ -27,7 +27,12 @@ class _StreamingLlm implements LlmRepository {
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
     void Function(ContextUsage)? onContext,
-  }) => (output = StreamController<String>()).stream;
+    Future<void> Function()? onPromptAccepted,
+  }) async* {
+    output = StreamController<String>();
+    await onPromptAccepted?.call();
+    yield* output!.stream;
+  }
 
   @override
   void stop() {

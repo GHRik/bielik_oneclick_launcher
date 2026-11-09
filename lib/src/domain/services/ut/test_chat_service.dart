@@ -11,12 +11,14 @@ import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/chat_service.dart';
+import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/conversation.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
 
 class _Llm implements LlmRepository {
   List<ChatMessage>? history;
+  bool rejectContext = false;
   @override
   Stream<String> generate(
     ModelFile model,
@@ -25,9 +27,12 @@ class _Llm implements LlmRepository {
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
     void Function(ContextUsage)? onContext,
-  }) {
+    Future<void> Function()? onPromptAccepted,
+  }) async* {
     this.history = history;
-    return Stream.fromIterable(['First', ' and second']);
+    if (rejectContext) throw ChatContextTooLong();
+    await onPromptAccepted?.call();
+    yield* Stream.fromIterable(['First', ' and second']);
   }
 
   @override
@@ -63,6 +68,49 @@ void main() {
       model: model,
       onUpdate: onUpdate ?? (_) {},
     );
+
+    Future<void> rejectAttachment() async {
+      const attachment = TextAttachment(
+        name: 'large.txt',
+        text: 'Document',
+        sizeBytes: 8,
+      );
+      await service.saveDraft(conversationId, 'Question');
+      await service.saveDraftAttachment(conversationId, attachment);
+      llm.rejectContext = true;
+      await expectLater(
+        service.send(
+          conversationId: conversationId,
+          text: 'Question',
+          attachment: attachment,
+          history: [],
+          model: model,
+          onUpdate: (_) {},
+        ),
+        throwsA(isA<ChatContextTooLong>()),
+      );
+    }
+
+    test('A rejected prompt does not enter message history', () async {
+      await rejectAttachment();
+
+      expect(await repository.getMessages(conversationId), isEmpty);
+    });
+
+    test('A rejected prompt preserves its editable draft', () async {
+      await rejectAttachment();
+
+      expect((await repository.getConversations()).single.draft, 'Question');
+    });
+
+    test('A rejected prompt preserves its draft attachment', () async {
+      await rejectAttachment();
+
+      expect(
+        (await repository.getConversations()).single.draftAttachment?.name,
+        'large.txt',
+      );
+    });
 
     test('Passes attachment content to inference without expanding the displayed question', () async {
       const attachment = TextAttachment(

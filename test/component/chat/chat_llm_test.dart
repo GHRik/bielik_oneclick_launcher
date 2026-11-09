@@ -28,13 +28,15 @@ class _Llm implements LlmRepository {
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
     void Function(ContextUsage)? onContext,
-  }) {
+    Future<void> Function()? onPromptAccepted,
+  }) async* {
     inputs.add(history);
     contextCallbacks.add(onContext);
     final stream = StreamController<String>();
     streams.add(stream);
     onStage(LlmStage.analyzing);
-    return stream.stream;
+    await onPromptAccepted?.call();
+    yield* stream.stream;
   }
 
   @override

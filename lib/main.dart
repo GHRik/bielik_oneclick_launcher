@@ -8,6 +8,8 @@ import 'package:bielik_oneclick_launcher/src/data/datasources/gpu_inference_adap
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/compute_routing_llm_repository.dart';
 
 import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
+import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
+import 'package:bielik_oneclick_launcher/src/domain/services/model_memory_guard.dart';
 import 'package:bielik_oneclick_launcher/configuration/database_configuration.dart';
 import 'package:bielik_oneclick_launcher/configuration/system_prompt.dart';
 import 'package:bielik_oneclick_launcher/src/app.dart';
@@ -44,6 +46,8 @@ Future<void> main() async {
   var activeConfiguration = await settings.load();
   var gpuConfiguration = const GpuConfiguration();
   final metrics = GenerationMetrics();
+  const resources = LocalDeviceResourcesRepository(DeviceResourcesDataSource());
+  const memoryGuard = ModelMemoryGuard(resources, bielikModels);
   final themeRepository = SqliteAppThemeRepository(database);
   final themePreference = await themeRepository.load();
   runApp(
@@ -64,15 +68,14 @@ Future<void> main() async {
         await settings.save(configuration);
         activeConfiguration = configuration;
       },
-      deviceResourcesRepository: const LocalDeviceResourcesRepository(
-        DeviceResourcesDataSource(),
-      ),
+      deviceResourcesRepository: resources,
       chatRepository: SqliteChatRepository(SqliteChatDataSource(database)),
       modelFilesRepository: LocalModelFilesRepository(ModelFileDataSource()),
       llmRepository: ComputeRoutingLlmRepository(
         createGpu: () => LocalLlmRepository(
           ModelFileDataSource(),
           metrics: metrics,
+          beforeLoad: memoryGuard.check,
           systemPrompt: bielikSystemPrompt,
           runtimeAdapter: GpuInferenceAdapter(gpuConfiguration),
           configurationFor: (model) =>
@@ -81,6 +84,7 @@ Future<void> main() async {
         cpu: LocalLlmRepository(
           ModelFileDataSource(),
           metrics: metrics,
+          beforeLoad: memoryGuard.check,
           systemPrompt: bielikSystemPrompt,
           configurationFor: (model) =>
               activeConfiguration ?? llmConfigurationFor(model),

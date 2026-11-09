@@ -106,6 +106,44 @@ void main() {
       },
     );
 
+    test(
+      'Accepts the prompt after counting tokens and before generation',
+      () async {
+        var accepted = false;
+        await repository
+            .generate(
+              model,
+              [message('1', 'Cześć', ChatAuthors.user)],
+              onStage: (_) {},
+              onPromptAccepted: () async {
+                expect(engine.counted, isNotEmpty);
+                expect(engine.generated, isEmpty);
+                accepted = true;
+              },
+            )
+            .drain<void>();
+
+        expect(accepted, isTrue);
+      },
+    );
+
+    test('Does not accept an oversized prompt', () async {
+      var accepted = false;
+      await expectLater(
+        repository
+            .generate(
+              model,
+              [message('1', 'a' * 1000, ChatAuthors.user)],
+              onStage: (_) {},
+              onPromptAccepted: () async => accepted = true,
+            )
+            .drain<void>(),
+        throwsA(isA<ChatContextTooLong>()),
+      );
+
+      expect(accepted, isFalse);
+    });
+
     test('Preserves the system prompt when old turns are trimmed', () async {
       await generateTrimmedHistory();
 

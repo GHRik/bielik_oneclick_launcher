@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/services/ut/test_model_memory_guard.dart'
+    as memory_guard;
+
 import 'package:bielik_oneclick_launcher/src/domain/models/ut/test_context_usage.dart'
     as suite18;
 import 'package:bielik_oneclick_launcher/src/data/datasources/ut/test_txt_attachment_decoder.dart'
@@ -54,6 +57,7 @@ import 'package:bielik_oneclick_launcher/src/presentation/formatters/ut/test_sto
     as suite17;
 
 void main() {
+  group('src/domain/services/model_memory_guard.dart', memory_guard.main);
   group('src/domain/models/context_usage.dart', suite18.main);
   group('src/data/datasources/txt_attachment_decoder.dart', txt_decoder.main);
   group(

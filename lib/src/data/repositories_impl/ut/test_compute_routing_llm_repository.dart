@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
@@ -9,6 +11,7 @@ import 'package:bielik_oneclick_launcher/src/data/repositories_impl/compute_rout
 
 class _Repository implements LlmRepository {
   bool fail = false;
+  bool rejectContext = false;
   int calls = 0;
   int unloads = 0;
   @override
@@ -19,10 +22,13 @@ class _Repository implements LlmRepository {
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
     void Function(ContextUsage)? onContext,
+    Future<void> Function()? onPromptAccepted,
   }) async* {
     calls++;
     if (fail) throw StateError('GPU failed');
+    if (rejectContext) throw ChatContextTooLong();
     onContext?.call(const ContextUsage(promptTokens: 64, contextSize: 2048));
+    await onPromptAccepted?.call();
     yield 'odpowiedź';
   }
 
@@ -61,6 +67,24 @@ void main() {
         .drain<void>();
 
     for (final mode in LlmComputeMode.values) {
+      test(
+        'Forwards prompt acceptance from the ${mode.name} runtime',
+        () async {
+          var accepted = false;
+          await router
+              .generate(
+                model,
+                [],
+                onStage: (_) {},
+                computeMode: mode,
+                onPromptAccepted: () async => accepted = true,
+              )
+              .drain<void>();
+
+          expect(accepted, isTrue);
+        },
+      );
+
       test('Forwards measured context from the ${mode.name} runtime', () async {
         ContextUsage? measured;
         await router
@@ -75,6 +99,18 @@ void main() {
         expect(measured?.promptTokens, 64);
       });
     }
+
+    test(
+      'GPU context rejection is not reported as an acceleration failure',
+      () async {
+        gpu.rejectContext = true;
+
+        await expectLater(
+          generate(LlmComputeMode.gpu),
+          throwsA(isA<ChatContextTooLong>()),
+        );
+      },
+    );
 
     test('CPU inference does not construct a GPU repository', () async {
       await generate(LlmComputeMode.cpu);

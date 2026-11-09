@@ -74,33 +74,51 @@ class ChatService {
                 .take(40)
                 .toString()
           : null;
-      late ChatMessage saved;
-      try {
-        saved = await _write(
-          () => _repository.addMessage(
-            conversationId: conversationId,
-            authorId: ChatAuthors.user,
-            text: message,
-            attachment: attachment,
-            conversationTitle: title,
-            clearDraft: true,
-          ),
-        );
-      } catch (error) {
-        throw UserMessageSaveFailure(error);
+      var committed = false;
+      Future<void> commitMessage() async {
+        if (_stopped || committed) return;
+        late ChatMessage saved;
+        try {
+          saved = await _write(
+            () => _repository.addMessage(
+              conversationId: conversationId,
+              authorId: ChatAuthors.user,
+              text: message,
+              attachment: attachment,
+              conversationTitle: title,
+              clearDraft: true,
+            ),
+          );
+        } catch (error) {
+          throw UserMessageSaveFailure(error);
+        }
+        committed = true;
+        await onUpdate(ChatMessageSaved(saved, title: title));
       }
-      await onUpdate(ChatMessageSaved(saved, title: title));
-      if (_stopped || _llm == null) return;
+
+      if (_llm == null) {
+        await commitMessage();
+        return;
+      }
       if (model == null) throw StateError('No model selected.');
+      final pending = ChatMessage(
+        id: 'pending',
+        conversationId: conversationId,
+        authorId: ChatAuthors.user,
+        text: message,
+        attachment: attachment,
+        createdAt: DateTime.now(),
+      );
       await _reply(
         conversationId,
         model,
-        [...history, saved],
+        [...history, pending],
         onUpdate,
         onStage ?? (_) {},
         computeMode,
         onLoaded,
         onContext,
+        commitMessage,
       );
     } finally {
       _active = false;
@@ -116,6 +134,7 @@ class ChatService {
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
     void Function(ContextUsage)? onContext,
+    Future<void> Function() onPromptAccepted,
   ) async {
     final buffer = StringBuffer();
     String? responseId;
@@ -128,6 +147,7 @@ class ChatService {
         computeMode: computeMode,
         onLoaded: onLoaded,
         onContext: onContext,
+        onPromptAccepted: onPromptAccepted,
       )) {
         if (_stopped) break;
         if (fragment.isEmpty) continue;

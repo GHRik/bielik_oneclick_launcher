@@ -3,6 +3,9 @@ import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/services/model_memory_guard.dart';
+import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
+import 'package:bielik_oneclick_launcher/src/domain/services/chat_service.dart';
 
 class ComputeRoutingLlmRepository implements LlmRepository {
   ComputeRoutingLlmRepository({required this.cpu, required this.createGpu});
@@ -21,6 +24,7 @@ class ComputeRoutingLlmRepository implements LlmRepository {
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
     void Function(ContextUsage)? onContext,
+    Future<void> Function()? onPromptAccepted,
   }) async* {
     if (_active) throw StateError('Generowanie już trwa.');
     _active = true;
@@ -40,15 +44,22 @@ class ComputeRoutingLlmRepository implements LlmRepository {
         computeMode: computeMode,
         onLoaded: onLoaded,
         onContext: onContext,
+        onPromptAccepted: onPromptAccepted,
       )) {
         yield text;
       }
     } catch (error) {
+      if (error is ChatContextTooLong || error is UserMessageSaveFailure) {
+        rethrow;
+      }
       if (useGpu) {
         await _gpu?.unload();
         _gpu = null;
         _selected = null;
-        if (error is GpuAccelerationFailure) rethrow;
+        if (error is GpuAccelerationFailure ||
+            error is InsufficientModelMemory) {
+          rethrow;
+        }
         throw GpuAccelerationFailure(error.toString());
       }
       rethrow;

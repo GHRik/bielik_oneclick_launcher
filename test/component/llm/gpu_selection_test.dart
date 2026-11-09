@@ -22,6 +22,7 @@ class _Llm implements LlmRepository {
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
     void Function(ContextUsage)? onContext,
+    Future<void> Function()? onPromptAccepted,
   }) async* {
     requests.add(computeMode);
     onLoaded?.call(
@@ -31,6 +32,7 @@ class _Llm implements LlmRepository {
         gpuLayers: 0,
       ),
     );
+    await onPromptAccepted?.call();
     onStage(LlmStage.generating);
     yield 'Odpowiedź';
   }
