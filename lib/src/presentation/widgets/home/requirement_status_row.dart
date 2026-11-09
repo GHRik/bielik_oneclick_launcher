@@ -16,86 +16,109 @@ class RequirementStatusRow extends StatelessWidget {
   final double requiredGb;
   final double? availableGb;
 
+  String _gb(double value) =>
+      '${value.toStringAsFixed(2).replaceAll('.', ',')} GB';
+
   @override
   Widget build(BuildContext context) {
-    final available = availableGb;
-    final requirementStatus = ResourceRequirement(
+    final theme = Theme.of(context);
+    final status = ResourceRequirement(
       requiredGb: requiredGb,
-      availableGb: available,
+      availableGb: availableGb,
     ).status;
-    final hasData = requirementStatus != RequirementStatus.unknown;
-    final enough = requirementStatus == RequirementStatus.sufficient;
+    final hasData = status != RequirementStatus.unknown;
+    final insufficient = status == RequirementStatus.insufficient;
+    final ratio = !hasData
+        ? 0.0
+        : availableGb == 0
+        ? 1.0
+        : requiredGb / availableGb!;
     final color = !hasData
-        ? Theme.of(context).colorScheme.onSurfaceVariant
-        : enough
-        ? Colors.green.shade800
-        : Colors.red.shade800;
-    final background = !hasData
-        ? Theme.of(context).colorScheme.surfaceContainerLow
-        : enough
-        ? Colors.green.shade50
-        : Colors.red.shade50;
-    final status = !hasData
+        ? Colors.grey.shade600
+        : insufficient
+        ? Colors.red.shade700
+        : Colors.green.shade700;
+    final description = !hasData
         ? 'Brak danych'
-        : enough
-        ? 'Wystarczająco'
-        : 'Za mało';
-    final value = hasData
-        ? available!.toStringAsFixed(2).replaceAll('.', ',')
-        : '—';
+        : insufficient
+        ? 'Za mało'
+        : 'Wystarczająco';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(requirement, style: TextStyle(color: color)),
-        const SizedBox(height: 8),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: background,
-            border: Border.all(color: color.withValues(alpha: 0.4)),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  !hasData
-                      ? Icons.help_outline
-                      : enough
-                      ? Icons.check_circle_outline
-                      : Icons.error_outline,
-                  color: color,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '$availableLabel: $value GB',
-                        style: TextStyle(color: color),
+    return Semantics(
+      label:
+          '$requirement. Wymagane: ${_gb(requiredGb)}. '
+          '$availableLabel: ${hasData ? _gb(availableGb!) : "brak danych"}. '
+          '$description',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 4,
+            children: [
+              Text(requirement, style: theme.textTheme.bodyMedium),
+              Tooltip(
+                message: description,
+                child: ExcludeSemantics(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Icon(
+                        !hasData
+                            ? Icons.remove
+                            : insufficient
+                            ? Icons.close
+                            : Icons.check,
+                        size: 16,
+                        color: Colors.white,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        status,
-                        style: TextStyle(
-                          color: color,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: insufficient ? 1 : ratio.clamp(0.0, 1.0),
+            minHeight: 7,
+            borderRadius: BorderRadius.circular(8),
+            color: color,
+            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+            semanticsLabel: '$requirement · $description',
+            semanticsValue:
+                '${((insufficient ? 1 : ratio.clamp(0.0, 1.0)) * 100).round()}%',
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 12,
+            runSpacing: 4,
+            children: [
+              Text(
+                '${_gb(requiredGb)} / ${hasData ? _gb(availableGb!) : "—"}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              if (!hasData || insufficient)
+                Text(
+                  !hasData
+                      ? 'Brak danych'
+                      : 'Brakuje ${_gb(requiredGb - availableGb!)}',
+                  style: theme.textTheme.bodySmall?.copyWith(color: color),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

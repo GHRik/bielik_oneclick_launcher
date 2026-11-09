@@ -25,6 +25,7 @@ Future<void> _openHome(
 }
 
 Future<void> _startDownload(WidgetTester tester) async {
+  await tester.ensureVisible(find.text('Pobierz'));
   await tester.tap(find.text('Pobierz'));
   await tester.pumpAndSettle();
   await tester.tap(find.text('Pobierz mimo to'));
@@ -46,7 +47,8 @@ void main() {
     ) async {
       await _openHome(tester);
 
-      expect(find.text('Miejsce na dysku: około 1,7 GB'), findsOneWidget);
+      expect(find.text('Miejsce na model'), findsOneWidget);
+      expect(find.text('1,70 GB / —'), findsOneWidget);
     });
 
     testWidgets('Shows percentage, speed and ETA for an active download', (
@@ -63,7 +65,7 @@ void main() {
     });
 
     testWidgets(
-      'Cancelling a download removes progress and leaves deletion disabled',
+      'Cancelling a download removes progress and keeps deletion hidden',
       (tester) async {
         await _openHome(tester);
         await _startDownload(tester);
@@ -72,15 +74,8 @@ void main() {
         await tester.tap(find.text('Anuluj pobieranie'));
         await tester.pumpAndSettle();
 
-        expect(find.byType(LinearProgressIndicator), findsNothing);
-        expect(
-          tester
-              .widget<OutlinedButton>(
-                find.widgetWithText(OutlinedButton, 'Usuń'),
-              )
-              .onPressed,
-          isNull,
-        );
+        expect(find.text('Anuluj pobieranie'), findsNothing);
+        expect(find.text('Usuń'), findsNothing);
         await tester.pumpWidget(const SizedBox.shrink());
       },
     );
@@ -92,8 +87,8 @@ void main() {
 
       await _selectLargerModel(tester);
 
-      expect(find.text('Miejsce na dysku: około 5,06 GB'), findsOneWidget);
-      expect(find.textContaining('12 GB RAM'), findsOneWidget);
+      expect(find.text('5,06 GB / —'), findsOneWidget);
+      expect(find.text('8,00 GB / —'), findsOneWidget);
     });
 
     testWidgets(
@@ -122,6 +117,18 @@ void main() {
       expect(find.text('Otwórz czat').hitTestable(), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
+  });
+
+  testWidgets('Customize model opens the existing settings screen', (
+    tester,
+  ) async {
+    await _openHome(tester);
+    await tester.ensureVisible(find.text('Dostosuj model'));
+    await tester.tap(find.text('Dostosuj model'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Konfiguracja LLM'), findsOneWidget);
+    expect(find.text('Zapisz'), findsOneWidget);
   });
 
   group('Chat entry from home', () {

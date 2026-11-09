@@ -7,6 +7,7 @@ import 'package:bielik_oneclick_launcher/src/presentation/controllers/model_down
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/download_confirmation_dialog.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/download_progress_card.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_requirements_card.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_selection_card.dart';
 
 class ModelManagementPanel extends StatefulWidget {
   const ModelManagementPanel({
@@ -19,6 +20,7 @@ class ModelManagementPanel extends StatefulWidget {
     this.totalRamGb,
     this.onResourcesChanged,
     this.modelOptions,
+    this.onSettings,
   });
 
   final List<BielikModel> models;
@@ -29,6 +31,7 @@ class ModelManagementPanel extends StatefulWidget {
   final double? totalRamGb;
   final Future<void> Function()? onResourcesChanged;
   final Widget? modelOptions;
+  final VoidCallback? onSettings;
 
   @override
   State<ModelManagementPanel> createState() => _ModelManagementPanelState();
@@ -117,6 +120,7 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ListenableBuilder(
       listenable: _download,
       builder: (context, _) => Column(
@@ -124,92 +128,135 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Wybierz model Bielika',
-            style: Theme.of(context).textTheme.headlineSmall,
-            textAlign: TextAlign.center,
+            _download.complete
+                ? 'Twój model.\nGotowy do rozmowy.'
+                : 'Wybierz model.\nZacznij rozmowę.',
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              height: 1.15,
+            ),
           ),
           const SizedBox(height: 24),
-          DropdownButtonFormField<BielikModel>(
-            initialValue: _selectedModel,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'Model',
-              border: OutlineInputBorder(),
-            ),
-            items: [
-              for (final model in widget.models)
-                DropdownMenuItem(value: model, child: Text(model.name)),
-            ],
+          ModelSelectionCard(
+            models: widget.models,
+            selectedModel: _selectedModel,
+            downloaded: _download.complete,
+            checking: _download.checking,
             onChanged:
                 _download.busy || _download.checking || _downloadDialogOpen
                 ? null
                 : _selectModel,
           ),
+          if (widget.onSettings != null) ...[
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: widget.onSettings,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.all(20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.tune),
+                  SizedBox(width: 12),
+                  Expanded(child: Text('Dostosuj model')),
+                  Icon(Icons.arrow_forward, size: 20),
+                ],
+              ),
+            ),
+          ],
           if (widget.modelOptions != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             widget.modelOptions!,
           ],
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed:
-                      _download.busy || _download.checking || _download.complete
-                      ? null
-                      : _requestDownload,
-                  icon: const Icon(Icons.download),
-                  label: Text(
-                    _download.complete
-                        ? 'Pobrano'
-                        : _download.isRunning
-                        ? '${_download.percent}%'
-                        : 'Pobierz',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed:
-                      _download.busy ||
-                          _download.checking ||
-                          !_download.complete
-                      ? null
-                      : _deleteModel,
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Usuń'),
-                ),
-              ),
-            ],
-          ),
-          if (_download.visible) ...[
+          if (!_download.complete) ...[
+            const SizedBox(height: 16),
+            ModelRequirementsCard(
+              model: _selectedModel,
+              availableStorageGb: widget.availableStorageGb,
+              availableRamGb: widget.availableRamGb,
+              totalRamGb: widget.totalRamGb,
+            ),
+          ],
+          if (_download.visible && !_download.complete) ...[
             const SizedBox(height: 16),
             DownloadProgressCard(download: _download),
           ],
-          if (_download.complete && !_download.visible) ...[
-            const SizedBox(height: 12),
-            const Text('Model pobrany na telefon.'),
+          if (_download.complete) ...[
+            const SizedBox(height: 16),
+            Card(
+              margin: EdgeInsets.zero,
+              elevation: 0,
+              color: theme.colorScheme.surfaceContainerLow,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: const Padding(
+                padding: EdgeInsets.all(20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.check_circle_outline, color: Colors.green),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Wszystko gotowe.\nModel jest na Twoim telefonie. '
+                        'Możesz rozmawiać bez internetu.',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: _download.busy || _download.checking
+                  ? null
+                  : _deleteModel,
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: const Text('Usuń'),
+            ),
+          ] else ...[
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: _download.busy || _download.checking
+                  ? null
+                  : _requestDownload,
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 18,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              icon: const Icon(Icons.download),
+              label: Text(
+                _download.isRunning ? '${_download.percent}%' : 'Pobierz',
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Model pobierasz raz. Później działa lokalnie.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall,
+            ),
           ],
           if (_download.error != null) ...[
             const SizedBox(height: 12),
             Text(
               _download.error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              style: TextStyle(color: theme.colorScheme.error),
             ),
-            if (_download.checking == false && !_download.busy)
+            if (!_download.checking && !_download.busy)
               TextButton(
                 onPressed: () => _download.select(_selectedModel),
                 child: const Text('Sprawdź ponownie'),
               ),
           ],
-          const SizedBox(height: 24),
-          ModelRequirementsCard(
-            model: _selectedModel,
-            availableStorageGb: widget.availableStorageGb,
-            availableRamGb: widget.availableRamGb,
-            totalRamGb: widget.totalRamGb,
-          ),
         ],
       ),
     );
