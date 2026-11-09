@@ -29,6 +29,14 @@ class DictationComposer extends StatelessWidget {
     final composer = Composer(
       textEditingController: draft,
       hintText: 'Napisz wiadomość…',
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+      inputFillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      textColor: Theme.of(context).colorScheme.onSurface,
+      hintColor: Theme.of(context).colorScheme.onSurfaceVariant,
+      attachmentIconColor: Theme.of(context).colorScheme.primary,
+      sendIconColor: Theme.of(context).colorScheme.primary,
+      emptyFieldSendIconColor: Theme.of(context).colorScheme.onSurfaceVariant,
+      keyboardAppearance: Theme.of(context).brightness,
       attachmentIcon: showAttachmentButton
           ? const Icon(Icons.add, semanticLabel: 'Dodaj plik TXT')
           : null,
