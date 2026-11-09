@@ -261,6 +261,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                               widget.workspace.streamingMessageId,
                           clipboardRepository: widget.clipboardRepository,
                           onMessageSend: widget.workspace.sendMessage,
+                          onTextAction: widget.workspace.sendTextAction,
                           sending:
                               widget.workspace.sending || widget.workspace.busy,
                         ),

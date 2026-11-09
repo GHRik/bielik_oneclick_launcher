@@ -46,6 +46,16 @@ class ConversationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _textActionsOffered = false;
+  bool get offersTextActions =>
+      _textActionsOffered && draft.text.trim().isNotEmpty;
+
+  void offerTextActions() {
+    if (draft.text.trim().isEmpty) return;
+    _textActionsOffered = true;
+    notifyListeners();
+  }
+
   bool hasMessages;
   int _messageContentBytes;
   int _draftRevision = 0;
@@ -68,6 +78,7 @@ class ConversationController extends ChangeNotifier {
   void _draftChanged() {
     if (_suppressDraftChanges || draft.text == _conversation.draft) return;
     _draftRevision++;
+    if (draft.text.trim().isEmpty) _textActionsOffered = false;
     _conversation = _conversation.copyWith(draft: draft.text);
     onDraftChanged(draft.text);
     notifyListeners();
@@ -94,6 +105,7 @@ class ConversationController extends ChangeNotifier {
     if (_draftRevision == submittedDraftRevision) {
       _suppressDraftChanges = true;
       draft.clear();
+      _textActionsOffered = false;
       _suppressDraftChanges = false;
       _draftRevision++;
       _conversation = _conversation.copyWith(draft: '');

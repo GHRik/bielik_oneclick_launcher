@@ -4,6 +4,8 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/repositories/clipboard_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/chat_text_action.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/chat_quick_actions.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/speech_dictation_controller.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/conversation_controller.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/pages/text_attachment_page.dart';
@@ -24,6 +26,7 @@ class ConversationView extends StatelessWidget {
     this.onMicrophoneTap,
     this.streamingMessageId,
     this.clipboardRepository,
+    this.onTextAction,
   });
 
   final ConversationController conversation;
@@ -35,6 +38,7 @@ class ConversationView extends StatelessWidget {
   final VoidCallback? onMicrophoneTap;
   final String? streamingMessageId;
   final ClipboardRepository? clipboardRepository;
+  final ValueChanged<ChatTextAction>? onTextAction;
 
   ChatTheme _chatTheme(BuildContext context) {
     final material = Theme.of(context);
@@ -142,6 +146,31 @@ class ConversationView extends StatelessWidget {
         composerBuilder: (context) => DictationComposer(
           key: ValueKey('composer-${conversation.id}'),
           draft: conversation.draft,
+          quickActions: conversation.offersTextActions
+              ? ChatQuickActions(
+                  onTranslate:
+                      sending ||
+                          pickingAttachment ||
+                          dictation?.active == true ||
+                          onTextAction == null
+                      ? null
+                      : () => onTextAction!(ChatTextAction.translate),
+                  onSummarize:
+                      sending ||
+                          pickingAttachment ||
+                          dictation?.active == true ||
+                          onTextAction == null
+                      ? null
+                      : () => onTextAction!(ChatTextAction.summarize),
+                  onAnalyze:
+                      sending ||
+                          pickingAttachment ||
+                          dictation?.active == true ||
+                          onTextAction == null
+                      ? null
+                      : () => onTextAction!(ChatTextAction.analyze),
+                )
+              : null,
           onSend: onMessageSend,
           dictation: dictation,
           onMicrophoneTap: onMicrophoneTap,
