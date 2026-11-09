@@ -194,6 +194,8 @@ void main() {
 class _ChatRepository implements ChatRepository {
   final Map<int, Conversation> _conversations = {};
   final List<ChatMessage> _messages = [];
+  final Map<int, int> _usageOrder = {};
+  int _usageSequence = 0;
   int _nextConversationId = 1;
   int _nextMessageId = 1;
   bool failRead = false;
@@ -206,7 +208,8 @@ class _ChatRepository implements ChatRepository {
   @override
   Future<List<Conversation>> getConversations() async {
     if (failRead) throw StateError('Read failed');
-    return _conversations.values.toList()..sort((a, b) => b.id.compareTo(a.id));
+    return _conversations.values.toList()
+      ..sort((a, b) => _usageOrder[b.id]!.compareTo(_usageOrder[a.id]!));
   }
 
   @override
@@ -219,6 +222,7 @@ class _ChatRepository implements ChatRepository {
       updatedAt: now,
     );
     _conversations[conversation.id] = conversation;
+    _usageOrder[conversation.id] = ++_usageSequence;
     return conversation;
   }
 
@@ -292,6 +296,14 @@ class _ChatRepository implements ChatRepository {
       draftAttachment: attachment,
       clearDraftAttachment: attachment == null,
     );
+  }
+
+  @override
+  Future<void> markConversationUsed(int conversationId) async {
+    if (!_conversations.containsKey(conversationId)) {
+      throw StateError('Conversation not found');
+    }
+    _usageOrder[conversationId] = ++_usageSequence;
   }
 
   @override

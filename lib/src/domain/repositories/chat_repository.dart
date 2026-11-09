@@ -20,5 +20,6 @@ abstract interface class ChatRepository {
     int conversationId,
     TextAttachment? attachment,
   );
+  Future<void> markConversationUsed(int conversationId);
   Future<void> deleteConversation(int conversationId);
 }

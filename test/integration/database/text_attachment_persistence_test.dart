@@ -143,7 +143,7 @@ void main() {
             );
             expect(message['text'], 'Preserved');
             expect(message['attachment'], hasMessageColumn ? saved : null);
-            expect(await connection.getVersion(), 4);
+            expect(await connection.getVersion(), 5);
             await repaired.close();
             expect(
               (await (await repaired.open()).query('messages')).single['text'],
@@ -157,7 +157,7 @@ void main() {
     }
   }
 
-  for (final version in [2, 3]) {
+  for (final version in [2, 3, 4]) {
     test('Upgrades schema $version without deleting existing messages', () async {
       final legacyPath = path.join(directory.path, 'legacy.db');
       final old = await databaseFactoryFfi.openDatabase(
@@ -166,10 +166,14 @@ void main() {
           version: version,
           onCreate: (db, _) async {
             await db.execute(
-              "CREATE TABLE conversations (id INTEGER PRIMARY KEY, title TEXT, draft TEXT, created_at INTEGER, updated_at INTEGER${version == 3 ? ', last_used_at INTEGER' : ''})",
+              "CREATE TABLE conversations (id INTEGER PRIMARY KEY, title TEXT, draft TEXT, created_at INTEGER, updated_at INTEGER${version == 3
+                  ? ', last_used_at INTEGER'
+                  : version == 4
+                  ? ', draft_attachment TEXT'
+                  : ''})",
             );
             await db.execute(
-              'CREATE TABLE messages (id TEXT PRIMARY KEY, conversation_id INTEGER, author_id TEXT, text TEXT, created_at INTEGER)',
+              "CREATE TABLE messages (id TEXT PRIMARY KEY, conversation_id INTEGER, author_id TEXT, text TEXT, created_at INTEGER${version == 4 ? ', attachment TEXT' : ''})",
             );
             await db.execute(
               'CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT)',
@@ -202,7 +206,7 @@ void main() {
         await db.update('conversations', {
           'draft_attachment': 'test',
         }, where: 'id = 1');
-        expect(await db.getVersion(), 4);
+        expect(await db.getVersion(), 5);
       } finally {
         await migrated.close();
       }

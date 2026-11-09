@@ -112,6 +112,9 @@ void main() {
                   await db.execute(
                     'ALTER TABLE messages DROP COLUMN attachment',
                   );
+                  await db.execute(
+                    'ALTER TABLE conversations DROP COLUMN last_used_at',
+                  );
                   if (!hasSettings) await db.execute('DROP TABLE settings');
                 },
               ),
@@ -146,7 +149,7 @@ void main() {
           test('Upgrades the schema to version 4', () async {
             final connection = await database.open();
 
-            expect(await connection.getVersion(), 4);
+            expect(await connection.getVersion(), 5);
           });
 
           test('Preserves conversation data', () async {

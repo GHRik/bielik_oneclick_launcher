@@ -38,6 +38,9 @@ class ChatWorkspace extends ChangeNotifier {
   }
 
   ConversationController? _generationTarget;
+  String? _streamingMessageId;
+  String? get streamingMessageId =>
+      _selected == _generationTarget ? _streamingMessageId : null;
   Future<void>? _generationTask;
   Future<void>? _releaseTask;
   bool _stopRequested = false;
@@ -184,6 +187,27 @@ class ChatWorkspace extends ChangeNotifier {
     return controller;
   }
 
+  Future<bool> importText(String text) async {
+    if (_disposed || text.trim().isEmpty || text.length > 65536) return false;
+    _error = null;
+    await initialize();
+    await flush();
+    if (_disposed || !ready || _conversations.isEmpty) return false;
+    final target = _conversations.first;
+    selectConversation(target);
+    final previous = target.draft.text;
+    target.draft.value = TextEditingValue(
+      text: previous.isEmpty ? text : '$previous\n\n$text',
+      selection: TextSelection.collapsed(
+        offset: previous.isEmpty
+            ? text.length
+            : previous.length + 2 + text.length,
+      ),
+    );
+    await flush();
+    return !_disposed && _error == null;
+  }
+
   Future<void> initialize() {
     if (_initialization != null) return _initialization!;
     _loading = true;
@@ -260,7 +284,16 @@ class ChatWorkspace extends ChangeNotifier {
   void selectConversation(ConversationController conversation) {
     if (!_conversations.contains(conversation) || _disposed) return;
     _selected = conversation;
+    _conversations.remove(conversation);
+    _conversations.insert(0, conversation);
     _notify();
+    unawaited(
+      _enqueue(() async {
+        if (_conversations.contains(conversation)) {
+          await repository.markConversationUsed(conversation.id);
+        }
+      }, errorMessage: 'Nie udało się zapisać kolejności rozmów.'),
+    );
   }
 
   Future<void> deleteConversation(ConversationController conversation) async {
@@ -312,6 +345,7 @@ class ChatWorkspace extends ChangeNotifier {
       return Future.value();
     }
     final target = selected;
+    selectConversation(target);
     final revision = target.draftRevision;
     final attachmentRevision = target.attachmentRevision;
     final attachment = target.attachment;
@@ -363,6 +397,10 @@ class ChatWorkspace extends ChangeNotifier {
           if (_disposed) return;
           switch (update) {
             case ChatMessageSaved():
+              if (update.message.role == ChatRole.assistant) {
+                _streamingMessageId = update.message.id;
+                _notify();
+              }
               await target.addMessage(
                 update.message,
                 submittedAttachmentRevision:
@@ -398,6 +436,7 @@ class ChatWorkspace extends ChangeNotifier {
       }
     } finally {
       _sending = false;
+      _streamingMessageId = null;
       _generationTarget = null;
       _stage = null;
       _notify();
