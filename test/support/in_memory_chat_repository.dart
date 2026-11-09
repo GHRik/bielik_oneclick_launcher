@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/conversation.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
@@ -7,6 +9,8 @@ import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository
 class InMemoryChatRepository implements ChatRepository {
   final Map<int, Conversation> _conversations = {};
   final List<ChatMessage> _messages = [];
+  final Map<int, int> _usageOrder = {};
+  int _usageSequence = 0;
   int _nextConversationId = 1;
   int _nextMessageId = 1;
   bool failRead = false;
@@ -19,7 +23,8 @@ class InMemoryChatRepository implements ChatRepository {
   @override
   Future<List<Conversation>> getConversations() async {
     if (failRead) throw StateError('Read failed');
-    return _conversations.values.toList()..sort((a, b) => b.id.compareTo(a.id));
+    return _conversations.values.toList()
+      ..sort((a, b) => _usageOrder[b.id]!.compareTo(_usageOrder[a.id]!));
   }
 
   @override
@@ -32,6 +37,7 @@ class InMemoryChatRepository implements ChatRepository {
       updatedAt: now,
     );
     _conversations[conversation.id] = conversation;
+    _usageOrder[conversation.id] = ++_usageSequence;
     return conversation;
   }
 
@@ -47,6 +53,7 @@ class InMemoryChatRepository implements ChatRepository {
     required String text,
     String? conversationTitle,
     bool clearDraft = false,
+    TextAttachment? attachment,
   }) async {
     if (sendStarted != null && !sendStarted!.isCompleted) {
       sendStarted!.complete();
@@ -59,12 +66,14 @@ class InMemoryChatRepository implements ChatRepository {
       conversationId: conversationId,
       authorId: authorId,
       text: text,
+      attachment: attachment,
       createdAt: DateTime.now().toUtc(),
     );
     _messages.add(message);
     _conversations[conversationId] = conversation.copyWith(
       title: conversationTitle,
       draft: clearDraft ? '' : conversation.draft,
+      clearDraftAttachment: clearDraft,
       updatedAt: message.createdAt,
     );
     return message;
@@ -81,6 +90,7 @@ class InMemoryChatRepository implements ChatRepository {
       authorId: old.authorId,
       text: text,
       createdAt: old.createdAt,
+      attachment: old.attachment,
     );
   }
 
@@ -90,6 +100,25 @@ class InMemoryChatRepository implements ChatRepository {
     if (conversation != null) {
       _conversations[conversationId] = conversation.copyWith(draft: draft);
     }
+  }
+
+  @override
+  Future<void> saveDraftAttachment(
+    int conversationId,
+    TextAttachment? attachment,
+  ) async {
+    _conversations[conversationId] = _conversations[conversationId]!.copyWith(
+      draftAttachment: attachment,
+      clearDraftAttachment: attachment == null,
+    );
+  }
+
+  @override
+  Future<void> markConversationUsed(int conversationId) async {
+    if (!_conversations.containsKey(conversationId)) {
+      throw StateError('Conversation not found');
+    }
+    _usageOrder[conversationId] = ++_usageSequence;
   }
 
   @override

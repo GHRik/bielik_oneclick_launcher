@@ -1,5 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/speech_recognition_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/clipboard_repository.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/gpu_configuration.dart';
 
 import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
@@ -7,6 +11,7 @@ import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/configured_model_catalog_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/incoming_text_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/device_resources_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_catalog_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_repository.dart';
@@ -26,10 +31,15 @@ class MyApp extends StatelessWidget {
     this.deviceResourcesRepository,
     this.modelRepository = const ConfiguredModelCatalogRepository(bielikModels),
     this.statisticsRepository,
+    this.attachmentRepository,
+    this.incomingTextRepository,
+    this.speechRepository,
+    this.clipboardRepository,
   });
 
   final DeviceResourcesRepository? deviceResourcesRepository;
   final ChatRepository chatRepository;
+  final IncomingTextRepository? incomingTextRepository;
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
   final LlmConfiguration llmConfiguration;
@@ -37,6 +47,9 @@ class MyApp extends StatelessWidget {
   final Future<void> Function(LlmConfiguration)? onSaveLlmConfiguration;
   final ModelCatalogRepository modelRepository;
   final StatisticsRepository? statisticsRepository;
+  final AttachmentRepository? attachmentRepository;
+  final SpeechRecognitionRepository? speechRepository;
+  final ClipboardRepository? clipboardRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +59,10 @@ class MyApp extends StatelessWidget {
       home: HomePage(
         deviceResourcesRepository: deviceResourcesRepository,
         chatRepository: chatRepository,
+        attachmentRepository: attachmentRepository,
+        incomingTextRepository: incomingTextRepository,
+        speechRepository: speechRepository,
+        clipboardRepository: clipboardRepository,
         modelFilesRepository: modelFilesRepository,
         llmRepository: llmRepository,
         llmConfiguration: llmConfiguration,

@@ -6,6 +6,7 @@ import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
@@ -32,7 +33,7 @@ class _Llm implements LlmRepository {
     contextCallbacks.add(onContext);
     final stream = StreamController<String>();
     streams.add(stream);
-    onStage(LlmStage.generating);
+    onStage(LlmStage.analyzing);
     return stream.stream;
   }
 
@@ -180,6 +181,53 @@ void main() {
           'New question',
         ]);
         expect(llm.inputs.last.single.conversationId, workspace.selected.id);
+        await llm.streams.last.close();
+        await second;
+      });
+    });
+
+    testWidgets('Shows analysis until the first nonempty response fragment', (
+      tester,
+    ) async {
+      await withWorkspace(tester, (repository, llm, workspace) async {
+        final send = workspace.sendMessage('Question');
+        await _until(() => llm.streams.isNotEmpty);
+        expect(workspace.generationStatus, 'Bielik myśli…');
+        llm.streams.last.add('');
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        expect(workspace.generationStatus, 'Bielik myśli…');
+        llm.streams.last.add('Reply');
+        await _until(() => workspace.selected.messages.length == 2);
+        expect(workspace.generationStatus, 'Bielik pisze…');
+        await llm.streams.last.close();
+        await send;
+      });
+    });
+
+    testWidgets('Keeps the document and answer in a follow-up question', (
+      tester,
+    ) async {
+      await withWorkspace(tester, (repository, llm, workspace) async {
+        workspace.selected.setAttachment(
+          const TextAttachment(
+            name: 'facts.txt',
+            text: 'The project name is Eagle.',
+            sizeBytes: 26,
+          ),
+        );
+        final first = workspace.sendMessage('Remember this document');
+        await _until(() => llm.streams.isNotEmpty);
+        llm.streams.last.add('The project is Eagle.');
+        await llm.streams.last.close();
+        await first;
+        final second = workspace.sendMessage('What is the project name?');
+        await _until(() => llm.streams.length == 2);
+        expect(
+          llm.inputs.last.first.promptText,
+          contains('The project name is Eagle.'),
+        );
+        expect(llm.inputs.last[1].text, 'The project is Eagle.');
+        expect(llm.inputs.last.last.text, 'What is the project name?');
         await llm.streams.last.close();
         await second;
       });

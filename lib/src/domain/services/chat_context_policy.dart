@@ -27,15 +27,18 @@ class ChatContextPolicy {
   }) async {
     final turns = <ContextMessage>[];
     for (final message in history.where(
-      (message) => message.text.trim().isNotEmpty,
+      (message) => message.promptText.trim().isNotEmpty,
     )) {
       if (turns.isNotEmpty && turns.last.role == message.role) {
         final previous = turns.removeLast();
         turns.add(
-          ContextMessage(message.role, '${previous.text}\n\n${message.text}'),
+          ContextMessage(
+            message.role,
+            '${previous.text}\n\n${message.promptText}',
+          ),
         );
       } else {
-        turns.add(ContextMessage(message.role, message.text));
+        turns.add(ContextMessage(message.role, message.promptText));
       }
     }
     while (turns.isNotEmpty) {

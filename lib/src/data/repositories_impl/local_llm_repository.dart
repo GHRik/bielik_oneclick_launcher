@@ -107,6 +107,7 @@ class LocalLlmRepository implements LlmRepository {
       if (_stopped) return;
       final engine = _engine!;
       var promptTokens = 0;
+      onStage(LlmStage.analyzing);
       final context = await contextPolicy.prepare(
         history,
         isCancelled: () => _stopped,
@@ -131,7 +132,6 @@ class LocalLlmRepository implements LlmRepository {
       final reusePromptPrefix =
           conversationId != null && _contextConversationId == conversationId;
       _contextConversationId = conversationId;
-      onStage(LlmStage.generating);
       await for (final chunk in engine.create(
         _engineMessages(context),
         params: GenerationParams(

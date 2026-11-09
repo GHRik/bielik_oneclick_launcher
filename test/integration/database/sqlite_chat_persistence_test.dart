@@ -41,6 +41,33 @@ void main() {
   }
 
   group('SQLite chat repository persistence', () {
+    test('Persists recently used conversations first', () async {
+      final first = await repository.createConversation();
+      await repository.createConversation();
+      await repository.markConversationUsed(first.id);
+      await reopen();
+      expect((await repository.getConversations()).first.id, first.id);
+    });
+
+    test('Saving a background draft does not change usage order', () async {
+      final first = await repository.createConversation();
+      final second = await repository.createConversation();
+      await repository.saveDraft(first.id, 'Background draft');
+      expect((await repository.getConversations()).first.id, second.id);
+    });
+
+    test('Rapid selections preserve their final order', () async {
+      final first = await repository.createConversation();
+      final second = await repository.createConversation();
+      await repository.markConversationUsed(first.id);
+      await repository.markConversationUsed(second.id);
+      await repository.markConversationUsed(first.id);
+      expect((await repository.getConversations()).map((chat) => chat.id), [
+        first.id,
+        second.id,
+      ]);
+    });
+
     test(
       'Returns conversations with stable IDs in newest-first order',
       () async {
