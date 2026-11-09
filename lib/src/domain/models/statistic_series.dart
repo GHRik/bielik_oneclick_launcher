@@ -1,4 +1,6 @@
 class StatisticSeries {
+  static const historySeconds = 120;
+
   const StatisticSeries({
     required this.title,
     required this.unit,

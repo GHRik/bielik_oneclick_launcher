@@ -53,9 +53,14 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
       ],
     ));
     _samples.removeWhere(
-      (sample) => now.difference(sample.time).inMilliseconds > 60000,
+      (sample) =>
+          now.difference(sample.time).inMilliseconds >
+          StatisticSeries.historySeconds * 1000,
     );
-    if (_samples.length > 61) _samples.removeRange(0, _samples.length - 61);
+    const maxSamples = StatisticSeries.historySeconds + 1;
+    if (_samples.length > maxSamples) {
+      _samples.removeRange(0, _samples.length - maxSamples);
+    }
     return getSeries();
   }
 
@@ -63,7 +68,11 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
   List<StatisticSeries> getSeries() {
     final now = _now();
     final samples = _samples
-        .where((s) => now.difference(s.time).inMilliseconds <= 60000)
+        .where(
+          (s) =>
+              now.difference(s.time).inMilliseconds <=
+              StatisticSeries.historySeconds * 1000,
+        )
         .toList();
     const definitions = [
       (
