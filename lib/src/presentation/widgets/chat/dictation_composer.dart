@@ -47,7 +47,7 @@ class DictationComposer extends StatelessWidget {
       inputClearMode: InputClearMode.never,
       sendButtonDisabled: sending || (speech?.active ?? false),
       sendIcon: const Icon(Icons.send, semanticLabel: 'Wyślij wiadomość'),
-      right: speech == null ? 0 : 56,
+      padding: EdgeInsets.fromLTRB(8, 8, speech == null ? 8 : 64, 8),
       topWidget:
           attachmentPreview != null ||
               speech?.error != null ||
@@ -89,6 +89,12 @@ class DictationComposer extends StatelessWidget {
                 ? 'Zatrzymaj dyktowanie'
                 : 'Dyktuj wiadomość',
             isSelected: speech.active,
+            style: IconButton.styleFrom(
+              backgroundColor: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerLow,
+              foregroundColor: Theme.of(context).colorScheme.primary,
+            ),
             onPressed: sending || speech.finishing ? null : onMicrophoneTap,
             icon: const Icon(Icons.mic_none),
             selectedIcon: const Icon(Icons.mic),
