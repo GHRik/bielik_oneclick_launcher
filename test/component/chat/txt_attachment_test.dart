@@ -140,12 +140,17 @@ void main() {
     expect(llm.unloads, unloads);
   });
 
-  testWidgets('Leaving the chat still unloads its model', (tester) async {
+  testWidgets('Leaving the chat unloads its model after the idle timeout', (
+    tester,
+  ) async {
     await open(tester);
     await send(tester);
     final unloads = llm.unloads;
     await tester.pageBack();
     await tester.pumpAndSettle();
+    expect(llm.unloads, unloads);
+    await tester.pump(const Duration(minutes: 2));
+    await tester.pump();
     expect(llm.unloads, unloads + 1);
   });
 
