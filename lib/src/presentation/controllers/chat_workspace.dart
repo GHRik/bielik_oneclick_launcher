@@ -34,6 +34,9 @@ class ChatWorkspace extends ChangeNotifier {
   }
 
   ConversationController? _generationTarget;
+  String? _streamingMessageId;
+  String? get streamingMessageId =>
+      _selected == _generationTarget ? _streamingMessageId : null;
   Future<void>? _generationTask;
   Future<void>? _releaseTask;
   bool _stopRequested = false;
@@ -299,6 +302,10 @@ class ChatWorkspace extends ChangeNotifier {
           if (_disposed) return;
           switch (update) {
             case ChatMessageSaved():
+              if (update.message.role == ChatRole.assistant) {
+                _streamingMessageId = update.message.id;
+                _notify();
+              }
               await target.addMessage(
                 update.message,
                 submittedDraftRevision: update.message.role == ChatRole.user
@@ -330,6 +337,7 @@ class ChatWorkspace extends ChangeNotifier {
       }
     } finally {
       _sending = false;
+      _streamingMessageId = null;
       _generationTarget = null;
       _stage = null;
       _notify();

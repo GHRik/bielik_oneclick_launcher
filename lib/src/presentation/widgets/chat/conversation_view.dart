@@ -15,12 +15,14 @@ class ConversationView extends StatelessWidget {
     required this.conversation,
     required this.onMessageSend,
     this.sending = false,
+    this.streamingMessageId,
     this.clipboardRepository,
   });
 
   final ConversationController conversation;
   final ValueChanged<String> onMessageSend;
   final bool sending;
+  final String? streamingMessageId;
   final ClipboardRepository? clipboardRepository;
 
   @override
@@ -50,7 +52,12 @@ class ConversationView extends StatelessWidget {
                   child: SimpleTextMessage(message: message, index: index),
                 ),
               )
-            : AssistantMarkdownMessage(message: message),
+            : MessageWithActions(
+                messageId: message.id,
+                isUser: false,
+                showCopy: message.id != streamingMessageId,
+                child: AssistantMarkdownMessage(message: message),
+              ),
         emptyChatListBuilder: (context) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),

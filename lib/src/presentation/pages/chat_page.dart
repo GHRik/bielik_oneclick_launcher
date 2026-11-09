@@ -184,6 +184,8 @@ class _ChatPageState extends State<ChatPage> {
                       Expanded(
                         child: ConversationView(
                           conversation: widget.workspace.selected,
+                          streamingMessageId:
+                              widget.workspace.streamingMessageId,
                           clipboardRepository: widget.clipboardRepository,
                           onMessageSend: widget.workspace.sendMessage,
                           sending:
