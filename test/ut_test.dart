@@ -2,6 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/ut/test_platform_incoming_text_repository.dart'
     as incoming_text_suite;
+import 'package:bielik_oneclick_launcher/src/presentation/controllers/ut/test_speech_dictation_controller.dart'
+    as dictation;
+
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/ut/test_platform_speech_recognition_repository.dart'
+    as speech_adapter;
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/ut/test_system_clipboard_repository.dart'
+    as clipboard;
 
 import 'package:bielik_oneclick_launcher/configuration/ut/test_llm_configuration.dart'
     as suite0;
@@ -44,6 +51,18 @@ void main() {
   group(
     'src/data/repositories_impl/platform_incoming_text_repository.dart',
     incoming_text_suite.main,
+  );
+  group(
+    'src/presentation/controllers/speech_dictation_controller.dart',
+    dictation.main,
+  );
+  group(
+    'src/data/repositories_impl/platform_speech_recognition_repository.dart',
+    speech_adapter.main,
+  );
+  group(
+    'src/data/repositories_impl/system_clipboard_repository.dart',
+    clipboard.main,
   );
   group('configuration/llm_configuration.dart', suite0.main);
   group('src/data/datasources/device_resources_datasource.dart', suite1.main);

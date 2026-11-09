@@ -12,6 +12,8 @@ import 'package:bielik_oneclick_launcher/configuration/database_configuration.da
 import 'package:bielik_oneclick_launcher/configuration/system_prompt.dart';
 import 'package:bielik_oneclick_launcher/src/app.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/platform_incoming_text_repository.dart';
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/platform_speech_recognition_repository.dart';
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/system_clipboard_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/llm_settings_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/sqlite_llm_settings_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/statistics_datasource.dart';
@@ -46,6 +48,8 @@ Future<void> main() async {
           !kIsWeb && defaultTargetPlatform == TargetPlatform.android
           ? PlatformIncomingTextRepository()
           : null,
+      speechRepository: PlatformSpeechRecognitionRepository(),
+      clipboardRepository: const SystemClipboardRepository(),
       onSaveGpuConfiguration: (configuration) =>
           gpuConfiguration = configuration,
       llmConfiguration: activeConfiguration ?? defaultLlmConfiguration,
