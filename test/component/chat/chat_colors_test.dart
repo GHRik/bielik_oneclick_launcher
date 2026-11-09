@@ -52,12 +52,12 @@ void main() {
       );
       expect(bubble.sentBackgroundColor, theme.colorScheme.primaryContainer);
       expect(bubble.sentTextStyle!.color, theme.colorScheme.onPrimaryContainer);
-      final composer = tester.widget<Composer>(find.byType(Composer));
+      final input = tester.widget<TextField>(find.byType(TextField));
       expect(
-        composer.inputFillColor,
+        input.decoration!.fillColor,
         theme.colorScheme.surfaceContainerHighest,
       );
-      expect(composer.textColor, theme.colorScheme.onSurface);
+      expect(input.style!.color, theme.colorScheme.onSurface);
       expect(tester.takeException(), isNull);
     });
   }

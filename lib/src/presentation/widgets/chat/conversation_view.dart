@@ -172,6 +172,11 @@ class ConversationView extends StatelessWidget {
                 )
               : null,
           onSend: onMessageSend,
+          onPasted: conversation.offerTextActions,
+          onAttachmentTap:
+              sending || pickingAttachment || dictation?.active == true
+              ? null
+              : onAttachmentTap,
           dictation: dictation,
           onMicrophoneTap: onMicrophoneTap,
           sending: sending || pickingAttachment,
