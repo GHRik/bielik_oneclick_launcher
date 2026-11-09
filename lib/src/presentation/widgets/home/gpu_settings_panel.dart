@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/settings/parameter_help_button.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/gpu_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/gpu_settings_draft.dart';
 
@@ -36,6 +38,10 @@ class _GpuSettingsPanelState extends State<GpuSettingsPanel> {
                 initialValue: draft.backend,
                 decoration: const InputDecoration(
                   labelText: 'Backend GPU',
+                  suffixIcon: ParameterHelpButton(
+                    title: 'Backend GPU',
+                    description: 'Sposób komunikacji z GPU: Vulkan lub OpenCL. Wydajność i zgodność zależą od sterownika telefonu; GPU nie zawsze jest szybsze od CPU.',
+                  ),
                   border: OutlineInputBorder(),
                 ),
                 items: const [
@@ -58,6 +64,10 @@ class _GpuSettingsPanelState extends State<GpuSettingsPanel> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   labelText: 'Limit warstw GPU',
+                  suffixIcon: ParameterHelpButton(
+                    title: 'Limit warstw GPU',
+                    description: 'Maksymalna liczba warstw modelu przenoszonych na GPU. Większy limit może zwiększyć zużycie pamięci; rzeczywista liczba zależy od modelu i silnika.',
+                  ),
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -67,12 +77,20 @@ class _GpuSettingsPanelState extends State<GpuSettingsPanel> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   labelText: 'Mikropartia GPU',
+                  suffixIcon: ParameterHelpButton(
+                    title: 'Mikropartia GPU',
+                    description: 'Liczba tokenów przetwarzanych jednocześnie wewnątrz partii. Większa wartość może przyspieszyć analizę tekstu, ale wymaga więcej pamięci.',
+                  ),
                   border: OutlineInputBorder(),
                 ),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Flash Attention'),
+                secondary: const ParameterHelpButton(
+                  title: 'Flash Attention',
+                  description: 'Optymalizacja mechanizmu uwagi, która może ograniczyć zużycie pamięci i przyspieszyć obliczenia. Dostępność zależy od modelu i backendu.',
+                ),
                 value: draft.flashAttention,
                 onChanged: (value) =>
                     setState(() => draft.flashAttention = value),

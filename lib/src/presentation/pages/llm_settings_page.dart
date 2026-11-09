@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/settings/parameter_help_button.dart';
+
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/settings/theme_preference_card.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/gpu_configuration.dart';
@@ -86,6 +88,20 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
     ),
   );
 
+  static const _help = {
+    'contextSize': 'Ile tokenów model może uwzględnić naraz, łącznie z rozmową, załącznikami i odpowiedzią. Większy kontekst zużywa więcej RAM.',
+    'responseTokens': 'Maksymalna liczba tokenów nowej odpowiedzi. Większy limit zostawia mniej miejsca na tekst wejściowy.',
+    'safetyTokens': 'Rezerwa tokenów na narzut formatu rozmowy. Nie jest dostępna dla treści wiadomości ani odpowiedzi.',
+    'numberOfThreads': 'Liczba wątków CPU używanych do obliczeń. Więcej wątków nie zawsze oznacza szybszą odpowiedź.',
+    'batchSize': 'Maksymalna liczba tokenów w partii przetwarzania tekstu wejściowego. Większa partia może przyspieszyć analizę, ale zwiększa zużycie pamięci.',
+    'temperature': 'Niższa wartość daje bardziej przewidywalne odpowiedzi. Wyższa zwiększa różnorodność wybieranych tokenów.',
+    'topK': 'Ogranicza wybór następnego tokenu do K najbardziej prawdopodobnych kandydatów. Wartość 0 wyłącza ten filtr.',
+    'topP': 'Ogranicza wybór do tokenów, których łączne prawdopodobieństwo osiąga ustawiony próg. Niższa wartość zawęża wybór.',
+    'minP': 'Odrzuca tokeny zbyt mało prawdopodobne względem najlepszego kandydata. Wartość 0 wyłącza ten filtr.',
+    'repeatPenalty': 'Ogranicza powtarzanie tokenów. Wartość 1 nie nakłada kary; zbyt wysoka może pogorszyć odpowiedzi.',
+    'seed': 'Ziarno losowania. Ta sama wartość pomaga odtwarzać wyniki przy identycznych ustawieniach i środowisku. Puste pole oznacza losowe ziarno.',
+  };
+
   Widget _field(String name) => Padding(
     padding: const EdgeInsets.only(bottom: 16),
     child: TextField(
@@ -96,6 +112,10 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
       ),
       decoration: InputDecoration(
         labelText: LlmSettingsDraft.labels[name],
+        suffixIcon: ParameterHelpButton(
+          title: LlmSettingsDraft.labels[name]!,
+          description: _help[name]!,
+        ),
         border: const OutlineInputBorder(),
       ),
     ),

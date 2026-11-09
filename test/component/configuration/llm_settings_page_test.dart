@@ -7,6 +7,27 @@ import 'package:bielik_oneclick_launcher/src/presentation/controllers/llm_settin
 import 'package:bielik_oneclick_launcher/src/presentation/pages/llm_settings_page.dart';
 
 void main() {
+  testWidgets('Tapping parameter help opens its explanation', (tester) async {
+    final draft = LlmSettingsDraft(defaultLlmConfiguration);
+    await tester.pumpWidget(MaterialApp(home: LlmSettingsPage(draft: draft)));
+
+    final help = find.byTooltip('Wyjaśnienie: Rozmiar kontekstu (tokeny)');
+    await tester.ensureVisible(help);
+    await tester.tap(help);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(
+      find.textContaining('Większy kontekst zużywa więcej RAM.'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Rozumiem'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    draft.dispose();
+  });
+
   group('Settings save action', () {
     for (final valid in [false, true]) {
       testWidgets(
