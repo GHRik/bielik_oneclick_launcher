@@ -55,8 +55,9 @@ class _Speech extends Fake implements SpeechToText {
   @override
   Future<void> cancel() async {}
 
-  void recognize(String text) =>
-      result!(SpeechRecognitionResult([SpeechRecognitionWords(text, null, 1.0)], 0));
+  void recognize(String text) => result!(
+    SpeechRecognitionResult([SpeechRecognitionWords(text, null, 1.0)], 0),
+  );
 }
 
 void main() {
