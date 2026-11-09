@@ -11,6 +11,7 @@ import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/configuration/database_configuration.dart';
 import 'package:bielik_oneclick_launcher/configuration/system_prompt.dart';
 import 'package:bielik_oneclick_launcher/src/app.dart';
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/sqlite_app_theme_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_attachment_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/platform_incoming_text_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/platform_speech_recognition_repository.dart';
@@ -43,8 +44,12 @@ Future<void> main() async {
   var activeConfiguration = await settings.load();
   var gpuConfiguration = const GpuConfiguration();
   final metrics = GenerationMetrics();
+  final themeRepository = SqliteAppThemeRepository(database);
+  final themePreference = await themeRepository.load();
   runApp(
     MyApp(
+      themeRepository: themeRepository,
+      themePreference: themePreference,
       attachmentRepository: LocalAttachmentRepository(),
       incomingTextRepository:
           !kIsWeb && defaultTargetPlatform == TargetPlatform.android
