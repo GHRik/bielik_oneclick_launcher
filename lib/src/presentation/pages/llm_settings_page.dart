@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/settings/theme_preference_card.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/gpu_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/gpu_settings_draft.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/gpu_settings_panel.dart';
@@ -121,6 +123,8 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const ThemePreferenceCard(),
+                const SizedBox(height: 16),
                 const Text(
                   'Ustawienia wspólne dla modeli. Zapisz zmiany, aby użyć ich '
                   'przy następnym otwarciu czatu.',

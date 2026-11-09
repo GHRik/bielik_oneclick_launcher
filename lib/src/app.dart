@@ -1,5 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/app_theme_preference.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/app_theme_repository.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/controllers/app_theme_controller.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/settings/app_theme_scope.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/speech_recognition_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/clipboard_repository.dart';
@@ -19,7 +24,7 @@ import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.
 import 'package:bielik_oneclick_launcher/src/domain/repositories/statistics_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/pages/home_page.dart';
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({
     super.key,
     required this.chatRepository,
@@ -35,6 +40,8 @@ class MyApp extends StatelessWidget {
     this.incomingTextRepository,
     this.speechRepository,
     this.clipboardRepository,
+    this.themePreference = AppThemePreference.system,
+    this.themeRepository,
   });
 
   final DeviceResourcesRepository? deviceResourcesRepository;
@@ -50,27 +57,61 @@ class MyApp extends StatelessWidget {
   final AttachmentRepository? attachmentRepository;
   final SpeechRecognitionRepository? speechRepository;
   final ClipboardRepository? clipboardRepository;
+  final AppThemePreference themePreference;
+  final AppThemeRepository? themeRepository;
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final _theme = AppThemeController(
+    initial: widget.themePreference,
+    repository: widget.themeRepository,
+  );
+
+  @override
+  void dispose() {
+    _theme.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Bielik',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: HomePage(
-        deviceResourcesRepository: deviceResourcesRepository,
-        chatRepository: chatRepository,
-        attachmentRepository: attachmentRepository,
-        incomingTextRepository: incomingTextRepository,
-        speechRepository: speechRepository,
-        clipboardRepository: clipboardRepository,
-        modelFilesRepository: modelFilesRepository,
-        llmRepository: llmRepository,
-        llmConfiguration: llmConfiguration,
-        onSaveLlmConfiguration: onSaveLlmConfiguration,
-        onSaveGpuConfiguration: onSaveGpuConfiguration,
-        models: modelRepository.getModels(),
-        statisticSeries: statisticsRepository?.getSeries() ?? const [],
-        statisticsRepository: statisticsRepository,
+    return AppThemeScope(
+      controller: _theme,
+      child: ListenableBuilder(
+        listenable: _theme,
+        builder: (context, _) => MaterialApp(
+          title: 'Bielik',
+          theme: ThemeData(
+            colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+          ),
+          darkTheme: ThemeData(
+            colorScheme: .fromSeed(
+              seedColor: Colors.deepPurple,
+              brightness: Brightness.dark,
+            ),
+          ),
+          themeMode: _theme.mode,
+          home: HomePage(
+            deviceResourcesRepository: widget.deviceResourcesRepository,
+            chatRepository: widget.chatRepository,
+            attachmentRepository: widget.attachmentRepository,
+            incomingTextRepository: widget.incomingTextRepository,
+            speechRepository: widget.speechRepository,
+            clipboardRepository: widget.clipboardRepository,
+            modelFilesRepository: widget.modelFilesRepository,
+            llmRepository: widget.llmRepository,
+            llmConfiguration: widget.llmConfiguration,
+            onSaveLlmConfiguration: widget.onSaveLlmConfiguration,
+            onSaveGpuConfiguration: widget.onSaveGpuConfiguration,
+            models: widget.modelRepository.getModels(),
+            statisticSeries:
+                widget.statisticsRepository?.getSeries() ?? const [],
+            statisticsRepository: widget.statisticsRepository,
+          ),
+        ),
       ),
     );
   }
