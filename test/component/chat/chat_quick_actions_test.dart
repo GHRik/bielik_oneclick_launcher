@@ -18,6 +18,14 @@ void main() {
       ),
     );
     expect(find.byType(ActionChip), findsNWidgets(3));
+    final chips = find.byType(ActionChip);
+    final first = tester.getRect(chips.at(0));
+    final second = tester.getRect(chips.at(1));
+    final third = tester.getRect(chips.at(2));
+    expect(second.center.dy, closeTo(first.center.dy, 0.1));
+    expect(third.center.dy, closeTo(first.center.dy, 0.1));
+    expect(first.left, greaterThanOrEqualTo(0));
+    expect(third.right, lessThanOrEqualTo(280));
     expect(tester.takeException(), isNull);
   });
 

@@ -14,27 +14,38 @@ class ChatQuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-    child: Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      children: [
-        ActionChip(
-          avatar: const Icon(Icons.translate, size: 18),
-          label: const Text('Przetłumacz'),
-          onPressed: onTranslate,
+    padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+    child: FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: ChipTheme(
+        data: ChipTheme.of(context).copyWith(
+          labelStyle: Theme.of(context).textTheme.labelSmall,
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          labelPadding: const EdgeInsets.symmetric(horizontal: 4),
         ),
-        ActionChip(
-          avatar: const Icon(Icons.summarize_outlined, size: 18),
-          label: const Text('Streść'),
-          onPressed: onSummarize,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 6,
+          children: [
+            ActionChip(
+              avatar: const Icon(Icons.translate, size: 16),
+              label: const Text('Przetłumacz'),
+              onPressed: onTranslate,
+            ),
+            ActionChip(
+              avatar: const Icon(Icons.summarize_outlined, size: 16),
+              label: const Text('Streść'),
+              onPressed: onSummarize,
+            ),
+            ActionChip(
+              avatar: const Icon(Icons.manage_search, size: 16),
+              label: const Text('Analizuj'),
+              onPressed: onAnalyze,
+            ),
+          ],
         ),
-        ActionChip(
-          avatar: const Icon(Icons.manage_search, size: 18),
-          label: const Text('Analizuj'),
-          onPressed: onAnalyze,
-        ),
-      ],
+      ),
     ),
   );
 }
