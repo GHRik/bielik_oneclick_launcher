@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_chat_ui/flutter_chat_ui.dart' show Composer;
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/app.dart';
@@ -56,6 +57,14 @@ void main() {
       tester.getCenter(find.byTooltip('Dyktuj wiadomość')).dx,
       greaterThan(tester.getCenter(find.byIcon(Icons.send)).dx),
     );
+  });
+
+  testWidgets('The microphone stays inside the painted composer area', (
+    tester,
+  ) async {
+    await open(tester);
+    final microphone = tester.getCenter(find.byTooltip('Dyktuj wiadomość'));
+    expect(tester.getRect(find.byType(Composer)).contains(microphone), isTrue);
   });
 
   testWidgets('Speech updates the draft without sending it', (tester) async {

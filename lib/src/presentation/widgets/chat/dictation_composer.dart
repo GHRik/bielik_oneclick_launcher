@@ -29,6 +29,14 @@ class DictationComposer extends StatelessWidget {
     final composer = Composer(
       textEditingController: draft,
       hintText: 'Napisz wiadomość…',
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+      inputFillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      textColor: Theme.of(context).colorScheme.onSurface,
+      hintColor: Theme.of(context).colorScheme.onSurfaceVariant,
+      attachmentIconColor: Theme.of(context).colorScheme.primary,
+      sendIconColor: Theme.of(context).colorScheme.primary,
+      emptyFieldSendIconColor: Theme.of(context).colorScheme.onSurfaceVariant,
+      keyboardAppearance: Theme.of(context).brightness,
       attachmentIcon: showAttachmentButton
           ? const Icon(Icons.add, semanticLabel: 'Dodaj plik TXT')
           : null,
@@ -39,7 +47,7 @@ class DictationComposer extends StatelessWidget {
       inputClearMode: InputClearMode.never,
       sendButtonDisabled: sending || (speech?.active ?? false),
       sendIcon: const Icon(Icons.send, semanticLabel: 'Wyślij wiadomość'),
-      right: speech == null ? 0 : 56,
+      padding: EdgeInsets.fromLTRB(8, 8, speech == null ? 8 : 64, 8),
       topWidget:
           attachmentPreview != null ||
               speech?.error != null ||
@@ -81,6 +89,12 @@ class DictationComposer extends StatelessWidget {
                 ? 'Zatrzymaj dyktowanie'
                 : 'Dyktuj wiadomość',
             isSelected: speech.active,
+            style: IconButton.styleFrom(
+              backgroundColor: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerLow,
+              foregroundColor: Theme.of(context).colorScheme.primary,
+            ),
             onPressed: sending || speech.finishing ? null : onMicrophoneTap,
             icon: const Icon(Icons.mic_none),
             selectedIcon: const Icon(Icons.mic),

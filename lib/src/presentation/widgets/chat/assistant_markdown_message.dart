@@ -33,10 +33,14 @@ class AssistantMarkdownMessage extends StatelessWidget {
                 softLineBreak: true,
                 styleSheet: MarkdownStyleSheet(
                   p: textStyle,
+                  a: TextStyle(color: theme.colorScheme.primary),
                   listBullet: textStyle,
                   strong: const TextStyle(fontWeight: FontWeight.bold),
                   em: const TextStyle(fontStyle: FontStyle.italic),
-                  code: textStyle.copyWith(fontFamily: 'monospace'),
+                  code: textStyle.copyWith(
+                    fontFamily: 'monospace',
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  ),
                   h1: textStyle.copyWith(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,

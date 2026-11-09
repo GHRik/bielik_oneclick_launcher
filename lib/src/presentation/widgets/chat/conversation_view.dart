@@ -36,6 +36,14 @@ class ConversationView extends StatelessWidget {
   final String? streamingMessageId;
   final ClipboardRepository? clipboardRepository;
 
+  ChatTheme _chatTheme(BuildContext context) {
+    final material = Theme.of(context);
+    final base = material.brightness == Brightness.dark
+        ? ChatTheme.dark()
+        : ChatTheme.light();
+    return base.copyWith(colors: ChatColors.fromThemeData(material));
+  }
+
   Widget _userMessage(BuildContext context, TextMessage message, int index) {
     final attachment = conversation.messages
         .where((stored) => stored.id == message.id)
@@ -47,7 +55,19 @@ class ConversationView extends StatelessWidget {
       children: [
         if (message.text.isNotEmpty || attachment == null)
           SelectionArea(
-            child: SimpleTextMessage(message: message, index: index),
+            child: SimpleTextMessage(
+              message: message,
+              index: index,
+              sentBackgroundColor: Theme.of(context)
+                  .colorScheme
+                  .primaryContainer,
+              sentTextStyle: _chatTheme(context).typography.bodyMedium.copyWith(
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              ),
+              timeStyle: _chatTheme(context).typography.labelSmall.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
         if (attachment != null)
           AttachmentPreview(
@@ -66,6 +86,8 @@ class ConversationView extends StatelessWidget {
     builder: (context, _) => Chat(
       key: ValueKey('chat-${conversation.id}'),
       chatController: conversation.controller,
+      theme: _chatTheme(context),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       currentUserId: ChatAuthors.user,
       onMessageSend: (text) {
         if (dictation?.active != true) onMessageSend(text);

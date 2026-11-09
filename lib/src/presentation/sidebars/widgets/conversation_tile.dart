@@ -28,7 +28,9 @@ class ConversationTile extends StatelessWidget {
           minLeadingWidth: 20,
           horizontalTitleGap: 8,
           selected: selected,
-          selectedTileColor: Theme.of(context).colorScheme.secondaryContainer,
+          selectedTileColor: Theme.of(context).colorScheme.primaryContainer,
+          selectedColor: Theme.of(context).colorScheme.onPrimaryContainer,
+          iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
