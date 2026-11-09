@@ -14,7 +14,7 @@ class MessageWithActions extends StatelessWidget {
 
   final String messageId;
   final Widget child;
-  final VoidCallback? onCopy;
+  final Future<void> Function()? onCopy;
   final bool isUser;
   final bool showCopy;
 
@@ -29,7 +29,7 @@ class MessageWithActions extends StatelessWidget {
       if (showCopy)
         MessageCopyButton(
           key: ValueKey('copy-message-$messageId'),
-          onPressed: onCopy,
+          onCopy: onCopy,
         ),
     ],
   );

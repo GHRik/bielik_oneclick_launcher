@@ -2,6 +2,8 @@ import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/clipboard_repository.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/message_with_actions.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/conversation_controller.dart';
@@ -13,11 +15,13 @@ class ConversationView extends StatelessWidget {
     required this.conversation,
     required this.onMessageSend,
     this.sending = false,
+    this.clipboardRepository,
   });
 
   final ConversationController conversation;
   final ValueChanged<String> onMessageSend;
   final bool sending;
+  final ClipboardRepository? clipboardRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +43,9 @@ class ConversationView extends StatelessWidget {
             }) => isSentByMe
             ? MessageWithActions(
                 messageId: message.id,
+                onCopy: clipboardRepository == null
+                    ? null
+                    : () => clipboardRepository!.copyText(message.text),
                 child: SelectionArea(
                   child: SimpleTextMessage(message: message, index: index),
                 ),
