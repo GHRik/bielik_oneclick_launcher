@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
+
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/chat_model_header.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
@@ -17,11 +19,13 @@ class ChatPage extends StatefulWidget {
     required this.workspace,
     required this.statisticSeries,
     this.statisticsController,
+    this.attachmentRepository,
   });
 
   final ChatWorkspace workspace;
   final List<StatisticSeries> statisticSeries;
   final StatisticsController? statisticsController;
+  final AttachmentRepository? attachmentRepository;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -180,6 +184,12 @@ class _ChatPageState extends State<ChatPage> {
                       Expanded(
                         child: ConversationView(
                           conversation: widget.workspace.selected,
+                          onAttachmentTap: widget.attachmentRepository == null
+                              ? null
+                              : () => widget.workspace.pickAttachment(
+                                  widget.attachmentRepository!,
+                                ),
+                          pickingAttachment: widget.workspace.pickingAttachment,
                           onMessageSend: widget.workspace.sendMessage,
                           sending:
                               widget.workspace.sending || widget.workspace.busy,

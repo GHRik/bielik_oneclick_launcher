@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart';
 
 import 'package:material_ui/material_ui.dart';
@@ -97,6 +99,8 @@ class ChatWorkspace extends ChangeNotifier {
   bool _loading = true;
   bool _busy = false;
   bool _sending = false;
+  bool _pickingAttachment = false;
+  bool get pickingAttachment => _pickingAttachment;
   String? _error;
 
   List<ConversationController> get conversations =>
@@ -104,7 +108,7 @@ class ChatWorkspace extends ChangeNotifier {
   ConversationController get selected => _selected!;
   bool get ready => _selected != null;
   bool get loading => _loading;
-  bool get busy => _busy || _releasing;
+  bool get busy => _busy || _releasing || _pickingAttachment;
   bool get sending => _sending;
   String? get error => _error;
 
@@ -210,6 +214,37 @@ class ChatWorkspace extends ChangeNotifier {
     return task;
   }
 
+  Future<void> pickAttachment(AttachmentRepository repository) async {
+    if (!ready || _disposed || busy || sending) return;
+    final target = selected;
+    _pickingAttachment = true;
+    _error = null;
+    _notify();
+    try {
+      final attachment = await repository.pickTextAttachment();
+      if (!_disposed && attachment != null && _conversations.contains(target)) {
+        target.setAttachment(attachment);
+        await flush();
+      }
+    } on AttachmentException catch (error) {
+      _error = switch (error.failure) {
+        AttachmentFailure.unsupportedType =>
+          'Na razie można dołączać tylko pliki TXT.',
+        AttachmentFailure.tooLarge =>
+          'Plik TXT jest za duży. Limit wynosi 64 KiB.',
+        AttachmentFailure.invalidEncoding =>
+          'Plik nie jest poprawnym tekstem UTF-8. Zapisz go w UTF-8.',
+        AttachmentFailure.empty => 'Wybrany plik TXT jest pusty.',
+        AttachmentFailure.readFailed => 'Nie udało się odczytać pliku TXT.',
+      };
+    } catch (_) {
+      _error = 'Nie udało się odczytać pliku TXT.';
+    } finally {
+      _pickingAttachment = false;
+      _notify();
+    }
+  }
+
   Future<void> newChat() {
     if (!ready || _disposed) return Future.value();
     return _runAction(() async {
@@ -265,6 +300,7 @@ class ChatWorkspace extends ChangeNotifier {
         _disposed ||
         _sending ||
         _releasing ||
+        _pickingAttachment ||
         (message.isEmpty && selected.attachment == null)) {
       return Future.value();
     }
@@ -351,7 +387,7 @@ class ChatWorkspace extends ChangeNotifier {
             'Błąd akceleracji GPU. Wyłącz GPU w konfiguracji, aby użyć CPU. ${error.reason}';
       }
     } on ChatContextTooLong {
-      _error = 'Wiadomość jest za długa. Skróć ją i spróbuj ponownie.';
+      _error = 'Wiadomość lub załącznik przekracza kontekst modelu. Skróć tekst albo wybierz mniejszy plik.';
     } on EmptyModelReply {
       if (!_stopRequested) _error = 'Model nie zwrócił odpowiedzi.';
     } catch (error) {

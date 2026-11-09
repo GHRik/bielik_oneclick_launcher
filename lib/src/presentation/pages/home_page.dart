@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/gpu_configuration.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
@@ -34,6 +36,7 @@ class HomePage extends StatefulWidget {
     required this.chatRepository,
     required this.statisticSeries,
     this.statisticsRepository,
+    this.attachmentRepository,
   });
 
   final DeviceResourcesRepository? deviceResourcesRepository;
@@ -46,6 +49,7 @@ class HomePage extends StatefulWidget {
   final List<BielikModel> models;
   final List<StatisticSeries> statisticSeries;
   final StatisticsRepository? statisticsRepository;
+  final AttachmentRepository? attachmentRepository;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -110,6 +114,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         MaterialPageRoute<void>(
           builder: (_) => ChatPage(
             workspace: _chatWorkspace,
+            attachmentRepository: widget.attachmentRepository,
             statisticSeries: widget.statisticSeries,
             statisticsController: _statistics,
           ),

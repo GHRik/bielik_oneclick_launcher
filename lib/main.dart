@@ -10,6 +10,7 @@ import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/configuration/database_configuration.dart';
 import 'package:bielik_oneclick_launcher/configuration/system_prompt.dart';
 import 'package:bielik_oneclick_launcher/src/app.dart';
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_attachment_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/llm_settings_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/sqlite_llm_settings_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/statistics_datasource.dart';
@@ -40,6 +41,7 @@ Future<void> main() async {
   final metrics = GenerationMetrics();
   runApp(
     MyApp(
+      attachmentRepository: LocalAttachmentRepository(),
       onSaveGpuConfiguration: (configuration) =>
           gpuConfiguration = configuration,
       llmConfiguration: activeConfiguration ?? defaultLlmConfiguration,
