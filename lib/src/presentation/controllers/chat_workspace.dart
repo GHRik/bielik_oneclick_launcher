@@ -212,7 +212,16 @@ class ChatWorkspace extends ChangeNotifier {
   void selectConversation(ConversationController conversation) {
     if (!_conversations.contains(conversation) || _disposed) return;
     _selected = conversation;
+    _conversations.remove(conversation);
+    _conversations.insert(0, conversation);
     _notify();
+    unawaited(
+      _enqueue(() async {
+        if (_conversations.contains(conversation)) {
+          await repository.markConversationUsed(conversation.id);
+        }
+      }, errorMessage: 'Nie udało się zapisać kolejności rozmów.'),
+    );
   }
 
   Future<void> deleteConversation(ConversationController conversation) async {
@@ -259,6 +268,7 @@ class ChatWorkspace extends ChangeNotifier {
       return Future.value();
     }
     final target = selected;
+    selectConversation(target);
     final revision = target.draftRevision;
     _error = null;
     _sending = true;

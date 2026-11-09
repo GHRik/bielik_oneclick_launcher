@@ -25,6 +25,27 @@ void main() {
       await tester.pump();
     }
 
+    testWidgets('Opening a conversation moves it to the top', (tester) async {
+      await withWorkspace(tester, (repository, workspace) async {
+        await workspace.initialize();
+        final first = workspace.selected;
+        await workspace.newChat();
+        workspace.selectConversation(first);
+        expect(workspace.conversations.first, same(first));
+      });
+    });
+
+    testWidgets('Opening a conversation persists its position', (tester) async {
+      await withWorkspace(tester, (repository, workspace) async {
+        await workspace.initialize();
+        final first = workspace.selected;
+        await workspace.newChat();
+        workspace.selectConversation(first);
+        await workspace.flush();
+        expect((await repository.getConversations()).first.id, first.id);
+      });
+    });
+
     testWidgets('Reports an initialization failure without becoming ready', (
       tester,
     ) async {
