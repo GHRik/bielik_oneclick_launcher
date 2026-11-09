@@ -265,18 +265,36 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _chatOpen ? null : _openChat,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _chatOpen ? null : _openChat,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .primaryContainer,
+                        foregroundColor: Theme.of(context)
+                            .colorScheme
+                            .onPrimaryContainer,
+                        elevation: 0,
+                        padding: const EdgeInsets.all(20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.chat_bubble_outline),
+                          SizedBox(width: 12),
+                          Expanded(child: Text('Otwórz czat')),
+                          Icon(Icons.arrow_forward, size: 20),
+                        ],
+                      ),
                     ),
                   ),
-                  icon: const Icon(Icons.chat_bubble_outline),
-                  label: const Text('Otwórz czat'),
                 ),
               ),
             ),
