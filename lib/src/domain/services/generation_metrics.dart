@@ -11,6 +11,8 @@ class GenerationMetrics {
       ..reset()
       ..start();
     _first = false;
+    firstResponseSeconds = null;
+    tokensPerSecond = null;
   }
 
   void firstText() {

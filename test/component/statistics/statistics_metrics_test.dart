@@ -16,6 +16,22 @@ class _Source extends StatisticsDataSource {
 
 void main() {
   group('Statistics adapter metric mapping', () {
+    test('Clears first response time when a new request begins', () {
+      final metrics = GenerationMetrics()..firstResponseSeconds = 2;
+
+      metrics.begin();
+
+      expect(metrics.firstResponseSeconds, isNull);
+    });
+
+    test('Clears generation speed when a new request begins', () {
+      final metrics = GenerationMetrics()..tokensPerSecond = 10;
+
+      metrics.begin();
+
+      expect(metrics.tokensPerSecond, isNull);
+    });
+
     test('Measures application RAM through the statistics adapter', () async {
       final metrics = GenerationMetrics();
       final repository = LocalStatisticsRepository(_Source(), metrics);
