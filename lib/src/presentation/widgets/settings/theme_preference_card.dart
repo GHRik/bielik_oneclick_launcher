@@ -10,6 +10,27 @@ class ThemePreferenceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = AppThemeScope.maybeOf(context);
     if (controller == null) return const SizedBox.shrink();
+    final colors = Theme.of(context).colorScheme;
+    final effective = controller.preference == AppThemePreference.system
+        ? Theme.of(context).brightness == Brightness.dark
+              ? AppThemePreference.dark
+              : AppThemePreference.light
+        : controller.preference;
+
+    Future<void> select(AppThemePreference value) async {
+      try {
+        await controller.select(value);
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Nie udało się zapisać motywu. Spróbuj ponownie.'),
+            ),
+          );
+        }
+      }
+    }
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -21,49 +42,44 @@ class ThemePreferenceCard extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<AppThemePreference>(
-              key: ValueKey(controller.preference),
-              initialValue: controller.preference,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Motyw',
-                border: OutlineInputBorder(),
-              ),
-              items: const [
-                DropdownMenuItem(
-                  value: AppThemePreference.system,
-                  child: Text('Systemowy'),
-                ),
-                DropdownMenuItem(
-                  value: AppThemePreference.light,
-                  child: Text('Jasny'),
-                ),
-                DropdownMenuItem(
-                  value: AppThemePreference.dark,
-                  child: Text('Ciemny'),
-                ),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                for (final mode in [
+                  AppThemePreference.light,
+                  AppThemePreference.dark,
+                ])
+                  Semantics(
+                    selected: effective == mode,
+                    child: OutlinedButton.icon(
+                      onPressed: controller.saving ? null : () => select(mode),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: effective == mode
+                            ? colors.primaryContainer
+                            : colors.surface,
+                        foregroundColor: effective == mode
+                            ? colors.onPrimaryContainer
+                            : colors.onSurface,
+                      ),
+                      icon: Icon(
+                        mode == AppThemePreference.light
+                            ? Icons.light_mode_outlined
+                            : Icons.dark_mode_outlined,
+                      ),
+                      label: Text(
+                        mode == AppThemePreference.light ? 'Jasny' : 'Ciemny',
+                      ),
+                    ),
+                  ),
               ],
-              onChanged: controller.saving
-                  ? null
-                  : (value) async {
-                      if (value == null) return;
-                      try {
-                        await controller.select(value);
-                      } catch (_) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Nie udało się zapisać motywu. Spróbuj ponownie.',
-                              ),
-                            ),
-                          );
-                        }
-                      }
-                    },
             ),
             const SizedBox(height: 8),
-            const Text('Zmiana działa od razu i zapisuje się automatycznie.'),
+            Text(
+              controller.preference == AppThemePreference.system
+                  ? 'Motyw zgodny z ustawieniami systemu.'
+                  : 'Wybrany motyw zapisuje się automatycznie.',
+            ),
           ],
         ),
       ),

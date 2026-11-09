@@ -43,9 +43,7 @@ Brightness brightness(WidgetTester tester) =>
     Theme.of(tester.element(find.byType(Scaffold).last)).brightness;
 
 Future<void> choose(WidgetTester tester, String label) async {
-  await tester.tap(find.byType(DropdownButtonFormField<AppThemePreference>));
-  await tester.pumpAndSettle();
-  await tester.tap(find.text(label).last);
+  await tester.tap(find.widgetWithText(OutlinedButton, label));
   await tester.pumpAndSettle();
 }
 
