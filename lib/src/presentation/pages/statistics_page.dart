@@ -4,16 +4,31 @@ import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/statistics_controller.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/statistics/statistic_card.dart';
 
-class StatisticsPage extends StatelessWidget {
+class StatisticsPage extends StatefulWidget {
   const StatisticsPage({super.key, required this.series, this.controller});
 
   final List<StatisticSeries> series;
   final StatisticsController? controller;
 
   @override
+  State<StatisticsPage> createState() => _StatisticsPageState();
+}
+
+class _StatisticsPageState extends State<StatisticsPage> {
+  DateTime? _selectedAt;
+
+  void _selectTime(double secondsAgo) {
+    setState(() {
+      _selectedAt = DateTime.now().add(
+        Duration(microseconds: (secondsAgo * 1000000).round()),
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final source = controller;
-    if (source == null) return _content(context, series);
+    final source = widget.controller;
+    if (source == null) return _content(context, widget.series);
     return ListenableBuilder(
       listenable: source,
       builder: (context, _) => _content(context, source.series),
@@ -22,6 +37,11 @@ class StatisticsPage extends StatelessWidget {
 
   Widget _content(BuildContext context, List<StatisticSeries> series) {
     final theme = Theme.of(context);
+    final selectedAt = _selectedAt;
+    final selectedSeconds = selectedAt == null
+        ? null
+        : selectedAt.difference(DateTime.now()).inMicroseconds / 1000000;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Statystyki')),
       body: DecoratedBox(
@@ -52,7 +72,7 @@ class StatisticsPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Ostatnie 60 sekund · historia bieżącej sesji',
+                      'Ostatnie ${StatisticSeries.historySeconds} sekund · historia bieżącej sesji',
                       style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(height: 8),
@@ -60,6 +80,14 @@ class StatisticsPage extends StatelessWidget {
                       'Jeśli pomiar jest niedostępny, urządzenie go nie udostępnia — pokazujemy wtedy 0.',
                       style: theme.textTheme.bodySmall,
                     ),
+                    if (selectedAt != null)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: () => setState(() => _selectedAt = null),
+                          child: const Text('Na żywo'),
+                        ),
+                      ),
                     const SizedBox(height: 24),
                     LayoutBuilder(
                       builder: (context, constraints) {
@@ -78,10 +106,11 @@ class StatisticsPage extends StatelessWidget {
                             for (var i = 0; i < series.length; i++)
                               SizedBox(
                                 width: cardWidth,
-                                height: 304 * textScale,
                                 child: StatisticCard(
                                   key: ValueKey(series[i].title),
                                   series: series[i],
+                                  selectedSeconds: selectedSeconds,
+                                  onTimeSelected: _selectTime,
                                 ),
                               ),
                           ],

@@ -79,14 +79,59 @@ void main() {
       });
     }
 
-    testWidgets('Displays charts with a 60-second history axis', (
+    testWidgets('Displays charts with a 120-second history axis', (
       tester,
     ) async {
       await _showStatistics(tester);
 
       expect(find.byType(StatisticLineChart), findsNWidgets(5));
-      expect(find.textContaining('Ostatnie 60 sekund'), findsOneWidget);
-      expect(find.text('-60 s'), findsNWidgets(5));
+      expect(find.textContaining('Ostatnie 120 sekund'), findsOneWidget);
+      expect(find.text('-2 min'), findsNWidgets(5));
+    });
+
+    testWidgets('Time labels align with the plot edges and midpoint', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 400,
+              child: StatisticLineChart(series: statisticsPreviewData.first),
+            ),
+          ),
+        ),
+      );
+      final graph = find.descendant(
+        of: find.byType(StatisticLineChart),
+        matching: find.byType(GestureDetector),
+      );
+      final plot = tester.getRect(graph);
+      expect(tester.getTopLeft(find.text('-2 min')).dx, closeTo(plot.left, 1));
+      expect(
+        tester.getCenter(find.text('-1 min')).dx,
+        closeTo(plot.center.dx, 1),
+      );
+      expect(tester.getTopRight(find.text('teraz')).dx, closeTo(plot.right, 1));
+    });
+
+    testWidgets('A narrow plot hides only the middle time label', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 150,
+              child: StatisticLineChart(series: statisticsPreviewData.first),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('-2 min'), findsOneWidget);
+      expect(find.text('-1 min'), findsNothing);
+      expect(find.text('teraz'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('Displays the sample selected by tapping a chart', (
@@ -104,7 +149,60 @@ void main() {
       final reading = tester.widget<Text>(
         find.byKey(const ValueKey('chart-reading-Prędkość generowania')),
       );
-      expect(reading.data, '-30 s · 19 tok./s');
+      expect(reading.data, '-60 s · 19 tok./s');
+    });
+
+    testWidgets(
+      'Selecting time on one chart selects the same time on every chart',
+      (tester) async {
+        await _showStatistics(tester);
+        final graph = find.descendant(
+          of: find.byType(StatisticLineChart).first,
+          matching: find.byType(GestureDetector),
+        );
+        await tester.tap(graph);
+        await tester.pump();
+        final charts = tester
+            .widgetList<StatisticLineChart>(find.byType(StatisticLineChart))
+            .toList();
+        final selected = charts.first.selectedSeconds;
+        expect(selected, closeTo(-60, 0.1));
+        expect(
+          charts.every((chart) => chart.selectedSeconds == selected),
+          isTrue,
+        );
+        for (final sample in statisticsPreviewData) {
+          expect(
+            tester
+                .widget<Text>(
+                  find.byKey(ValueKey('chart-reading-${sample.title}')),
+                )
+                .data,
+            startsWith('-60 s ·'),
+          );
+        }
+      },
+    );
+
+    testWidgets('Returning to live view clears selection on every chart', (
+      tester,
+    ) async {
+      await _showStatistics(tester);
+      final graph = find.descendant(
+        of: find.byType(StatisticLineChart).first,
+        matching: find.byType(GestureDetector),
+      );
+      await tester.tap(graph);
+      await tester.pump();
+      await tester.ensureVisible(find.text('Na żywo'));
+      await tester.tap(find.text('Na żywo'));
+      await tester.pump();
+      expect(
+        tester
+            .widgetList<StatisticLineChart>(find.byType(StatisticLineChart))
+            .every((chart) => chart.selectedSeconds == null),
+        isTrue,
+      );
     });
 
     testWidgets('Displays CPU temperature with Celsius units', (tester) async {

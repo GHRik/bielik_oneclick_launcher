@@ -2,15 +2,21 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
 
+const _historySeconds = StatisticSeries.historySeconds;
+
 class StatisticLineChart extends StatefulWidget {
   const StatisticLineChart({
     super.key,
     required this.series,
     this.height = 170,
+    this.selectedSeconds,
+    this.onTimeSelected,
   });
 
   final StatisticSeries series;
   final double height;
+  final double? selectedSeconds;
+  final ValueChanged<double>? onTimeSelected;
 
   @override
   State<StatisticLineChart> createState() => _StatisticLineChartState();
@@ -32,14 +38,20 @@ class _StatisticLineChartState extends State<StatisticLineChart> {
             series.values.length,
             (i) => series.values.length < 2
                 ? 0.0
-                : -60 + i * 60 / (series.values.length - 1),
+                : -_historySeconds +
+                      i * _historySeconds / (series.values.length - 1),
           );
+    final selectedSeconds = widget.onTimeSelected == null
+        ? _selectedSeconds
+        : widget.selectedSeconds;
     int? index;
-    if (_selectedSeconds != null && times.isNotEmpty) {
+    if (selectedSeconds != null &&
+        selectedSeconds >= -_historySeconds &&
+        times.isNotEmpty) {
       index = 0;
       for (var i = 1; i < times.length; i++) {
-        if ((times[i] - _selectedSeconds!).abs() <
-            (times[index!] - _selectedSeconds!).abs()) {
+        if ((times[i] - selectedSeconds).abs() <
+            (times[index!] - selectedSeconds).abs()) {
           index = i;
         }
       }
@@ -52,12 +64,15 @@ class _StatisticLineChartState extends State<StatisticLineChart> {
         ? 'Dotknij wykresu'
         : '0 ${series.unit}';
     final textScale = MediaQuery.textScalerOf(context).scale(12) / 12;
-    final axisStyle = Theme.of(context).textTheme.labelSmall
-        ?.copyWith(fontSize: 11);
+    final axisStyle =
+        (Theme.of(context).textTheme.labelSmall ?? const TextStyle()).copyWith(
+          fontSize: 11,
+          height: 1.2,
+        );
     final axisWidth = 42 * textScale;
     return Semantics(
       label:
-          'Wykres: ${series.title}, jednostka ${series.unit}. Ostatnie 60 sekund.',
+          'Wykres: ${series.title}, jednostka ${series.unit}. Ostatnie $_historySeconds sekund.',
       child: Column(
         children: [
           SizedBox(
@@ -88,11 +103,16 @@ class _StatisticLineChartState extends State<StatisticLineChart> {
                           if (constraints.maxWidth <= 0 || times.isEmpty) {
                             return;
                           }
-                          setState(
-                            () => _selectedSeconds =
-                                -60 +
-                                60 * (x / constraints.maxWidth).clamp(0, 1),
-                          );
+                          final seconds =
+                              -_historySeconds +
+                              _historySeconds.toDouble() *
+                                  (x / constraints.maxWidth).clamp(0.0, 1.0);
+                          final onSelected = widget.onTimeSelected;
+                          if (onSelected != null) {
+                            onSelected(seconds);
+                          } else {
+                            setState(() => _selectedSeconds = seconds);
+                          }
                         }
 
                         return GestureDetector(
@@ -110,6 +130,7 @@ class _StatisticLineChartState extends State<StatisticLineChart> {
                               series: series,
                               times: times,
                               selectedIndex: index,
+                              selectedSeconds: selectedSeconds,
                               lineColor: colors.primary,
                               gridColor: colors.outlineVariant.withValues(
                                 alpha: 0.45,
@@ -126,24 +147,73 @@ class _StatisticLineChartState extends State<StatisticLineChart> {
           ),
           Padding(
             padding: EdgeInsets.only(left: axisWidth, top: 8),
-            child: Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                Text('-60 s', style: axisStyle),
-                Text('-30 s', style: axisStyle),
-                Text('teraz', style: axisStyle),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final labels = [
+                  '-${_historySeconds ~/ 60} min',
+                  '-${_historySeconds ~/ 120} min',
+                  'teraz',
+                ];
+                final painters = [
+                  for (final label in labels)
+                    TextPainter(
+                      text: TextSpan(text: label, style: axisStyle),
+                      textDirection: TextDirection.ltr,
+                      textScaler: MediaQuery.textScalerOf(context),
+                    )..layout(),
+                ];
+                final showMiddle =
+                    constraints.maxWidth >=
+                    painters[1].width +
+                        2 *
+                            (painters[0].width > painters[2].width
+                                ? painters[0].width
+                                : painters[2].width) +
+                        16;
+                final height = painters
+                    .map((p) => p.height)
+                    .reduce((a, b) => a > b ? a : b);
+                for (final painter in painters) {
+                  painter.dispose();
+                }
+                return SizedBox(
+                  width: double.infinity,
+                  height: height,
+                  child: Stack(
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(labels[0], style: axisStyle),
+                      ),
+                      if (showMiddle)
+                        Align(
+                          alignment: Alignment.center,
+                          child: Text(labels[1], style: axisStyle),
+                        ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(labels[2], style: axisStyle),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            reading,
-            key: ValueKey('chart-reading-${series.title}'),
-            style: Theme.of(context).textTheme.bodySmall
-                ?.copyWith(fontSize: 11, height: 1.2),
-            textAlign: TextAlign.center,
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 30 * textScale,
+            child: Center(
+              child: Text(
+                reading,
+                key: ValueKey('chart-reading-${series.title}'),
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(fontSize: 11, height: 1.2),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ),
         ],
       ),
@@ -156,6 +226,7 @@ class _LineChartPainter extends CustomPainter {
     required this.series,
     required this.times,
     required this.selectedIndex,
+    required this.selectedSeconds,
     required this.lineColor,
     required this.gridColor,
   });
@@ -163,6 +234,7 @@ class _LineChartPainter extends CustomPainter {
   final StatisticSeries series;
   final List<double> times;
   final int? selectedIndex;
+  final double? selectedSeconds;
   final Color lineColor;
   final Color gridColor;
 
@@ -180,7 +252,7 @@ class _LineChartPainter extends CustomPainter {
       );
     }
     Offset point(int i) => Offset(
-      size.width * ((times[i] + 60) / 60).clamp(0, 1),
+      size.width * ((times[i] + _historySeconds) / _historySeconds).clamp(0, 1),
       size.height *
           (1 -
               ((series.values[i]! - series.minimum) /
@@ -211,16 +283,20 @@ class _LineChartPainter extends CustomPainter {
         ..strokeWidth = 2.5
         ..strokeJoin = StrokeJoin.round,
     );
+    final seconds = selectedSeconds;
+    if (seconds != null && seconds >= -_historySeconds && seconds <= 0) {
+      final x = size.width * ((seconds + _historySeconds) / _historySeconds);
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x, size.height),
+        Paint()
+          ..color = lineColor.withValues(alpha: 0.5)
+          ..strokeWidth = 1,
+      );
+    }
     final selected = selectedIndex;
     if (selected != null && series.values[selected] != null) {
       final p = point(selected);
-      canvas.drawLine(
-        Offset(p.dx, 0),
-        Offset(p.dx, size.height),
-        Paint()
-          ..color = lineColor.withValues(alpha: 0.4)
-          ..strokeWidth = 1,
-      );
       canvas.drawCircle(p, 5, Paint()..color = lineColor);
     }
   }
@@ -229,6 +305,7 @@ class _LineChartPainter extends CustomPainter {
   bool shouldRepaint(_LineChartPainter oldDelegate) =>
       oldDelegate.series != series ||
       oldDelegate.selectedIndex != selectedIndex ||
+      oldDelegate.selectedSeconds != selectedSeconds ||
       oldDelegate.lineColor != lineColor ||
       oldDelegate.gridColor != gridColor;
 }

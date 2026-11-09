@@ -146,9 +146,23 @@ void main() {
       expect(series.first.secondsAgo, [-4, 0]);
     });
 
+    test('Keeps samples at the 120-second boundary', () async {
+      await repository.sample();
+      now = now.add(const Duration(seconds: 120));
+      final series = await repository.sample();
+      expect(series.first.secondsAgo, [-120, 0]);
+    });
+
+    test('Caps the retained history at 121 samples', () async {
+      for (var i = 0; i < 150; i++) {
+        await repository.sample();
+      }
+      expect(repository.getSeries().first.values, hasLength(121));
+    });
+
     test('Drops samples older than the history window', () async {
       await repository.sample();
-      now = now.add(const Duration(seconds: 61));
+      now = now.add(const Duration(seconds: 121));
 
       final series = await repository.sample();
 
