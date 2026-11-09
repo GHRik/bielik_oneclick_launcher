@@ -37,9 +37,26 @@
     const element = document.createElement('div');
     element.className = 'release-body';
     const translated = polishNotes[release.tag_name];
-    element.textContent = typeof translated === 'string' && translated.trim()
-      ? translated
-      : 'Polski opis zmian nie jest jeszcze dostępny. Angielski opis znajdziesz na GitHubie.';
+    if (typeof translated !== 'string' || !translated.trim()) {
+      element.textContent = 'Polski opis zmian nie jest jeszcze dostępny. Angielski opis znajdziesz na GitHubie.';
+      return element;
+    }
+    for (const block of translated.trim().split(/\n\s*\n/)) {
+      const lines = block.split('\n').map(line => line.trim()).filter(Boolean);
+      if (lines.every(line => /^[•*-]\s+/.test(line))) {
+        const list = document.createElement('ul');
+        for (const line of lines) {
+          const item = document.createElement('li');
+          item.textContent = line.replace(/^[•*-]\s+/, '');
+          list.append(item);
+        }
+        element.append(list);
+      } else {
+        const paragraph = document.createElement('p');
+        paragraph.textContent = lines.join(' ');
+        element.append(paragraph);
+      }
+    }
     return element;
   }
 
