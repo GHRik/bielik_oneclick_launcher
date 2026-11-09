@@ -1,120 +1,144 @@
 import 'dart:async';
-import 'dart:convert';
 
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/platform_speech_recognition_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/speech_recognition_repository.dart';
 
+class _Speech extends Fake implements SpeechToText {
+  bool available = true, permission = true;
+  int initializations = 0, listens = 0;
+  Completer<bool>? pendingInitialization;
+  SpeechResultListener? result;
+  SpeechListenOptions? options;
+  List<SpeechConfigOption>? configuration;
+
+  @override
+  Future<bool> get hasPermission async => permission;
+
+  @override
+  Future<bool> initialize({
+    SpeechErrorListener? onError,
+    SpeechStatusListener? onStatus,
+    dynamic debugLogging = false,
+    Duration finalTimeout = SpeechToText.defaultFinalTimeout,
+    List<SpeechConfigOption>? options,
+  }) async {
+    ++initializations;
+    configuration = options;
+    return await (pendingInitialization?.future ?? Future.value(available));
+  }
+
+  @override
+  Future<void> listen({
+    SpeechResultListener? onResult,
+    Duration? listenFor,
+    Duration? pauseFor,
+    String? localeId,
+    SpeechSoundLevelChange? onSoundLevelChange,
+    dynamic cancelOnError = false,
+    dynamic partialResults = true,
+    dynamic onDevice = false,
+    ListenMode listenMode = ListenMode.confirmation,
+    dynamic sampleRate = 0,
+    SpeechListenOptions? listenOptions,
+  }) async {
+    ++listens;
+    result = onResult;
+    options = listenOptions;
+  }
+
+  @override
+  Future<void> stop() async {}
+  @override
+  Future<void> cancel() async {}
+
+  void recognize(String text) =>
+      result!(SpeechRecognitionResult([SpeechRecognitionWords(text, null, 1.0)], 0));
+}
+
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-  const channel = MethodChannel('plugin.csdcorp.com/speech_to_text');
-  final messenger =
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  late _Speech speech;
   late PlatformSpeechRecognitionRepository repository;
-  late List<MethodCall> calls;
   late List<SpeechFailure> errors;
   late List<String> words;
-  bool available = true;
-  bool permission = true;
-  Completer<bool>? initialization;
-
-  Future<void> event(String method, dynamic arguments) async {
-    await messenger.handlePlatformMessage(
-      channel.name,
-      const StandardMethodCodec().encodeMethodCall(
-        MethodCall(method, arguments),
-      ),
-      (_) {},
-    );
-  }
 
   Future<bool> start() =>
       repository.start(onText: words.add, onDone: () {}, onError: errors.add);
 
   setUp(() {
-    calls = [];
+    speech = _Speech();
+    repository = PlatformSpeechRecognitionRepository(speech: speech);
     errors = [];
     words = [];
-    available = permission = true;
-    initialization = null;
-    repository = PlatformSpeechRecognitionRepository(
-      speech: SpeechToText.withMethodChannel(),
-    );
-    messenger.setMockMethodCallHandler(channel, (call) async {
-      calls.add(call);
-      return switch (call.method) {
-        'initialize' => initialization?.future ?? Future.value(available),
-        'has_permission' => permission,
-        'listen' => true,
-        _ => null,
-      };
-    });
   });
-  tearDown(() async {
-    await repository.cancel();
-    messenger.setMockMethodCallHandler(channel, null);
-  });
+  tearDown(() => repository.cancel());
 
   test('Does not initialize or request access before start', () {
-    expect(calls, isEmpty);
+    expect(speech.initializations, 0);
   });
 
   test('Starts recognition in dictation mode', () async {
     await start();
-    final arguments =
-        calls.singleWhere((call) => call.method == 'listen').arguments as Map;
-    expect(arguments['listenMode'], ListenMode.dictation.index);
+    expect(speech.options!.listenMode, ListenMode.dictation);
   });
 
+  test(
+    'Disables Bluetooth access without requesting extra permissions',
+    () async {
+      await start();
+      expect(speech.configuration, contains(SpeechToText.androidNoBluetooth));
+    },
+  );
+
   test('Reports permission denial without listening', () async {
-    available = permission = false;
+    speech.available = speech.permission = false;
     await start();
     expect(errors, [SpeechFailure.permissionDenied]);
-    expect(calls.where((call) => call.method == 'listen'), isEmpty);
+    expect(speech.listens, 0);
   });
 
   test('Reports an unavailable recognition service', () async {
-    available = false;
+    speech.available = false;
     await start();
     expect(errors, [SpeechFailure.unavailable]);
   });
 
   test('Forwards recognized text', () async {
     await start();
-    await event(
-      'textRecognition',
-      jsonEncode({
-        'alternates': [
-          {'recognizedWords': 'Hej Bielik', 'confidence': 1.0},
-        ],
-        'resultType': 0,
-      }),
-    );
+    speech.recognize('Hej Bielik');
     expect(words, ['Hej Bielik']);
   });
 
   test(
     'Cancellation during permission initialization prevents listening',
     () async {
-      initialization = Completer<bool>();
+      speech.pendingInitialization = Completer<bool>();
       final starting = start();
+      await Future<void>.delayed(Duration.zero);
       final cancelling = repository.cancel();
-      initialization!.complete(true);
+      speech.pendingInitialization!.complete(true);
       await starting;
       await cancelling;
-      expect(calls.where((call) => call.method == 'listen'), isEmpty);
+      expect(speech.listens, 0);
     },
   );
 
   test('Rechecks permission before every recording', () async {
     await start();
     await repository.cancel();
-    permission = false;
+    speech.permission = false;
     await start();
     expect(errors.last, SpeechFailure.permissionDenied);
-    expect(calls.where((call) => call.method == 'listen').length, 1);
+    expect(speech.listens, 1);
+  });
+
+  test('Ignores recognition results delivered after cancellation', () async {
+    await start();
+    await repository.cancel();
+    speech.recognize('Late text');
+    expect(words, isEmpty);
   });
 }

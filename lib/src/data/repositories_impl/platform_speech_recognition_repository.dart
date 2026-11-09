@@ -27,6 +27,7 @@ class PlatformSpeechRecognitionRepository
     _onError = onError;
     try {
       final available = await (_initialization ??= _speech.initialize(
+        options: [SpeechToText.androidNoBluetooth],
         onStatus: (status) {
           if (status == SpeechToText.doneStatus) _onDone?.call();
         },

@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/speech_recognition_repository.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/gpu_configuration.dart';
 
 import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
@@ -26,6 +28,7 @@ class MyApp extends StatelessWidget {
     this.deviceResourcesRepository,
     this.modelRepository = const ConfiguredModelCatalogRepository(bielikModels),
     this.statisticsRepository,
+    this.speechRepository,
   });
 
   final DeviceResourcesRepository? deviceResourcesRepository;
@@ -37,6 +40,7 @@ class MyApp extends StatelessWidget {
   final Future<void> Function(LlmConfiguration)? onSaveLlmConfiguration;
   final ModelCatalogRepository modelRepository;
   final StatisticsRepository? statisticsRepository;
+  final SpeechRecognitionRepository? speechRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +50,7 @@ class MyApp extends StatelessWidget {
       home: HomePage(
         deviceResourcesRepository: deviceResourcesRepository,
         chatRepository: chatRepository,
+        speechRepository: speechRepository,
         modelFilesRepository: modelFilesRepository,
         llmRepository: llmRepository,
         llmConfiguration: llmConfiguration,

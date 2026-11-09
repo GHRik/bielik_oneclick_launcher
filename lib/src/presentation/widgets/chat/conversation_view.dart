@@ -3,6 +3,8 @@ import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/controllers/speech_dictation_controller.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/dictation_composer.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/conversation_controller.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/assistant_markdown_message.dart';
 
@@ -12,11 +14,15 @@ class ConversationView extends StatelessWidget {
     required this.conversation,
     required this.onMessageSend,
     this.sending = false,
+    this.dictation,
+    this.onMicrophoneTap,
   });
 
   final ConversationController conversation;
   final ValueChanged<String> onMessageSend;
   final bool sending;
+  final SpeechDictationController? dictation;
+  final VoidCallback? onMicrophoneTap;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +30,9 @@ class ConversationView extends StatelessWidget {
       key: ValueKey('chat-${conversation.id}'),
       chatController: conversation.controller,
       currentUserId: ChatAuthors.user,
-      onMessageSend: onMessageSend,
+      onMessageSend: (text) {
+        if (dictation?.active != true) onMessageSend(text);
+      },
       resolveUser: (id) async =>
           User(id: id, name: id == ChatAuthors.user ? 'Ty' : 'Bielik'),
       builders: Builders(
@@ -61,14 +69,12 @@ class ConversationView extends StatelessWidget {
             ),
           ),
         ),
-        composerBuilder: (context) => Composer(
+        composerBuilder: (context) => DictationComposer(
           key: ValueKey('composer-${conversation.id}'),
-          textEditingController: conversation.draft,
-          hintText: 'Napisz wiadomość…',
-          attachmentIcon: null,
-          inputClearMode: InputClearMode.never,
-          sendButtonDisabled: sending,
-          sendIcon: const Icon(Icons.send, semanticLabel: 'Wyślij wiadomość'),
+          draft: conversation.draft,
+          dictation: dictation,
+          onMicrophoneTap: onMicrophoneTap,
+          sending: sending,
         ),
       ),
     );
