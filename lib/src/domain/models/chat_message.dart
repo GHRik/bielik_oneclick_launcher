@@ -26,10 +26,6 @@ class ChatMessage {
   final DateTime createdAt;
   final TextAttachment? attachment;
 
-  String get displayText => attachment == null
-      ? text
-      : [if (text.isNotEmpty) text, '📎 ${attachment!.name}'].join('\n\n');
-
   String get promptText => attachment == null
       ? text
       : [

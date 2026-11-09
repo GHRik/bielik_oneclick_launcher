@@ -9,12 +9,13 @@ import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart'
 import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/pages/chat_page.dart';
-import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/attachment_preview.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/pages/text_attachment_page.dart';
 
 import '../../support/in_memory_chat_repository.dart';
 import '../../support/in_memory_model_files_repository.dart';
 
 class _Attachments implements AttachmentRepository {
+  Future<void> Function()? onPick;
   TextAttachment? next = const TextAttachment(
     name: 'notatki.txt',
     text: 'Zażółć 🙂\nTreść do analizy',
@@ -23,12 +24,14 @@ class _Attachments implements AttachmentRepository {
   AttachmentFailure? failure;
   @override
   Future<TextAttachment?> pickTextAttachment() async {
+    await onPick?.call();
     if (failure != null) throw AttachmentException(failure!);
     return next;
   }
 }
 
 class _Llm implements LlmRepository {
+  int unloads = 0;
   final inputs = <List<ChatMessage>>[];
   @override
   Stream<String> generate(
@@ -45,7 +48,9 @@ class _Llm implements LlmRepository {
   @override
   void stop() {}
   @override
-  Future<void> unload() async {}
+  Future<void> unload() async {
+    unloads++;
+  }
 }
 
 void main() {
@@ -81,12 +86,156 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> send(WidgetTester tester) async {
+    await tester.enterText(find.byType(TextField), 'Question');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.send));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('The system file picker does not unload the chat model', (
+    tester,
+  ) async {
+    await open(tester);
+    await send(tester);
+    final unloads = llm.unloads;
+    attachments.onPick = () async {
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await Future<void>.value();
+      expect(llm.unloads, unloads);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    };
+    await pick(tester);
+    expect(llm.unloads, unloads);
+    await send(tester);
+    expect(llm.inputs, hasLength(2));
+    expect(llm.unloads, unloads);
+  });
+
+  testWidgets('Pausing in the attachment preview keeps the chat model loaded', (
+    tester,
+  ) async {
+    await open(tester);
+    await send(tester);
+    await pick(tester);
+    final unloads = llm.unloads;
+    await tester.tap(find.text('notatki.txt'));
+    await tester.pumpAndSettle();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await Future<void>.value();
+    expect(llm.unloads, unloads);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(llm.unloads, unloads);
+  });
+
+  testWidgets('Leaving the chat still unloads its model', (tester) async {
+    await open(tester);
+    await send(tester);
+    final unloads = llm.unloads;
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(llm.unloads, unloads + 1);
+  });
+
+  testWidgets('Opens the complete pending attachment in a selectable preview', (
+    tester,
+  ) async {
+    await open(tester);
+    await pick(tester);
+    await tester.tap(find.text('notatki.txt'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextAttachmentPage), findsOneWidget);
+    expect(find.text(attachments.next!.text), findsOneWidget);
+    expect(find.byType(SelectionArea), findsWidgets);
+    expect(llm.inputs, isEmpty);
+  });
+
+  testWidgets('Opens a sent attachment from its saved contents', (
+    tester,
+  ) async {
+    await open(tester);
+    await pick(tester);
+    final savedText = attachments.next!.text;
+    await tester.tap(find.byIcon(Icons.send));
+    await tester.pumpAndSettle();
+    attachments.next = null;
+    await tester.tap(find.text('notatki.txt'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextAttachmentPage), findsOneWidget);
+    expect(find.text(savedText), findsOneWidget);
+  });
+
+  testWidgets('Removing an attachment does not open its preview', (
+    tester,
+  ) async {
+    await open(tester);
+    await pick(tester);
+    await tester.tap(find.byTooltip('Usuń załącznik'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextAttachmentPage), findsNothing);
+  });
+
+  testWidgets('Closing the preview preserves the pending attachment', (
+    tester,
+  ) async {
+    await open(tester);
+    await pick(tester);
+    await tester.tap(find.text('notatki.txt'));
+    await tester.pumpAndSettle();
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('pending-attachment')), findsOneWidget);
+  });
+
+  testWidgets('Opens an attachment restored from conversation history', (
+    tester,
+  ) async {
+    await open(tester);
+    await pick(tester);
+    final savedText = attachments.next!.text;
+    await tester.tap(find.byIcon(Icons.send));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+    attachments.next = null;
+    await open(tester);
+    await tester.tap(find.text('notatki.txt'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextAttachmentPage), findsOneWidget);
+    expect(find.text(savedText), findsOneWidget);
+  });
+
+  testWidgets('The TXT preview shows formatting characters literally', (
+    tester,
+  ) async {
+    attachments.next = const TextAttachment(
+      name: 'literal.txt',
+      text: '**Literal text**',
+      sizeBytes: 16,
+    );
+    await open(tester);
+    await pick(tester);
+    await tester.tap(find.text('literal.txt'));
+    await tester.pumpAndSettle();
+    expect(find.text('**Literal text**'), findsOneWidget);
+  });
+
   testWidgets('Picking TXT shows its name without invoking the model', (
     tester,
   ) async {
     await open(tester);
     await pick(tester);
-    expect(find.byType(AttachmentPreview), findsOneWidget);
+    expect(find.byKey(const ValueKey('pending-attachment')), findsOneWidget);
     expect(find.text('notatki.txt'), findsOneWidget);
     expect(llm.inputs, isEmpty);
   });
@@ -102,7 +251,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(llm.inputs.single.single.text, 'Podsumuj plik');
     expect(llm.inputs.single.single.attachment!.text, attachments.next!.text);
-    expect(find.byType(AttachmentPreview), findsNothing);
+    expect(find.byKey(const ValueKey('pending-attachment')), findsNothing);
   });
 
   testWidgets('Allows sending a TXT attachment without a typed question', (
@@ -123,7 +272,7 @@ void main() {
     await pick(tester);
     await tester.tap(find.byTooltip('Usuń załącznik'));
     await tester.pumpAndSettle();
-    expect(find.byType(AttachmentPreview), findsNothing);
+    expect(find.byKey(const ValueKey('pending-attachment')), findsNothing);
     expect((await chats.getConversations()).single.draftAttachment, isNull);
   });
 
@@ -148,7 +297,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.byIcon(Icons.send));
     await tester.pumpAndSettle();
-    expect(find.byType(AttachmentPreview), findsOneWidget);
+    expect(find.byKey(const ValueKey('pending-attachment')), findsOneWidget);
     expect(
       tester.widget<TextField>(find.byType(TextField)).controller!.text,
       'Keep this',
@@ -163,7 +312,7 @@ void main() {
     attachments.failure = AttachmentFailure.invalidEncoding;
     await pick(tester);
     expect(find.textContaining('UTF-8'), findsOneWidget);
-    expect(find.byType(AttachmentPreview), findsNothing);
+    expect(find.byKey(const ValueKey('pending-attachment')), findsNothing);
   });
 
   testWidgets(
@@ -177,10 +326,10 @@ void main() {
       final original = workspace.selected;
       await workspace.newChat();
       await tester.pumpAndSettle();
-      expect(find.byType(AttachmentPreview), findsNothing);
+      expect(find.byKey(const ValueKey('pending-attachment')), findsNothing);
       workspace.selectConversation(original);
       await tester.pumpAndSettle();
-      expect(find.byType(AttachmentPreview), findsOneWidget);
+      expect(find.byKey(const ValueKey('pending-attachment')), findsOneWidget);
     },
   );
 
@@ -194,7 +343,7 @@ void main() {
     await pick(tester);
     expect(tester.takeException(), isNull);
     expect(
-      tester.getRect(find.byType(AttachmentPreview)).right,
+      tester.getRect(find.byKey(const ValueKey('pending-attachment'))).right,
       lessThanOrEqualTo(320),
     );
   });

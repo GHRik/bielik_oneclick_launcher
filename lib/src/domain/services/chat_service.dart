@@ -122,6 +122,8 @@ class ChatService {
         onLoaded: onLoaded,
       )) {
         if (_stopped) break;
+        if (fragment.isEmpty) continue;
+        if (responseId == null) onStage(LlmStage.generating);
         buffer.write(fragment);
         if (responseId == null) {
           final saved = await _write(

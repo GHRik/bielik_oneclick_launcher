@@ -3,6 +3,7 @@ import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/pages/text_attachment_page.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/attachment_preview.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/conversation_controller.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/assistant_markdown_message.dart';
@@ -22,6 +23,30 @@ class ConversationView extends StatelessWidget {
   final bool sending;
   final VoidCallback? onAttachmentTap;
   final bool pickingAttachment;
+
+  Widget _userMessage(BuildContext context, TextMessage message, int index) {
+    final attachment = conversation.messages
+        .where((stored) => stored.id == message.id)
+        .firstOrNull
+        ?.attachment;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        if (message.text.isNotEmpty || attachment == null)
+          SelectionArea(
+            child: SimpleTextMessage(message: message, index: index),
+          ),
+        if (attachment != null)
+          AttachmentPreview(
+            key: ValueKey('attachment-${message.id}'),
+            attachment: attachment,
+            removable: false,
+            onOpen: () => TextAttachmentPage.open(context, attachment),
+          ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,9 +69,7 @@ class ConversationView extends StatelessWidget {
                 required bool isSentByMe,
                 MessageGroupStatus? groupStatus,
               }) => isSentByMe
-              ? SelectionArea(
-                  child: SimpleTextMessage(message: message, index: index),
-                )
+              ? _userMessage(context, message, index)
               : AssistantMarkdownMessage(message: message),
           emptyChatListBuilder: (context) => Center(
             child: Padding(
@@ -83,7 +106,12 @@ class ConversationView extends StatelessWidget {
             topWidget: conversation.attachment == null
                 ? null
                 : AttachmentPreview(
+                    key: const ValueKey('pending-attachment'),
                     attachment: conversation.attachment!,
+                    onOpen: () => TextAttachmentPage.open(
+                      context,
+                      conversation.attachment!,
+                    ),
                     onRemove: sending
                         ? null
                         : () => conversation.setAttachment(null),

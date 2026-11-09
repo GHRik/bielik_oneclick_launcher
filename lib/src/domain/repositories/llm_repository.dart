@@ -2,7 +2,7 @@ import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 
-enum LlmStage { loading, generating }
+enum LlmStage { loading, analyzing, generating }
 
 abstract interface class LlmRepository {
   Stream<String> generate(

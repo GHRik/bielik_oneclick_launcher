@@ -62,7 +62,7 @@ class ConversationController extends ChangeNotifier {
     id: message.id,
     authorId: message.authorId,
     createdAt: message.createdAt,
-    text: message.displayText,
+    text: message.text,
   );
 
   void _draftChanged() {

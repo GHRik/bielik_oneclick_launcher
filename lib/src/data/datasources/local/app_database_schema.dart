@@ -10,10 +10,24 @@ class AppDatabaseSchema {
   ) async {
     if (oldVersion < 2) await _createSettings(database);
     if (oldVersion < 4) {
-      await database.execute(
-        'ALTER TABLE conversations ADD COLUMN draft_attachment TEXT',
+      final conversationColumns = await database.rawQuery(
+        'PRAGMA table_info(conversations)',
       );
-      await database.execute('ALTER TABLE messages ADD COLUMN attachment TEXT');
+      if (!conversationColumns.any(
+        (column) => column['name'] == 'draft_attachment',
+      )) {
+        await database.execute(
+          'ALTER TABLE conversations ADD COLUMN draft_attachment TEXT',
+        );
+      }
+      final messageColumns = await database.rawQuery(
+        'PRAGMA table_info(messages)',
+      );
+      if (!messageColumns.any((column) => column['name'] == 'attachment')) {
+        await database.execute(
+          'ALTER TABLE messages ADD COLUMN attachment TEXT',
+        );
+      }
     }
   }
 

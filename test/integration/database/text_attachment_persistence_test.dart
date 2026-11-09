@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/app_database.dart';
+import 'package:bielik_oneclick_launcher/src/data/datasources/local/app_database_schema.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/sqlite_chat_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/sqlite_chat_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart';
@@ -82,6 +83,79 @@ void main() {
       );
     },
   );
+
+  for (final hasDraftColumn in [false, true]) {
+    for (final hasMessageColumn in [false, true]) {
+      test(
+        'Repairs schema 3 with draft column $hasDraftColumn and message column $hasMessageColumn',
+        () async {
+          const saved = '{"name":"keep.txt","text":"Keep","sizeBytes":4}';
+          final file = path.join(directory.path, 'partial.db');
+          final old = await databaseFactoryFfi.openDatabase(
+            file,
+            options: OpenDatabaseOptions(
+              version: 3,
+              onCreate: (db, version) async {
+                await AppDatabaseSchema.create(db, version);
+                if (!hasDraftColumn) {
+                  await db.execute(
+                    'ALTER TABLE conversations DROP COLUMN draft_attachment',
+                  );
+                }
+                if (!hasMessageColumn) {
+                  await db.execute(
+                    'ALTER TABLE messages DROP COLUMN attachment',
+                  );
+                }
+                await db.insert('conversations', {
+                  'id': 1,
+                  'title': 'Keep',
+                  'draft': 'Draft',
+                  'created_at': 1,
+                  'updated_at': 2,
+                  if (hasDraftColumn) 'draft_attachment': saved,
+                });
+                await db.insert('messages', {
+                  'id': 'keep',
+                  'conversation_id': 1,
+                  'author_id': 'local-user',
+                  'text': 'Preserved',
+                  'created_at': 1,
+                  if (hasMessageColumn) 'attachment': saved,
+                });
+              },
+            ),
+          );
+          await old.close();
+          final repaired = AppDatabase(
+            factory: databaseFactoryFfi,
+            databasePath: file,
+          );
+          try {
+            final connection = await repaired.open();
+            final conversation = (await connection.query('conversations'))
+                .single;
+            final message = (await connection.query('messages')).single;
+            expect(conversation['draft'], 'Draft');
+            expect(
+              conversation['draft_attachment'],
+              hasDraftColumn ? saved : null,
+            );
+            expect(message['text'], 'Preserved');
+            expect(message['attachment'], hasMessageColumn ? saved : null);
+            expect(await connection.getVersion(), 4);
+            await repaired.close();
+            expect(
+              (await (await repaired.open()).query('messages')).single['text'],
+              'Preserved',
+            );
+          } finally {
+            await repaired.close();
+          }
+        },
+      );
+    }
+  }
 
   for (final version in [2, 3]) {
     test('Upgrades schema $version without deleting existing messages', () async {

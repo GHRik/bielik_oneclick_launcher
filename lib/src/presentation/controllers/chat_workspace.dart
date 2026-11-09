@@ -48,7 +48,9 @@ class ChatWorkspace extends ChangeNotifier {
       ? 'Zatrzymywanie…'
       : _stage == LlmStage.loading
       ? 'Ładowanie modelu…'
-      : 'Bielik pisze…';
+      : _stage == LlmStage.generating
+      ? 'Bielik pisze…'
+      : 'Bielik myśli…';
   String? get generatingTitle => _generationTarget?.title;
 
   void useModel(

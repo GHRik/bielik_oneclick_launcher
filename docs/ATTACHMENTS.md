@@ -4,7 +4,7 @@ Use the plus button in the chat composer to select one .txt file. Its name and s
 
 The first implementation accepts UTF-8 text, including UTF-8 with BOM, up to 64 KiB. Empty files, binary content, other extensions and invalid UTF-8 are rejected. Legacy encodings such as Windows-1250 and UTF-16 need conversion to UTF-8 first.
 
-Pending attachments are saved with their conversation draft. Sent attachment contents are stored in SQLite together with the message, independently of the original file. The chat displays the question and filename; the model receives the full text. Removing an attachment never deletes the original file.
+Pending attachments are saved with their conversation draft. Sent attachment contents are stored in SQLite together with the message, independently of the original file. The chat displays the question and a clickable file tile; the model receives the full text. Tap a pending or sent attachment to open a read-only, scrollable text view with selection support. The view uses stored content, so the original file is not required. Removing an attachment never deletes the original file.
 
 The 64 KiB import limit is not a guarantee that the text fits the selected model context. Attachment text is included in token counting. A latest input that exceeds the available context produces an error instead of silently truncating the file. Existing history trimming still applies to older turns; this feature does not implement document retrieval or chunking.
 
@@ -16,7 +16,8 @@ The 64 KiB import limit is not a guarantee that the text fits the selected model
 - data/repositories_impl/local_attachment_repository.dart: Flutter file_selector adapter using system file selection.
 - data/datasources/local/text_attachment_codec.dart: SQLite serialization.
 - presentation/controllers/chat_workspace.dart: per-conversation import and submission.
-- presentation/widgets/chat/attachment_preview.dart: pending file display.
+- presentation/widgets/chat/attachment_preview.dart: clickable file tile.
+- presentation/pages/text_attachment_page.dart: read-only text viewer.
 
 Future document formats should add separate text extractors behind the import boundary. Parsing belongs in data; prompt preparation and context budgeting stay shared.
 

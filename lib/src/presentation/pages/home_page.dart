@@ -90,7 +90,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     } else {
       _statistics?.pause();
     }
-    if (state == AppLifecycleState.paused) {
+    if (state == AppLifecycleState.paused && !_chatOpen) {
       unawaited(_chatWorkspace.releaseModel());
     }
     if (state != AppLifecycleState.resumed) {
