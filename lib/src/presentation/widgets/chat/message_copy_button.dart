@@ -16,18 +16,18 @@ class _MessageCopyButtonState extends State<MessageCopyButton> {
     final copy = widget.onCopy;
     if (copy == null || _copying) return;
     setState(() => _copying = true);
-    var feedback = 'Skopiowano do schowka.';
     try {
       await copy();
     } catch (_) {
-      feedback = 'Nie udało się skopiować wiadomości.';
-    } finally {
       if (mounted) {
-        setState(() => _copying = false);
         final messenger = ScaffoldMessenger.maybeOf(context);
         messenger?.hideCurrentSnackBar();
-        messenger?.showSnackBar(SnackBar(content: Text(feedback)));
+        messenger?.showSnackBar(
+          const SnackBar(content: Text('Nie udało się skopiować wiadomości.')),
+        );
       }
+    } finally {
+      if (mounted) setState(() => _copying = false);
     }
   }
 

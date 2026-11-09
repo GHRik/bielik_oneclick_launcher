@@ -59,7 +59,7 @@ void main() {
     await tester.tap(button);
     await tester.pumpAndSettle();
     expect(copied, question);
-    expect(find.text('Skopiowano do schowka.'), findsOneWidget);
+    expect(find.byType(SnackBar), findsNothing);
   });
 
   testWidgets('Does not touch the clipboard before the copy button is tapped', (
