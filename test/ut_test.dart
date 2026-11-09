@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/ut/test_platform_speech_recognition_repository.dart'
+    as speech_adapter;
+
 import 'package:bielik_oneclick_launcher/configuration/ut/test_llm_configuration.dart'
     as suite0;
 import 'package:bielik_oneclick_launcher/src/data/datasources/ut/test_device_resources_datasource.dart'
@@ -38,6 +41,10 @@ import 'package:bielik_oneclick_launcher/src/presentation/formatters/ut/test_sto
     as suite17;
 
 void main() {
+  group(
+    'src/data/repositories_impl/platform_speech_recognition_repository.dart',
+    speech_adapter.main,
+  );
   group('configuration/llm_configuration.dart', suite0.main);
   group('src/data/datasources/device_resources_datasource.dart', suite1.main);
   group('src/data/datasources/gpu_inference_adapter.dart', suite2.main);
