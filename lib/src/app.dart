@@ -7,6 +7,7 @@ import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/configured_model_catalog_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/incoming_text_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/device_resources_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_catalog_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_repository.dart';
@@ -26,10 +27,12 @@ class MyApp extends StatelessWidget {
     this.deviceResourcesRepository,
     this.modelRepository = const ConfiguredModelCatalogRepository(bielikModels),
     this.statisticsRepository,
+    this.incomingTextRepository,
   });
 
   final DeviceResourcesRepository? deviceResourcesRepository;
   final ChatRepository chatRepository;
+  final IncomingTextRepository? incomingTextRepository;
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
   final LlmConfiguration llmConfiguration;
@@ -46,6 +49,7 @@ class MyApp extends StatelessWidget {
       home: HomePage(
         deviceResourcesRepository: deviceResourcesRepository,
         chatRepository: chatRepository,
+        incomingTextRepository: incomingTextRepository,
         modelFilesRepository: modelFilesRepository,
         llmRepository: llmRepository,
         llmConfiguration: llmConfiguration,

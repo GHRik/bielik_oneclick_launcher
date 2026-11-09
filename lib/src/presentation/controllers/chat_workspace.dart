@@ -167,6 +167,27 @@ class ChatWorkspace extends ChangeNotifier {
     return controller;
   }
 
+  Future<bool> importText(String text) async {
+    if (_disposed || text.trim().isEmpty || text.length > 65536) return false;
+    _error = null;
+    await initialize();
+    await flush();
+    if (_disposed || !ready || _conversations.isEmpty) return false;
+    final target = _conversations.first;
+    selectConversation(target);
+    final previous = target.draft.text;
+    target.draft.value = TextEditingValue(
+      text: previous.isEmpty ? text : '$previous\n\n$text',
+      selection: TextSelection.collapsed(
+        offset: previous.isEmpty
+            ? text.length
+            : previous.length + 2 + text.length,
+      ),
+    );
+    await flush();
+    return !_disposed && _error == null;
+  }
+
   Future<void> initialize() {
     if (_initialization != null) return _initialization!;
     _loading = true;
