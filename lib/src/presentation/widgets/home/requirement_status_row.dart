@@ -34,11 +34,10 @@ class RequirementStatusRow extends StatelessWidget {
         ? 1.0
         : requiredGb / availableGb!;
     final color = !hasData
-        ? theme.colorScheme.onSurfaceVariant
+        ? Colors.grey.shade600
         : insufficient
         ? Colors.red.shade700
         : Colors.green.shade700;
-    final percent = !hasData ? '—' : '${(ratio * 100).round()}%';
     final description = !hasData
         ? 'Brak danych'
         : insufficient
@@ -60,11 +59,28 @@ class RequirementStatusRow extends StatelessWidget {
             runSpacing: 4,
             children: [
               Text(requirement, style: theme.textTheme.bodyMedium),
-              Text(
-                percent,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w700,
+              Tooltip(
+                message: description,
+                child: ExcludeSemantics(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Icon(
+                        !hasData
+                            ? Icons.remove
+                            : insufficient
+                            ? Icons.close
+                            : Icons.check,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],

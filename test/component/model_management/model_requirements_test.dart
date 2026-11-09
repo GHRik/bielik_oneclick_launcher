@@ -38,7 +38,8 @@ void main() {
       final bar = tester.widget<LinearProgressIndicator>(_bar('Pamięć RAM'));
       expect(bar.value, 0.5);
       expect(bar.color, Colors.green.shade700);
-      expect(find.text('50%'), findsOneWidget);
+      expect(find.byIcon(Icons.check), findsNWidgets(2));
+      expect(find.textContaining('%'), findsNothing);
     });
 
     testWidgets('Insufficient RAM fills the entire bar in red', (tester) async {
@@ -46,12 +47,14 @@ void main() {
       final bar = tester.widget<LinearProgressIndicator>(_bar('Pamięć RAM'));
       expect(bar.value, 1);
       expect(bar.color, Colors.red.shade700);
+      expect(find.byIcon(Icons.close), findsOneWidget);
     });
 
     testWidgets('Unknown RAM shows an empty neutral bar', (tester) async {
       await _card(tester, storage: 10);
       final bar = tester.widget<LinearProgressIndicator>(_bar('Pamięć RAM'));
       expect(bar.value, 0);
+      expect(find.byIcon(Icons.remove), findsOneWidget);
       expect(bar.semanticsLabel, contains('Brak danych'));
     });
 
