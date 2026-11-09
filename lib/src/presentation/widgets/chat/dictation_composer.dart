@@ -12,6 +12,7 @@ class DictationComposer extends StatelessWidget {
     required this.sending,
     required this.onSend,
     this.attachmentPreview,
+    this.quickActions,
     this.allowEmptyMessage = false,
     this.showAttachmentButton = false,
   });
@@ -22,6 +23,7 @@ class DictationComposer extends StatelessWidget {
   final bool sending;
   final ValueChanged<String> onSend;
   final Widget? attachmentPreview;
+  final Widget? quickActions;
   final bool allowEmptyMessage;
   final bool showAttachmentButton;
 
@@ -53,12 +55,14 @@ class DictationComposer extends StatelessWidget {
           : null,
       padding: EdgeInsets.fromLTRB(8, 8, speech == null ? 8 : 112, 8),
       topWidget:
-          attachmentPreview != null ||
+          quickActions != null ||
+              attachmentPreview != null ||
               speech?.error != null ||
               speech?.active == true
           ? Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                ?quickActions,
                 ?attachmentPreview,
                 if (speech?.error != null || speech?.active == true)
                   Padding(
