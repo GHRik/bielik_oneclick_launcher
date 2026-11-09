@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/app.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart';
@@ -40,6 +41,7 @@ class _Llm implements LlmRepository {
     required void Function(LlmStage) onStage,
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
+    void Function(ContextUsage)? onContext,
   }) {
     inputs.add(history);
     return Stream.value('Odpowiedź');

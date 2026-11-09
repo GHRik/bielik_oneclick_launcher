@@ -5,6 +5,7 @@ import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart'
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_update.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
@@ -23,6 +24,7 @@ class _Llm implements LlmRepository {
     required void Function(LlmStage) onStage,
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
+    void Function(ContextUsage)? onContext,
   }) {
     this.history = history;
     return Stream.fromIterable(['First', ' and second']);
@@ -91,6 +93,32 @@ void main() {
           ChatRole.user,
           ChatRole.assistant,
         ]);
+      },
+    );
+
+    test(
+      'Rejects another conversation history before saving a message',
+      () async {
+        await expectLater(
+          service.send(
+            conversationId: conversationId,
+            text: 'Question',
+            history: [
+              ChatMessage(
+                id: 'foreign',
+                conversationId: conversationId + 1,
+                authorId: ChatAuthors.user,
+                text: 'Private foreign text',
+                createdAt: DateTime(2026),
+              ),
+            ],
+            model: model,
+            onUpdate: (_) {},
+          ),
+          throwsArgumentError,
+        );
+        expect(await repository.getMessages(conversationId), isEmpty);
+        expect(llm.history, isNull);
       },
     );
 

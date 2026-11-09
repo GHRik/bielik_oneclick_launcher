@@ -9,6 +9,7 @@ import 'package:bielik_oneclick_launcher/src/domain/repositories/speech_recognit
 import 'package:bielik_oneclick_launcher/src/domain/repositories/clipboard_repository.dart';
 
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/chat_model_header.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/context_usage_indicator.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/statistics_controller.dart';
@@ -169,6 +170,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                       modelName: widget.workspace.modelName!,
                     ),
               actions: [
+                ContextUsageIndicator(usage: widget.workspace.contextUsage),
                 IconButton(
                   tooltip: 'Statystyki',
                   onPressed: _openStatistics,

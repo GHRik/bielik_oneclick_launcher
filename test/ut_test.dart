@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/ut/test_context_usage.dart'
+    as suite18;
 import 'package:bielik_oneclick_launcher/src/data/datasources/ut/test_txt_attachment_decoder.dart'
     as txt_decoder;
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/ut/test_local_attachment_repository.dart'
@@ -52,6 +54,7 @@ import 'package:bielik_oneclick_launcher/src/presentation/formatters/ut/test_sto
     as suite17;
 
 void main() {
+  group('src/domain/models/context_usage.dart', suite18.main);
   group('src/data/datasources/txt_attachment_decoder.dart', txt_decoder.main);
   group(
     'src/data/repositories_impl/local_attachment_repository.dart',

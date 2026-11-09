@@ -8,6 +8,7 @@ import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/clipboard_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/system_clipboard_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
@@ -25,6 +26,7 @@ class _StreamingLlm implements LlmRepository {
     required void Function(LlmStage) onStage,
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
+    void Function(ContextUsage)? onContext,
   }) => (output = StreamController<String>()).stream;
 
   @override

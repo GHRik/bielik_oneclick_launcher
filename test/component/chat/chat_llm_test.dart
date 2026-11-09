@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
@@ -15,6 +16,7 @@ import '../../support/in_memory_chat_repository.dart';
 class _Llm implements LlmRepository {
   final inputs = <List<ChatMessage>>[];
   final streams = <StreamController<String>>[];
+  final contextCallbacks = <void Function(ContextUsage)?>[];
   int stops = 0;
   int unloads = 0;
 
@@ -25,8 +27,10 @@ class _Llm implements LlmRepository {
     required void Function(LlmStage) onStage,
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
+    void Function(ContextUsage)? onContext,
   }) {
     inputs.add(history);
+    contextCallbacks.add(onContext);
     final stream = StreamController<String>();
     streams.add(stream);
     onStage(LlmStage.analyzing);
@@ -160,6 +164,28 @@ void main() {
       });
     });
 
+    testWidgets('Deleting a chat excludes its history from the next request', (
+      tester,
+    ) async {
+      await withWorkspace(tester, (repository, llm, workspace) async {
+        final deleted = workspace.selected;
+        final first = workspace.sendMessage('Old private text');
+        await _until(() => llm.streams.isNotEmpty);
+        llm.streams.last.add('Old answer');
+        await llm.streams.last.close();
+        await first;
+        await workspace.deleteConversation(deleted);
+        final second = workspace.sendMessage('New question');
+        await _until(() => llm.streams.length == 2);
+        expect(llm.inputs.last.map((message) => message.text), [
+          'New question',
+        ]);
+        expect(llm.inputs.last.single.conversationId, workspace.selected.id);
+        await llm.streams.last.close();
+        await second;
+      });
+    });
+
     testWidgets('Shows analysis until the first nonempty response fragment', (
       tester,
     ) async {
@@ -204,6 +230,27 @@ void main() {
         expect(llm.inputs.last.last.text, 'What is the project name?');
         await llm.streams.last.close();
         await second;
+      });
+    });
+
+    testWidgets('Context measurements belong only to the originating chat', (
+      tester,
+    ) async {
+      await withWorkspace(tester, (repository, llm, workspace) async {
+        final original = workspace.selected;
+        final send = workspace.sendMessage('Question');
+        await _until(() => llm.streams.isNotEmpty);
+        await workspace.newChat();
+        llm.contextCallbacks.last?.call(
+          const ContextUsage(promptTokens: 50, contextSize: 100),
+        );
+        expect(workspace.contextUsage, isNull);
+        workspace.selectConversation(original);
+        expect(workspace.contextUsage?.percent, 50);
+        await llm.streams.last.close();
+        await send;
+        await workspace.deleteConversation(original);
+        expect(workspace.contextUsage, isNull);
       });
     });
 
