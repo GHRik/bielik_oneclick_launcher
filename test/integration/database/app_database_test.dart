@@ -62,13 +62,13 @@ void main() {
       expect(await File(databasePath).exists(), isTrue);
     });
 
-    test('Initializes schema version 3', () async {
+    test('Initializes schema version 5', () async {
       final connection = await database.open();
 
       expect(
         (await connection.rawQuery('PRAGMA user_version'))
             .single['user_version'],
-        3,
+        5,
       );
     });
 

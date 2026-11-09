@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/speech_dictation_controller.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/repositories/speech_recognition_repository.dart';
@@ -24,6 +25,7 @@ class ChatPage extends StatefulWidget {
     required this.workspace,
     required this.statisticSeries,
     this.statisticsController,
+    this.attachmentRepository,
     this.speechRepository,
     this.clipboardRepository,
   });
@@ -31,6 +33,7 @@ class ChatPage extends StatefulWidget {
   final ChatWorkspace workspace;
   final List<StatisticSeries> statisticSeries;
   final StatisticsController? statisticsController;
+  final AttachmentRepository? attachmentRepository;
   final SpeechRecognitionRepository? speechRepository;
   final ClipboardRepository? clipboardRepository;
 
@@ -244,6 +247,12 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                       Expanded(
                         child: ConversationView(
                           conversation: widget.workspace.selected,
+                          onAttachmentTap: widget.attachmentRepository == null
+                              ? null
+                              : () => widget.workspace.pickAttachment(
+                                  widget.attachmentRepository!,
+                                ),
+                          pickingAttachment: widget.workspace.pickingAttachment,
                           dictation: _dictation,
                           onMicrophoneTap: _toggleDictation,
                           streamingMessageId:

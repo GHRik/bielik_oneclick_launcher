@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
 
@@ -12,6 +14,49 @@ ChatMessage _message(String text, String author) => ChatMessage(
 );
 
 void main() {
+  test('Includes attachment-only messages in the model context', () async {
+    final message = ChatMessage(
+      id: 'file',
+      conversationId: 1,
+      authorId: ChatAuthors.user,
+      text: '',
+      createdAt: DateTime.utc(2026),
+      attachment: const TextAttachment(
+        name: 'notes.txt',
+        text: 'Important source',
+        sizeBytes: 16,
+      ),
+    );
+    final context = await const ChatContextPolicy().prepare([
+      message,
+    ], countTokens: (_) async => 10);
+    expect(context.single.text, contains('Important source'));
+  });
+
+  test(
+    'Counts the attachment content when enforcing the context budget',
+    () async {
+      final message = ChatMessage(
+        id: 'file',
+        conversationId: 1,
+        authorId: ChatAuthors.user,
+        text: 'Question',
+        createdAt: DateTime.utc(2026),
+        attachment: TextAttachment(
+          name: 'large.txt',
+          text: 'x' * 3000,
+          sizeBytes: 3000,
+        ),
+      );
+      await expectLater(
+        const ChatContextPolicy().prepare([
+          message,
+        ], countTokens: (messages) async => messages.single.text.length),
+        throwsA(isA<ChatContextTooLong>()),
+      );
+    },
+  );
+
   group('Inference context normalization', () {
     test('Merges consecutive messages with the same role', () async {
       final context = await const ChatContextPolicy().prepare([

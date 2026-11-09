@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart';
+
 import 'package:characters/characters.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
@@ -37,24 +39,31 @@ class ChatService {
   Future<void> saveDraft(int conversationId, String draft) =>
       _write(() => _repository.saveDraft(conversationId, draft));
 
+  Future<void> saveDraftAttachment(
+    int conversationId,
+    TextAttachment? attachment,
+  ) =>
+      _write(() => _repository.saveDraftAttachment(conversationId, attachment));
+
   Future<void> send({
     required int conversationId,
     required String text,
     required List<ChatMessage> history,
     required FutureOr<void> Function(ChatUpdate) onUpdate,
     ModelFile? model,
+    TextAttachment? attachment,
     void Function(LlmStage)? onStage,
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
   }) async {
     if (_active) throw StateError('A chat operation is already active.');
     final message = text.trim();
-    if (message.isEmpty) return;
+    if (message.isEmpty && attachment == null) return;
     _active = true;
     _stopped = false;
     try {
       final title = history.isEmpty
-          ? message
+          ? (message.isEmpty ? attachment!.name : message)
                 .replaceAll(RegExp(r'\s+'), ' ')
                 .characters
                 .take(40)
@@ -67,6 +76,7 @@ class ChatService {
             conversationId: conversationId,
             authorId: ChatAuthors.user,
             text: message,
+            attachment: attachment,
             conversationTitle: title,
             clearDraft: true,
           ),
@@ -112,6 +122,8 @@ class ChatService {
         onLoaded: onLoaded,
       )) {
         if (_stopped) break;
+        if (fragment.isEmpty) continue;
+        if (responseId == null) onStage(LlmStage.generating);
         buffer.write(fragment);
         if (responseId == null) {
           final saved = await _write(

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/speech_recognition_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/clipboard_repository.dart';
 
@@ -38,6 +39,7 @@ class HomePage extends StatefulWidget {
     required this.chatRepository,
     required this.statisticSeries,
     this.statisticsRepository,
+    this.attachmentRepository,
     this.incomingTextRepository,
     this.speechRepository,
     this.clipboardRepository,
@@ -54,6 +56,7 @@ class HomePage extends StatefulWidget {
   final List<BielikModel> models;
   final List<StatisticSeries> statisticSeries;
   final StatisticsRepository? statisticsRepository;
+  final AttachmentRepository? attachmentRepository;
   final SpeechRecognitionRepository? speechRepository;
   final ClipboardRepository? clipboardRepository;
 
@@ -102,7 +105,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     } else {
       _statistics?.pause();
     }
-    if (state == AppLifecycleState.paused) {
+    if (state == AppLifecycleState.paused && !_chatOpen) {
       unawaited(_chatWorkspace.releaseModel());
     }
     if (state != AppLifecycleState.resumed) {
@@ -155,6 +158,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       final route = MaterialPageRoute<void>(
         builder: (_) => ChatPage(
           workspace: _chatWorkspace,
+          attachmentRepository: widget.attachmentRepository,
           speechRepository: widget.speechRepository,
           clipboardRepository: widget.clipboardRepository,
           statisticSeries: widget.statisticSeries,

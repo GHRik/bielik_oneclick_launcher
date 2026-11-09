@@ -82,10 +82,10 @@ void main() {
       expect(connections.first, same(connections.last));
     });
 
-    test('A new database uses schema version 3', () async {
+    test('A new database uses schema version 5', () async {
       final connection = await database.open();
 
-      expect(await connection.getVersion(), 3);
+      expect(await connection.getVersion(), 5);
     });
 
     test('Preserves a conversation after reopening', () async {

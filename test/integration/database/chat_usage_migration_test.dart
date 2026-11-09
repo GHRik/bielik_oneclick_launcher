@@ -24,6 +24,9 @@ void main() {
             'title TEXT, draft TEXT, created_at INTEGER, updated_at INTEGER)',
           );
           await db.execute(
+            'CREATE TABLE messages (id TEXT PRIMARY KEY, conversation_id INTEGER, author_id TEXT, text TEXT, created_at INTEGER)',
+          );
+          await db.execute(
             'CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT)',
           );
           await db.insert('conversations', {
@@ -52,6 +55,7 @@ void main() {
         'created_at': 100,
         'updated_at': 200,
         'last_used_at': 100,
+        'draft_attachment': null,
       });
       expect((await db.query('settings')).single['value'], 'preserved');
     } finally {

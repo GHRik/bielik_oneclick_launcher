@@ -107,6 +107,12 @@ void main() {
                 onCreate: (db, version) async {
                   await AppDatabaseSchema.create(db, version);
                   await db.execute(
+                    'ALTER TABLE conversations DROP COLUMN draft_attachment',
+                  );
+                  await db.execute(
+                    'ALTER TABLE messages DROP COLUMN attachment',
+                  );
+                  await db.execute(
                     'ALTER TABLE conversations DROP COLUMN last_used_at',
                   );
                   if (!hasSettings) await db.execute('DROP TABLE settings');
@@ -140,10 +146,10 @@ void main() {
             addTearDown(database.close);
           });
 
-          test('Upgrades the schema to version 3', () async {
+          test('Upgrades the schema to version 4', () async {
             final connection = await database.open();
 
-            expect(await connection.getVersion(), 3);
+            expect(await connection.getVersion(), 5);
           });
 
           test('Preserves conversation data', () async {

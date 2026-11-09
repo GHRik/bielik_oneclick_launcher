@@ -10,12 +10,18 @@ class DictationComposer extends StatelessWidget {
     required this.dictation,
     required this.onMicrophoneTap,
     required this.sending,
+    this.attachmentPreview,
+    this.allowEmptyMessage = false,
+    this.showAttachmentButton = false,
   });
 
   final TextEditingController draft;
   final SpeechDictationController? dictation;
   final VoidCallback? onMicrophoneTap;
   final bool sending;
+  final Widget? attachmentPreview;
+  final bool allowEmptyMessage;
+  final bool showAttachmentButton;
 
   @override
   Widget build(BuildContext context) {
@@ -23,26 +29,42 @@ class DictationComposer extends StatelessWidget {
     final composer = Composer(
       textEditingController: draft,
       hintText: 'Napisz wiadomość…',
-      attachmentIcon: null,
+      attachmentIcon: showAttachmentButton
+          ? const Icon(Icons.add, semanticLabel: 'Dodaj plik TXT')
+          : null,
+      allowEmptyMessage: allowEmptyMessage,
+      sendButtonVisibilityMode: allowEmptyMessage
+          ? SendButtonVisibilityMode.always
+          : SendButtonVisibilityMode.disabled,
       inputClearMode: InputClearMode.never,
       sendButtonDisabled: sending || (speech?.active ?? false),
       sendIcon: const Icon(Icons.send, semanticLabel: 'Wyślij wiadomość'),
       right: speech == null ? 0 : 56,
-      topWidget: speech?.error != null || speech?.active == true
-          ? Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-              child: Semantics(
-                liveRegion: true,
-                child: Text(
-                  speech!.error ??
-                      (speech.starting
-                          ? 'Uruchamianie mikrofonu…'
-                          : speech.finishing
-                          ? 'Kończenie dyktowania…'
-                          : 'Słucham… Kliknij mikrofon, aby zakończyć.'),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
+      topWidget:
+          attachmentPreview != null ||
+              speech?.error != null ||
+              speech?.active == true
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ?attachmentPreview,
+                if (speech?.error != null || speech?.active == true)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                    child: Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        speech!.error ??
+                            (speech.starting
+                                ? 'Uruchamianie mikrofonu…'
+                                : speech.finishing
+                                ? 'Kończenie dyktowania…'
+                                : 'Słucham… Kliknij mikrofon, aby zakończyć.'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ),
+              ],
             )
           : null,
     );

@@ -1,5 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:bielik_oneclick_launcher/src/data/datasources/ut/test_txt_attachment_decoder.dart'
+    as txt_decoder;
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/ut/test_local_attachment_repository.dart'
+    as attachments;
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/ut/test_platform_incoming_text_repository.dart'
     as incoming_text_suite;
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/ut/test_speech_dictation_controller.dart'
@@ -48,6 +52,11 @@ import 'package:bielik_oneclick_launcher/src/presentation/formatters/ut/test_sto
     as suite17;
 
 void main() {
+  group('src/data/datasources/txt_attachment_decoder.dart', txt_decoder.main);
+  group(
+    'src/data/repositories_impl/local_attachment_repository.dart',
+    attachments.main,
+  );
   group(
     'src/data/repositories_impl/platform_incoming_text_repository.dart',
     incoming_text_suite.main,

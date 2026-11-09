@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/speech_recognition_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/clipboard_repository.dart';
 
@@ -30,6 +31,7 @@ class MyApp extends StatelessWidget {
     this.deviceResourcesRepository,
     this.modelRepository = const ConfiguredModelCatalogRepository(bielikModels),
     this.statisticsRepository,
+    this.attachmentRepository,
     this.incomingTextRepository,
     this.speechRepository,
     this.clipboardRepository,
@@ -45,6 +47,7 @@ class MyApp extends StatelessWidget {
   final Future<void> Function(LlmConfiguration)? onSaveLlmConfiguration;
   final ModelCatalogRepository modelRepository;
   final StatisticsRepository? statisticsRepository;
+  final AttachmentRepository? attachmentRepository;
   final SpeechRecognitionRepository? speechRepository;
   final ClipboardRepository? clipboardRepository;
 
@@ -56,6 +59,7 @@ class MyApp extends StatelessWidget {
       home: HomePage(
         deviceResourcesRepository: deviceResourcesRepository,
         chatRepository: chatRepository,
+        attachmentRepository: attachmentRepository,
         incomingTextRepository: incomingTextRepository,
         speechRepository: speechRepository,
         clipboardRepository: clipboardRepository,

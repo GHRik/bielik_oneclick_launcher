@@ -96,6 +96,7 @@ class LocalLlmRepository implements LlmRepository {
       }
       if (_stopped) return;
       final engine = _engine!;
+      onStage(LlmStage.analyzing);
       final context = await contextPolicy.prepare(
         history,
         isCancelled: () => _stopped,
@@ -109,7 +110,6 @@ class LocalLlmRepository implements LlmRepository {
       final runtime = await runtimeAdapter.inspect(engine);
       if (_stopped) return;
       onLoaded?.call(runtime);
-      onStage(LlmStage.generating);
       await for (final chunk in engine.create(
         _engineMessages(context),
         params: GenerationParams(
