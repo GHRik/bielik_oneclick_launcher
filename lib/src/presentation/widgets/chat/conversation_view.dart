@@ -49,7 +49,7 @@ class ConversationView extends StatelessWidget {
   }
 
   Widget _userMessage(BuildContext context, TextMessage message, int index) {
-    final attachment = conversation.messages
+    final attachment = conversation.displayedMessages
         .where((stored) => stored.id == message.id)
         .firstOrNull
         ?.attachment;

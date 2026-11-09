@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
@@ -34,6 +36,8 @@ class _Attachments implements AttachmentRepository {
 }
 
 class _Llm implements LlmRepository {
+  Completer<void>? loadGate;
+  Object? loadFailure;
   bool rejectContext = false;
   int unloads = 0;
   final inputs = <List<ChatMessage>>[];
@@ -47,6 +51,8 @@ class _Llm implements LlmRepository {
     void Function(ContextUsage)? onContext,
     Future<void> Function()? onPromptAccepted,
   }) async* {
+    await loadGate?.future;
+    if (loadFailure != null) throw loadFailure!;
     if (rejectContext) throw ChatContextTooLong();
     await onPromptAccepted?.call();
     inputs.add(history);
@@ -100,6 +106,85 @@ void main() {
     await tester.tap(find.byIcon(Icons.send));
     await tester.pumpAndSettle();
   }
+
+  testWidgets(
+    'The message and attachment appear while the model is still loading',
+    (tester) async {
+      await open(tester);
+      await pick(tester);
+      llm.loadGate = Completer<void>();
+      await tester.enterText(find.byType(TextField), 'Question');
+      await tester.tap(find.byIcon(Icons.send));
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Question'), findsOneWidget);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        '',
+      );
+      expect(find.byKey(const ValueKey('pending-attachment')), findsNothing);
+      expect(find.text('notatki.txt'), findsOneWidget);
+      expect(llm.inputs, isEmpty);
+
+      llm.loadGate!.complete();
+      await tester.pumpAndSettle();
+      final conversation = (await chats.getConversations()).single;
+      expect(
+        (await chats.getMessages(conversation.id))
+            .where((message) => message.role == ChatRole.user),
+        hasLength(1),
+      );
+    },
+  );
+
+  testWidgets('A loading failure restores the question and its attachment', (
+    tester,
+  ) async {
+    await open(tester);
+    await pick(tester);
+    llm.loadGate = Completer<void>();
+    llm.loadFailure = StateError('Loading failed');
+    await tester.enterText(find.byType(TextField), 'Keep this');
+    await tester.tap(find.byIcon(Icons.send));
+    await tester.pump(const Duration(milliseconds: 400));
+
+    llm.loadGate!.complete();
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller!.text,
+      'Keep this',
+    );
+    expect(find.byKey(const ValueKey('pending-attachment')), findsOneWidget);
+    final conversation = (await chats.getConversations()).single;
+    expect(await chats.getMessages(conversation.id), isEmpty);
+    expect(conversation.draftAttachment?.name, 'notatki.txt');
+  });
+
+  testWidgets('Restoring a rejected send preserves a newer draft', (
+    tester,
+  ) async {
+    await open(tester);
+    await pick(tester);
+    llm.loadGate = Completer<void>();
+    llm.loadFailure = StateError('Loading failed');
+    await tester.enterText(find.byType(TextField), 'Original');
+    await tester.tap(find.byIcon(Icons.send));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.enterText(find.byType(TextField), 'New draft');
+
+    llm.loadGate!.complete();
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller!.text,
+      'Original\n\nNew draft',
+    );
+    expect(
+      (await chats.getConversations()).single.draft,
+      'Original\n\nNew draft',
+    );
+  });
 
   testWidgets(
     'A rejected summary keeps the attachment and original draft editable',

@@ -444,6 +444,7 @@ class ChatWorkspace extends ChangeNotifier {
     int attachmentRevision,
   ) async {
     try {
+      await target.showPendingMessage(message, attachment);
       await flush();
       if (_disposed || _stopRequested || !_conversations.contains(target)) {
         return;
@@ -515,6 +516,9 @@ class ChatWorkspace extends ChangeNotifier {
         _error = 'Nie udało się wygenerować odpowiedzi: $error';
       }
     } finally {
+      if (!_disposed && _conversations.contains(target)) {
+        if (await target.restorePendingMessage()) await flush();
+      }
       _sending = false;
       _streamingMessageId = null;
       _generationTarget = null;

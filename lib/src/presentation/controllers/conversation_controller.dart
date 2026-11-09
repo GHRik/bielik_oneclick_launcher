@@ -28,6 +28,62 @@ class ConversationController extends ChangeNotifier {
   Conversation _conversation;
   final List<ChatMessage> _messages;
   List<ChatMessage> get messages => List.unmodifiable(_messages);
+  ({ChatMessage message, String draft, bool offersActions})? _pendingSubmission;
+  int _pendingSequence = 0;
+  List<ChatMessage> get displayedMessages => [
+    ..._messages,
+    ?_pendingSubmission?.message,
+  ];
+
+  Future<void> showPendingMessage(
+    String text,
+    TextAttachment? attachment,
+  ) async {
+    if (_pendingSubmission != null) return;
+    final message = ChatMessage(
+      id: 'pending-$id-${_pendingSequence++}',
+      conversationId: id,
+      authorId: ChatAuthors.user,
+      text: text,
+      attachment: attachment,
+      createdAt: DateTime.now(),
+    );
+    _pendingSubmission = (
+      message: message,
+      draft: draft.text.isEmpty && attachment == null ? text : draft.text,
+      offersActions: _textActionsOffered,
+    );
+    _suppressDraftChanges = true;
+    draft.clear();
+    _suppressDraftChanges = false;
+    _textActionsOffered = false;
+    _conversation = _conversation.copyWith(
+      draft: '',
+      clearDraftAttachment: true,
+    );
+    await controller.insertMessage(_viewMessage(message));
+    notifyListeners();
+  }
+
+  Future<bool> restorePendingMessage() async {
+    final pending = _pendingSubmission;
+    if (pending == null) return false;
+    _pendingSubmission = null;
+    await controller.removeMessage(_viewMessage(pending.message));
+    final nextDraft = draft.text;
+    draft.text = [
+      pending.draft,
+      nextDraft,
+    ].where((text) => text.isNotEmpty).join('\n\n');
+    draft.selection = TextSelection.collapsed(offset: draft.text.length);
+    if (attachment == null && pending.message.attachment != null) {
+      setAttachment(pending.message.attachment);
+    }
+    _textActionsOffered = _textActionsOffered || pending.offersActions;
+    notifyListeners();
+    return true;
+  }
+
   final InMemoryChatController controller;
   final TextEditingController draft;
   final ValueChanged<String> onDraftChanged;
@@ -81,7 +137,15 @@ class ConversationController extends ChangeNotifier {
     _draftRevision++;
     if (draft.text.trim().isEmpty) _textActionsOffered = false;
     _conversation = _conversation.copyWith(draft: draft.text);
-    onDraftChanged(draft.text);
+    final pending = _pendingSubmission;
+    onDraftChanged(
+      pending == null
+          ? draft.text
+          : [
+              pending.draft,
+              draft.text,
+            ].where((text) => text.isNotEmpty).join('\n\n'),
+    );
     notifyListeners();
   }
 
@@ -91,7 +155,18 @@ class ConversationController extends ChangeNotifier {
     int? submittedAttachmentRevision,
     String? title,
   }) async {
-    await controller.insertMessage(_viewMessage(message));
+    final attachmentUnchanged =
+        _attachmentRevision == submittedAttachmentRevision;
+    if (message.role == ChatRole.user && _pendingSubmission != null) {
+      final pending = _pendingSubmission!;
+      _pendingSubmission = null;
+      await controller.updateMessage(
+        _viewMessage(pending.message),
+        _viewMessage(message),
+      );
+    } else {
+      await controller.insertMessage(_viewMessage(message));
+    }
     _messages.add(message);
     hasMessages = true;
     _messageContentBytes += message.contentSizeBytes;
@@ -110,6 +185,11 @@ class ConversationController extends ChangeNotifier {
       _suppressDraftChanges = false;
       _draftRevision++;
       _conversation = _conversation.copyWith(draft: '');
+    } else if (submittedDraftRevision != null) {
+      onDraftChanged(draft.text);
+    }
+    if (submittedAttachmentRevision != null && !attachmentUnchanged) {
+      onAttachmentChanged?.call(attachment);
     }
     notifyListeners();
   }
