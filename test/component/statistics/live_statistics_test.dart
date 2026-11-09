@@ -196,6 +196,23 @@ void main() {
       ]);
     });
 
+    test(
+      'Keeps a previously available measurement after history expires',
+      () async {
+        source.values = {'cpuTemperature': 45};
+        await repository.sample();
+        source.values = {};
+        now = now.add(const Duration(seconds: 121));
+
+        final series = await repository.sample();
+
+        expect(
+          series.singleWhere((s) => s.title == 'Temperatura CPU').isAvailable,
+          isTrue,
+        );
+      },
+    );
+
     test('Leaves a gap when the native source fails', () async {
       source.values = {'appCpuPercent': 25};
       await repository.sample();
@@ -269,15 +286,10 @@ void main() {
       ),
     );
 
-    testWidgets('Displays zero for an empty series', (tester) async {
+    testWidgets('Hides a measurement without any readings', (tester) async {
       await show(tester, [], []);
 
-      expect(
-        tester
-            .widget<Text>(find.byKey(const ValueKey('chart-reading-Reading')))
-            .data,
-        '0 GB',
-      );
+      expect(find.byType(StatisticLineChart), findsNothing);
     });
 
     testWidgets('Allows selecting a single sample', (tester) async {

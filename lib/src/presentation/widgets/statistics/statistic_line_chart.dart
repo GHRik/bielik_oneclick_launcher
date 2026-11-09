@@ -59,10 +59,10 @@ class _StatisticLineChartState extends State<StatisticLineChart> {
     final value = index == null ? null : series.values[index];
     final hasData = series.values.any((value) => value != null);
     final reading = index != null
-        ? '${times[index].round()} s · ${_format(value ?? 0)} ${series.unit}'
+        ? '${times[index].round()} s · ${value == null ? "Brak danych" : "${_format(value)} ${series.unit}"}'
         : hasData
         ? 'Dotknij wykresu'
-        : '0 ${series.unit}';
+        : 'Brak danych';
     final textScale = MediaQuery.textScalerOf(context).scale(12) / 12;
     final axisStyle =
         (Theme.of(context).textTheme.labelSmall ?? const TextStyle()).copyWith(

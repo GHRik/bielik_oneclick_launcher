@@ -43,7 +43,7 @@ void main() {
               find.byKey(const ValueKey('statistic-value-Użycie GPU')),
             )
             .data,
-        '0',
+        'Brak danych',
       );
       expect(find.text('42'), findsNothing);
     });

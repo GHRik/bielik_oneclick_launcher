@@ -17,7 +17,7 @@ class StatisticCard extends StatelessWidget {
   final ValueChanged<double>? onTimeSelected;
 
   String _reading(double? value) {
-    if (value == null || !value.isFinite) return '0';
+    if (value == null || !value.isFinite) return 'Brak danych';
     return value
         .toStringAsFixed(value == value.roundToDouble() ? 0 : 1)
         .replaceAll('.', ',');
@@ -67,7 +67,7 @@ class StatisticCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    series.unit,
+                    value == null || !value.isFinite ? '' : series.unit,
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 11,
                       height: 1.2,

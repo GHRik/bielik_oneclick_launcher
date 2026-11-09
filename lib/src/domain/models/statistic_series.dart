@@ -9,6 +9,7 @@ class StatisticSeries {
     required this.values,
     this.secondsAgo = const [],
     this.description = '',
+    this.hasRecordedData,
   });
 
   final String title;
@@ -18,4 +19,8 @@ class StatisticSeries {
   final List<double?> values;
   final List<double> secondsAgo;
   final String description;
+  final bool? hasRecordedData;
+
+  bool get isAvailable =>
+      hasRecordedData ?? values.any((value) => value != null && value.isFinite);
 }

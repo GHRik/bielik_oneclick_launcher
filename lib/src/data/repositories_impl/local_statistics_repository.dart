@@ -10,6 +10,7 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
     DateTime Function()? now,
   }) : _now = now ?? DateTime.now;
 
+  final Set<int> _recordedMeasurements = {};
   final StatisticsDataSource _source;
   final GenerationMetrics _generation;
   final DateTime Function() _now;
@@ -52,6 +53,9 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
         boundedNumber('gpuTemperature', 200),
       ],
     ));
+    for (var i = 0; i < _samples.last.values.length; i++) {
+      if (_samples.last.values[i] != null) _recordedMeasurements.add(i);
+    }
     _samples.removeWhere(
       (sample) =>
           now.difference(sample.time).inMilliseconds >
@@ -138,6 +142,7 @@ class LocalStatisticsRepository implements SamplingStatisticsRepository {
       );
       return StatisticSeries(
         title: definitions[i].$1,
+        hasRecordedData: _recordedMeasurements.contains(i),
         unit: definitions[i].$2,
         description: definitions[i].$4,
         minimum: 0,

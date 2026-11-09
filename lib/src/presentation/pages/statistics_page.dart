@@ -36,6 +36,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
   }
 
   Widget _content(BuildContext context, List<StatisticSeries> series) {
+    series = series.where((measurement) => measurement.isAvailable).toList();
     final theme = Theme.of(context);
     final selectedAt = _selectedAt;
     final selectedSeconds = selectedAt == null
@@ -77,7 +78,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Jeśli pomiar jest niedostępny, urządzenie go nie udostępnia — pokazujemy wtedy 0.',
+                      'Dostępność pomiarów zależy od urządzenia. Metryki generowania pojawią się po pierwszym wyniku.',
                       style: theme.textTheme.bodySmall,
                     ),
                     if (selectedAt != null)
