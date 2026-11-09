@@ -8,6 +8,7 @@ import 'package:bielik_oneclick_launcher/configuration/system_prompt.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/model_file_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
 
@@ -62,7 +63,7 @@ void main() {
       await File('${folder.path}/test.gguf').writeAsBytes([1]);
       engine = _Engine();
       configuration = defaultLlmConfiguration.copyWith(
-        contextSize: 512,
+        contextSize: bielikSystemPrompt.length + 224,
         responseTokens: 64,
       );
       repository = LocalLlmRepository(
@@ -105,6 +106,20 @@ void main() {
         }
       },
     );
+
+    test('Reports context usage including the system prompt', () async {
+      ContextUsage? usage;
+      await repository
+          .generate(
+            model,
+            [message('1', 'Cześć', ChatAuthors.user)],
+            onStage: (_) {},
+            onContext: (value) => usage = value,
+          )
+          .drain<void>();
+
+      expect(usage!.promptTokens, bielikSystemPrompt.length + 'Cześć'.length);
+    });
 
     test(
       'Accepts the prompt after counting tokens and before generation',

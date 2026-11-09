@@ -25,7 +25,8 @@ class ContextUsageIndicator extends StatelessWidget {
           title: const Text('Kontekst tej rozmowy'),
           content: Text(
             value == null
-                ? 'Pomiar pojawi się po przygotowaniu pierwszej wiadomości przez model.'
+                ? 'Pomiar pojawi się po przygotowaniu pierwszej wiadomości przez model. '
+                      'Obejmuje również instrukcję systemową Bielika.'
                 : '${value.usedTokens} / ${value.contextSize} tokenów (${value.percent}%).\n\n'
                       'Wejście: ${value.promptTokens}. Odpowiedź: ${value.responseTokens}.\n\n'
                       'Ostatni pomiar dla tej rozmowy. Uwzględnia instrukcję systemową '
