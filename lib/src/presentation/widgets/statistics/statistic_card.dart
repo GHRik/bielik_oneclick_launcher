@@ -5,17 +5,12 @@ import 'package:bielik_oneclick_launcher/src/presentation/widgets/statistics/gla
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/statistics/statistic_line_chart.dart';
 
 class StatisticCard extends StatelessWidget {
-  const StatisticCard({
-    super.key,
-    required this.series,
-    this.highlighted = false,
-  });
+  const StatisticCard({super.key, required this.series});
 
   final StatisticSeries series;
-  final bool highlighted;
 
   String _reading(double? value) {
-    if (value == null || !value.isFinite) return '—';
+    if (value == null || !value.isFinite) return '0';
     return value
         .toStringAsFixed(value == value.roundToDouble() ? 0 : 1)
         .replaceAll('.', ',');
@@ -32,6 +27,8 @@ class StatisticCard extends StatelessWidget {
           Text(
             series.title,
             style: theme.textTheme.labelMedium?.copyWith(
+              fontSize: 12,
+              height: 1.25,
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
@@ -45,18 +42,22 @@ class StatisticCard extends StatelessWidget {
                 _reading(value),
                 key: ValueKey('statistic-value-${series.title}'),
                 style: theme.textTheme.headlineMedium?.copyWith(
+                  fontSize: 26,
+                  height: 1.15,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              Text(series.unit, style: theme.textTheme.bodySmall),
+              Text(
+                series.unit,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 11,
+                  height: 1.2,
+                ),
+              ),
             ],
           ),
-          if (series.description.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(series.description, style: theme.textTheme.bodySmall),
-          ],
           const SizedBox(height: 16),
-          StatisticLineChart(series: series, height: highlighted ? 112 : 88),
+          StatisticLineChart(series: series, height: 64),
         ],
       ),
     );

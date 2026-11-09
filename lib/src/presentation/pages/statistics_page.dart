@@ -55,6 +55,11 @@ class StatisticsPage extends StatelessWidget {
                       'Ostatnie 60 sekund · historia bieżącej sesji',
                       style: theme.textTheme.bodySmall,
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Jeśli pomiar jest niedostępny, urządzenie go nie udostępnia — pokazujemy wtedy 0.',
+                      style: theme.textTheme.bodySmall,
+                    ),
                     const SizedBox(height: 24),
                     LayoutBuilder(
                       builder: (context, constraints) {
@@ -72,26 +77,16 @@ class StatisticsPage extends StatelessWidget {
                           children: [
                             for (var i = 0; i < series.length; i++)
                               SizedBox(
-                                width: i == 0
-                                    ? constraints.maxWidth
-                                    : cardWidth,
+                                width: cardWidth,
+                                height: 304 * textScale,
                                 child: StatisticCard(
                                   key: ValueKey(series[i].title),
                                   series: series[i],
-                                  highlighted: i == 0,
                                 ),
                               ),
                           ],
                         );
                       },
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Pomiary co sekundę, gdy aplikacja jest na pierwszym '
-                      'planie. Brak dostępnego pomiaru oznaczamy kreską.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
                     ),
                   ],
                 ),

@@ -255,14 +255,14 @@ void main() {
       ),
     );
 
-    testWidgets('Displays a no-data label for an empty series', (tester) async {
+    testWidgets('Displays zero for an empty series', (tester) async {
       await show(tester, [], []);
 
       expect(
         tester
             .widget<Text>(find.byKey(const ValueKey('chart-reading-Reading')))
             .data,
-        'Brak danych',
+        '0 GB',
       );
     });
 

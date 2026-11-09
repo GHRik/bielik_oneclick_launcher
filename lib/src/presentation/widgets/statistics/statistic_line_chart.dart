@@ -47,10 +47,10 @@ class _StatisticLineChartState extends State<StatisticLineChart> {
     final value = index == null ? null : series.values[index];
     final hasData = series.values.any((value) => value != null);
     final reading = index != null
-        ? '${times[index].round()} s · ${value == null ? 'Brak danych' : '${_format(value)} ${series.unit}'}'
+        ? '${times[index].round()} s · ${_format(value ?? 0)} ${series.unit}'
         : hasData
-        ? 'Dotknij wykresu, aby zobaczyć wartość'
-        : 'Brak danych';
+        ? 'Dotknij wykresu'
+        : '0 ${series.unit}';
     final textScale = MediaQuery.textScalerOf(context).scale(12) / 12;
     final axisStyle = Theme.of(context).textTheme.labelSmall
         ?.copyWith(fontSize: 11);
@@ -141,7 +141,8 @@ class _StatisticLineChartState extends State<StatisticLineChart> {
           Text(
             reading,
             key: ValueKey('chart-reading-${series.title}'),
-            style: Theme.of(context).textTheme.bodySmall,
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(fontSize: 11, height: 1.2),
             textAlign: TextAlign.center,
           ),
         ],

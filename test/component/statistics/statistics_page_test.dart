@@ -37,8 +37,24 @@ void main() {
           ),
         ),
       );
-      expect(find.text('—'), findsOneWidget);
+      expect(
+        tester
+            .widget<Text>(
+              find.byKey(const ValueKey('statistic-value-Użycie GPU')),
+            )
+            .data,
+        '0',
+      );
       expect(find.text('42'), findsNothing);
+    });
+
+    testWidgets('Every statistic tile has the same dimensions', (tester) async {
+      await _showStatistics(tester);
+      final tiles = find.byType(StatisticCard);
+      final size = tester.getSize(tiles.first);
+      for (var i = 1; i < tiles.evaluate().length; i++) {
+        expect(tester.getSize(tiles.at(i)), size);
+      }
     });
 
     for (final brightness in Brightness.values) {
