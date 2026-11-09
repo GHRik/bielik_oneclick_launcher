@@ -3,6 +3,8 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/data/datasources/preview_statistics_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/pages/statistics_page.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/statistics/statistic_card.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/statistics/statistic_line_chart.dart';
 
 Future<void> _showStatistics(WidgetTester tester) async {
@@ -17,6 +19,50 @@ Future<void> _showStatistics(WidgetTester tester) async {
 
 void main() {
   group('Statistics page preview', () {
+    testWidgets('Missing latest samples do not display stale readings', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: StatisticCard(
+              series: StatisticSeries(
+                title: 'Użycie GPU',
+                unit: '%',
+                minimum: 0,
+                maximum: 100,
+                values: [42, null],
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('—'), findsOneWidget);
+      expect(find.text('42'), findsNothing);
+    });
+
+    for (final brightness in Brightness.values) {
+      testWidgets('Glass cards fit enlarged text in ${brightness.name} mode', (
+        tester,
+      ) async {
+        tester.view.physicalSize = const Size(320, 700);
+        tester.view.devicePixelRatio = 1;
+        tester.platformDispatcher.textScaleFactorTestValue = 2;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData(brightness: brightness),
+            home: const StatisticsPage(series: statisticsPreviewData),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        expect(find.byType(StatisticLineChart), findsNWidgets(5));
+      });
+    }
+
     testWidgets('Displays charts with a 60-second history axis', (
       tester,
     ) async {

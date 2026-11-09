@@ -3,9 +3,14 @@ import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
 
 class StatisticLineChart extends StatefulWidget {
-  const StatisticLineChart({super.key, required this.series});
+  const StatisticLineChart({
+    super.key,
+    required this.series,
+    this.height = 170,
+  });
 
   final StatisticSeries series;
+  final double height;
 
   @override
   State<StatisticLineChart> createState() => _StatisticLineChartState();
@@ -46,24 +51,31 @@ class _StatisticLineChartState extends State<StatisticLineChart> {
         : hasData
         ? 'Dotknij wykresu, aby zobaczyć wartość'
         : 'Brak danych';
+    final textScale = MediaQuery.textScalerOf(context).scale(12) / 12;
+    final axisStyle = Theme.of(context).textTheme.labelSmall
+        ?.copyWith(fontSize: 11);
+    final axisWidth = 42 * textScale;
     return Semantics(
       label:
           'Wykres: ${series.title}, jednostka ${series.unit}. Ostatnie 60 sekund.',
       child: Column(
         children: [
           SizedBox(
-            height: 170,
+            height: widget.height * textScale,
             child: Row(
               children: [
                 SizedBox(
-                  width: 42,
+                  width: axisWidth,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(_format(series.maximum)),
-                      Text(_format((series.minimum + series.maximum) / 2)),
-                      Text(_format(series.minimum)),
+                      Text(_format(series.maximum), style: axisStyle),
+                      Text(
+                        _format((series.minimum + series.maximum) / 2),
+                        style: axisStyle,
+                      ),
+                      Text(_format(series.minimum), style: axisStyle),
                     ],
                   ),
                 ),
@@ -99,7 +111,9 @@ class _StatisticLineChartState extends State<StatisticLineChart> {
                               times: times,
                               selectedIndex: index,
                               lineColor: colors.primary,
-                              gridColor: colors.outlineVariant,
+                              gridColor: colors.outlineVariant.withValues(
+                                alpha: 0.45,
+                              ),
                             ),
                           ),
                         );
@@ -110,11 +124,17 @@ class _StatisticLineChartState extends State<StatisticLineChart> {
               ],
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(left: 42, top: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [Text('-60 s'), Text('-30 s'), Text('teraz')],
+          Padding(
+            padding: EdgeInsets.only(left: axisWidth, top: 8),
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                Text('-60 s', style: axisStyle),
+                Text('-30 s', style: axisStyle),
+                Text('teraz', style: axisStyle),
+              ],
             ),
           ),
           const SizedBox(height: 12),
