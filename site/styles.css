@@ -15,6 +15,20 @@
 .release-links{display:flex;gap:12px 24px;flex-wrap:wrap}
 .release-history>p:last-child{margin-top:16px}
 #release-more{margin-top:16px}
+.ask-flow{padding-block:40px;border-top:1px solid var(--line)}
+.ask-flow .eyebrow{margin-bottom:12px}
+.ask-flow-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;padding:24px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.ask-flow-steps figure{min-width:0}
+.ask-flow-steps figcaption{font-size:13px;font-weight:600;min-height:52px}
+.ask-flow-steps figcaption span{color:var(--accent);margin-right:8px;font-variant-numeric:tabular-nums}
+.ask-flow-steps img{width:100%;border:3px solid var(--line);border-radius:18px}
+.ask-flow .capture-note{margin-top:16px}
+.annotated-screen{position:relative;display:block;width:300px;max-width:100%}
+.annotated-screen .phone-screen{width:100%}
+.ask-flow-steps .annotated-screen{width:100%}
+.screen-annotation{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.screen-annotation ellipse{fill:none;stroke:#ff4b4b;stroke-width:14;filter:drop-shadow(0 1px 2px #0008)}
+@media(max-width:760px){.ask-flow-steps{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:18px}.ask-flow-steps figure{flex:0 0 82%;scroll-snap-align:center}.ask-flow-steps figcaption{min-height:44px}.ask-flow-steps img{border-radius:14px}}
 html{scroll-behavior:smooth;scroll-padding-top:24px}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:"Plus Jakarta Sans","Segoe UI",Arial,sans-serif;font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
@@ -100,7 +114,7 @@ h2{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:34px;letter-sp
 .carousel-pause .icon-play{display:none}
 .carousel-pause[data-paused="true"] .icon-pause{display:none}
 .carousel-pause[data-paused="true"] .icon-play{display:grid}
-.carousel-dots{display:flex;align-items:center;gap:4px}
+.carousel-dots{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;max-width:100%}
 .carousel-dots button{display:grid;place-items:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:0;background:transparent}
 .carousel-dots span{display:block;width:8px;height:8px;border-radius:50%;background:var(--dot)}
 .carousel-dots [aria-current="true"] span{background:var(--coral);box-shadow:0 0 0 4px color-mix(in srgb,var(--coral) 15%,transparent)}
