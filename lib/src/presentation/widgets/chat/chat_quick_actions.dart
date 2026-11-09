@@ -19,9 +19,21 @@ class ChatQuickActions extends StatelessWidget {
       spacing: 8,
       runSpacing: 4,
       children: [
-        ActionChip(label: const Text('Przetłumacz'), onPressed: onTranslate),
-        ActionChip(label: const Text('Streść'), onPressed: onSummarize),
-        ActionChip(label: const Text('Analizuj'), onPressed: onAnalyze),
+        ActionChip(
+          avatar: const Icon(Icons.translate, size: 18),
+          label: const Text('Przetłumacz'),
+          onPressed: onTranslate,
+        ),
+        ActionChip(
+          avatar: const Icon(Icons.summarize_outlined, size: 18),
+          label: const Text('Streść'),
+          onPressed: onSummarize,
+        ),
+        ActionChip(
+          avatar: const Icon(Icons.manage_search, size: 18),
+          label: const Text('Analizuj'),
+          onPressed: onAnalyze,
+        ),
       ],
     ),
   );
