@@ -56,6 +56,9 @@ class ConversationView extends StatelessWidget {
                 messageId: message.id,
                 isUser: false,
                 showCopy: message.id != streamingMessageId,
+                onCopy: clipboardRepository == null
+                    ? null
+                    : () => clipboardRepository!.copyText(message.text),
                 child: AssistantMarkdownMessage(message: message),
               ),
         emptyChatListBuilder: (context) => Center(

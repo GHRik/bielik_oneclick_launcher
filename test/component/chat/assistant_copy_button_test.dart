@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/clipboard_repository.dart';
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/system_clipboard_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
@@ -46,13 +49,30 @@ void main() {
   late InMemoryChatRepository repository;
   late _StreamingLlm llm;
   late ChatWorkspace workspace;
+  String? copied;
 
   setUp(() {
     repository = InMemoryChatRepository();
     llm = _StreamingLlm();
+    copied = null;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map)['text'] as String;
+          }
+          return null;
+        });
   });
 
-  Future<void> open(WidgetTester tester) async {
+  tearDown(
+    () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null),
+  );
+
+  Future<void> open(
+    WidgetTester tester, {
+    ClipboardRepository? clipboard,
+  }) async {
     workspace = ChatWorkspace(repository, llmRepository: llm)
       ..useModel(bielikModels.first);
     await workspace.initialize();
@@ -66,7 +86,11 @@ void main() {
     });
     await tester.pumpWidget(
       MaterialApp(
-        home: ChatPage(workspace: workspace, statisticSeries: const []),
+        home: ChatPage(
+          workspace: workspace,
+          statisticSeries: const [],
+          clipboardRepository: clipboard,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -78,6 +102,62 @@ void main() {
     llm.output!.add('Odpowiedź');
     await _pumpUntil(tester, () => workspace.selected.messages.length >= 2);
   }
+
+  testWidgets(
+    'Copies the complete final reply including all streamed fragments',
+    (tester) async {
+      await open(tester, clipboard: const SystemClipboardRepository());
+      await startReply(tester);
+      const remainder = '\n\n**Cała odpowiedź** 🙂';
+      llm.output!.add(remainder);
+      await _pumpUntil(
+        tester,
+        () => workspace.selected.messages.last.text.endsWith(remainder),
+      );
+      unawaited(llm.output!.close());
+      await _pumpUntil(tester, () => !workspace.sending);
+      await tester.pumpAndSettle();
+      final answer = workspace.selected.messages.last;
+      await tester.tap(find.byKey(ValueKey('copy-message-${answer.id}')));
+      await tester.pumpAndSettle();
+      expect(copied, 'Odpowiedź$remainder');
+    },
+  );
+
+  testWidgets('Copies the saved partial reply after a manual stop', (
+    tester,
+  ) async {
+    await open(tester, clipboard: const SystemClipboardRepository());
+    await startReply(tester);
+    final stopping = workspace.stopGeneration();
+    await _pumpUntil(tester, () => !workspace.sending);
+    await stopping;
+    await tester.pumpAndSettle();
+    final answer = workspace.selected.messages.last;
+    await tester.tap(find.byKey(ValueKey('copy-message-${answer.id}')));
+    await tester.pumpAndSettle();
+    expect(copied, 'Odpowiedź');
+  });
+
+  testWidgets('Copies an earlier answer while the next answer is streaming', (
+    tester,
+  ) async {
+    await open(tester, clipboard: const SystemClipboardRepository());
+    await startReply(tester);
+    final old = workspace.selected.messages.last;
+    unawaited(llm.output!.close());
+    await _pumpUntil(tester, () => !workspace.sending);
+    llm.output = null;
+    unawaited(workspace.sendMessage('Next'));
+    await _pumpUntil(tester, () => llm.output != null);
+    llm.output!.add('Another reply');
+    await _pumpUntil(tester, () => workspace.selected.messages.length == 4);
+    final button = find.byKey(ValueKey('copy-message-${old.id}'));
+    await tester.ensureVisible(button);
+    await tester.tap(button);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(copied, 'Odpowiedź');
+  });
 
   testWidgets('Hides the answer copy action during streaming', (tester) async {
     await open(tester);
