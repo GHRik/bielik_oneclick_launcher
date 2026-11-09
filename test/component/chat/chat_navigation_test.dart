@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/app.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/pages/statistics_page.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/statistics_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_statistics_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/generation_metrics.dart';
@@ -119,7 +120,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Statystyki'), findsOneWidget);
-      expect(find.text('Wydajność modelu'), findsOneWidget);
+      expect(find.byType(StatisticsPage), findsOneWidget);
       expect(find.text('Prędkość generowania'), findsOneWidget);
       expect(find.text('RAM aplikacji'), findsOneWidget);
     });
