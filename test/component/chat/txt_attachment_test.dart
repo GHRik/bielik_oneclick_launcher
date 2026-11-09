@@ -123,7 +123,12 @@ void main() {
     tester,
   ) async {
     await open(tester);
-    await tester.enterText(find.byType(TextField), 'Question');
+    for (var length = 1; length <= 'Question'.length; length++) {
+      await tester.enterText(
+        find.byType(TextField),
+        'Question'.substring(0, length),
+      );
+    }
     await pick(tester);
     await tester.tap(find.byTooltip('Usuń załącznik'));
     await tester.pumpAndSettle();
