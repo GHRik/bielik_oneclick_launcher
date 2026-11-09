@@ -234,6 +234,7 @@ class ChatWorkspace extends ChangeNotifier {
             : previous.length + 2 + text.length,
       ),
     );
+    target.offerTextActions();
     await flush();
     return !_disposed && _error == null;
   }

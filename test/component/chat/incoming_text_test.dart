@@ -158,6 +158,19 @@ void main() {
       );
     });
 
+    testWidgets('Imported text offers actions without sending automatically', (
+      tester,
+    ) async {
+      await openApp(tester);
+      incoming.controller.add('From another app');
+      await tester.pumpAndSettle();
+      expect(find.text('Przetłumacz'), findsOneWidget);
+      expect(find.text('Streść'), findsOneWidget);
+      expect(find.text('Analizuj'), findsOneWidget);
+      final conversation = (await repository.getConversations()).first;
+      expect(await repository.getMessages(conversation.id), isEmpty);
+    });
+
     testWidgets('Repeated imports reuse the existing chat route', (
       tester,
     ) async {
