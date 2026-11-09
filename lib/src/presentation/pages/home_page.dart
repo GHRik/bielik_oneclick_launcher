@@ -265,7 +265,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 480),
@@ -274,12 +274,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     child: FilledButton(
                       onPressed: _chatOpen ? null : _openChat,
                       style: FilledButton.styleFrom(
-                        backgroundColor: Theme.of(context)
-                            .colorScheme
-                            .primaryContainer,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         foregroundColor: Theme.of(context)
                             .colorScheme
-                            .onPrimaryContainer,
+                            .onPrimary,
+                        textStyle: Theme.of(context).textTheme.labelLarge
+                            ?.copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
                         elevation: 0,
                         padding: const EdgeInsets.all(20),
                         shape: RoundedRectangleBorder(
