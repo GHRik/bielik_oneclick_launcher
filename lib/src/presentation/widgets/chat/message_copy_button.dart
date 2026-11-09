@@ -32,9 +32,9 @@ class _MessageCopyButtonState extends State<MessageCopyButton> {
   }
 
   @override
-  Widget build(BuildContext context) => TextButton.icon(
+  Widget build(BuildContext context) => IconButton(
+    tooltip: 'Kopiuj całą wiadomość',
     onPressed: widget.onCopy == null || _copying ? null : _copy,
     icon: const Icon(Icons.copy_outlined, size: 18),
-    label: const Text('Kopiuj'),
   );
 }
