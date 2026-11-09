@@ -188,6 +188,25 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  void _openSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => LlmSettingsPage(
+          draft: _settingsDraft,
+          onSave: (configuration) async {
+            await widget.onSaveLlmConfiguration?.call(configuration);
+            await _chatWorkspace.releaseModel();
+          },
+          gpuConfiguration: _gpuConfiguration,
+          onSaveGpu: (configuration) {
+            widget.onSaveGpuConfiguration?.call(configuration);
+            _gpuConfiguration = configuration;
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -197,26 +216,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           IconButton(
             tooltip: 'Konfiguracja LLM',
             icon: const Icon(Icons.settings_outlined),
-            onPressed: _chatOpen
-                ? null
-                : () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => LlmSettingsPage(
-                        draft: _settingsDraft,
-                        onSave: (configuration) async {
-                          await widget.onSaveLlmConfiguration?.call(
-                            configuration,
-                          );
-                          await _chatWorkspace.releaseModel();
-                        },
-                        gpuConfiguration: _gpuConfiguration,
-                        onSaveGpu: (configuration) {
-                          widget.onSaveGpuConfiguration?.call(configuration);
-                          _gpuConfiguration = configuration;
-                        },
-                      ),
-                    ),
-                  ),
+            onPressed: _chatOpen ? null : _openSettings,
           ),
         ],
       ),
@@ -234,7 +234,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         double.infinity,
                       ),
                     ),
-                    child: Center(
+                    child: Align(
+                      alignment: Alignment.topCenter,
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 480),
                         child: AbsorbPointer(
@@ -252,6 +253,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                   _resources.resources.availableRamGb,
                               totalRamGb: _resources.resources.totalRamGb,
                               onResourcesChanged: _resources.refresh,
+                              onSettings: _openSettings,
                             ),
                           ),
                         ),
@@ -267,6 +269,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 width: double.infinity,
                 child: FilledButton.icon(
                   onPressed: _chatOpen ? null : _openChat,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
                   icon: const Icon(Icons.chat_bubble_outline),
                   label: const Text('Otwórz czat'),
                 ),

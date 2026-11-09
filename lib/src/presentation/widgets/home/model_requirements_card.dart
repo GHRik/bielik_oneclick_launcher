@@ -26,35 +26,40 @@ class ModelRequirementsCard extends StatelessWidget {
       availableRamGb: availableRamGb,
     );
     return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Wymagania modelu',
-              style: Theme.of(context).textTheme.titleMedium,
+              'Zasoby przed pobraniem',
+              style: Theme.of(context).textTheme.titleSmall,
             ),
-            const SizedBox(height: 12),
-            RequirementStatusRow(
-              requirement: 'Miejsce na dysku: ${model.diskSpace}',
-              availableLabel: 'Wolne miejsce u Ciebie',
-              requiredGb: requirements.storage.requiredGb,
-              availableGb: availableStorageGb,
+            const SizedBox(height: 4),
+            Text(
+              'Wymagane / dostępne',
+              style: Theme.of(context).textTheme.bodySmall,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 20),
             RequirementStatusRow(
-              requirement: 'RAM (szacunkowo): ${model.ram}',
-              availableLabel: 'Dostępny RAM u Ciebie',
+              requirement: 'Pamięć RAM',
+              availableLabel: 'Dostępny RAM',
               requiredGb: requirements.ram.requiredGb,
               availableGb: availableRamGb,
             ),
-            if (totalRamGb != null)
-              Text(
-                'Całkowity RAM: ${totalRamGb!.toStringAsFixed(2).replaceAll('.', ',')} GB',
-              ),
-            const SizedBox(height: 12),
-            const Text('Zużycie RAM zależy od długości rozmowy i silnika AI.'),
+            const SizedBox(height: 20),
+            RequirementStatusRow(
+              requirement: 'Miejsce na model',
+              availableLabel: 'Wolne miejsce',
+              requiredGb: requirements.storage.requiredGb,
+              availableGb: availableStorageGb,
+            ),
           ],
         ),
       ),

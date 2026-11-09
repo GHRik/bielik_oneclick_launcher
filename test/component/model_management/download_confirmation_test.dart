@@ -47,7 +47,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Czy na pewno chcesz pobrać?'), findsOneWidget);
-        expect(find.byType(LinearProgressIndicator), findsNothing);
+        expect(find.text('Anuluj pobieranie'), findsNothing);
       });
     }
 
@@ -60,7 +60,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AlertDialog), findsNothing);
-      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(find.text('Anuluj pobieranie'), findsNothing);
     });
 
     testWidgets('Confirming starts a download despite missing resources', (
@@ -74,7 +74,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AlertDialog), findsNothing);
-      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      expect(find.text('Anuluj pobieranie'), findsOneWidget);
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
@@ -87,7 +87,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AlertDialog), findsNothing);
-      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      expect(find.text('Anuluj pobieranie'), findsOneWidget);
       await tester.pumpWidget(const SizedBox.shrink());
     });
   });
