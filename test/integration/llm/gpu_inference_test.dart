@@ -7,22 +7,34 @@ import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/model_file_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 
 class _CpuEngine extends Fake implements LlamaEngine {
   int disposals = 0;
+  int tokenCount = 12;
+  final requests = <GenerationParams>[];
+  final prompts = <List<LlamaChatMessage>>[];
+  List<LlamaCompletionChunk> chunks = [];
 
   @override
   dynamic noSuchMethod(Invocation invocation) {
     switch (invocation.memberName) {
       case #chatTemplate:
         return Future.value(
-          const LlamaChatTemplateResult(prompt: '', tokenCount: 0),
+          LlamaChatTemplateResult(prompt: '', tokenCount: tokenCount),
         );
       case #getBackendName:
         return Future.value('CPU');
       case #create:
-        return const Stream<LlamaCompletionChunk>.empty();
+        requests.add(invocation.namedArguments[#params] as GenerationParams);
+        prompts.add(
+          List<LlamaChatMessage>.of(
+            invocation.positionalArguments.first as List<LlamaChatMessage>,
+          ),
+        );
+        return Stream<LlamaCompletionChunk>.fromIterable(chunks);
       case #dispose:
         disposals++;
         return Future<void>.value();
@@ -107,6 +119,95 @@ void main() {
 
       expect(params, hasLength(1));
     });
+
+    ChatMessage message(int conversationId, String text) => ChatMessage(
+      id: '$conversationId-$text',
+      conversationId: conversationId,
+      authorId: ChatAuthors.user,
+      text: text,
+      createdAt: DateTime(2026),
+    );
+
+    test(
+      'A different conversation starts without the previous prompt cache',
+      () async {
+        for (final id in [1, 1, 2, 1]) {
+          await repository.generate(model, [
+            message(id, 'Question'),
+          ], onStage: (_) {}).drain<void>();
+        }
+        expect(engine.requests.map((request) => request.reusePromptPrefix), [
+          false,
+          true,
+          false,
+          false,
+        ]);
+        expect(params, hasLength(1));
+      },
+    );
+
+    test(
+      'A new conversation sends only its own messages to the engine',
+      () async {
+        await repository.generate(model, [
+          message(1, 'Private old text'),
+        ], onStage: (_) {}).drain<void>();
+        await repository.generate(model, [
+          message(2, 'New question'),
+        ], onStage: (_) {}).drain<void>();
+        expect(engine.prompts.last.map((message) => message.content), [
+          'New question',
+        ]);
+        expect(engine.requests.last.reusePromptPrefix, isFalse);
+      },
+    );
+
+    test(
+      'Mixed conversation histories are rejected before loading the model',
+      () async {
+        await expectLater(
+          repository.generate(model, [
+            message(1, 'Old'),
+            message(2, 'New'),
+          ], onStage: (_) {}).drain<void>(),
+          throwsArgumentError,
+        );
+        expect(params, isEmpty);
+      },
+    );
+
+    test(
+      'Reports tokenizer counts before generation and final backend usage',
+      () async {
+        engine.chunks = [
+          LlamaCompletionChunk(
+            id: 'reply',
+            object: 'chat.completion.chunk',
+            created: 0,
+            model: 'test',
+            choices: [],
+            usage: const LlamaGenerationUsage(
+              promptTokens: 12,
+              completionTokens: 7,
+            ),
+          ),
+        ];
+        final measurements = <ContextUsage>[];
+        await repository
+            .generate(
+              model,
+              [message(1, 'Question')],
+              onStage: (_) {},
+              onContext: measurements.add,
+            )
+            .drain<void>();
+        expect(measurements.map((value) => value.usedTokens), [12, 19]);
+        expect(
+          measurements.last.contextSize,
+          defaultLlmConfiguration.contextSize,
+        );
+      },
+    );
 
     test('Unloading disposes the CPU engine', () async {
       await repository.generate(model, [], onStage: (_) {}).drain<void>();

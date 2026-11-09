@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:characters/characters.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_update.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
@@ -46,8 +47,12 @@ class ChatService {
     void Function(LlmStage)? onStage,
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
+    void Function(ContextUsage)? onContext,
   }) async {
     if (_active) throw StateError('A chat operation is already active.');
+    if (history.any((message) => message.conversationId != conversationId)) {
+      throw ArgumentError('History must belong to the active conversation.');
+    }
     final message = text.trim();
     if (message.isEmpty) return;
     _active = true;
@@ -85,6 +90,7 @@ class ChatService {
         onStage ?? (_) {},
         computeMode,
         onLoaded,
+        onContext,
       );
     } finally {
       _active = false;
@@ -99,6 +105,7 @@ class ChatService {
     void Function(LlmStage) onStage,
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
+    void Function(ContextUsage)? onContext,
   ) async {
     final buffer = StringBuffer();
     String? responseId;
@@ -110,6 +117,7 @@ class ChatService {
         onStage: onStage,
         computeMode: computeMode,
         onLoaded: onLoaded,
+        onContext: onContext,
       )) {
         if (_stopped) break;
         buffer.write(fragment);

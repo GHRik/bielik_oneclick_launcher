@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
@@ -17,9 +18,11 @@ class _Repository implements LlmRepository {
     required void Function(LlmStage) onStage,
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
+    void Function(ContextUsage)? onContext,
   }) async* {
     calls++;
     if (fail) throw StateError('GPU failed');
+    onContext?.call(const ContextUsage(promptTokens: 64, contextSize: 2048));
     yield 'odpowiedź';
   }
 
@@ -56,6 +59,22 @@ void main() {
     Future<void> generate(LlmComputeMode mode) => router
         .generate(model, [], onStage: (_) {}, computeMode: mode)
         .drain<void>();
+
+    for (final mode in LlmComputeMode.values) {
+      test('Forwards measured context from the ${mode.name} runtime', () async {
+        ContextUsage? measured;
+        await router
+            .generate(
+              model,
+              [],
+              onStage: (_) {},
+              computeMode: mode,
+              onContext: (value) => measured = value,
+            )
+            .drain<void>();
+        expect(measured?.promptTokens, 64);
+      });
+    }
 
     test('CPU inference does not construct a GPU repository', () async {
       await generate(LlmComputeMode.cpu);

@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/ut/test_context_usage.dart'
+    as suite18;
+
 import 'package:bielik_oneclick_launcher/configuration/ut/test_llm_configuration.dart'
     as suite0;
 import 'package:bielik_oneclick_launcher/src/data/datasources/ut/test_device_resources_datasource.dart'
@@ -38,6 +41,7 @@ import 'package:bielik_oneclick_launcher/src/presentation/formatters/ut/test_sto
     as suite17;
 
 void main() {
+  group('src/domain/models/context_usage.dart', suite18.main);
   group('configuration/llm_configuration.dart', suite0.main);
   group('src/data/datasources/device_resources_datasource.dart', suite1.main);
   group('src/data/datasources/gpu_inference_adapter.dart', suite2.main);

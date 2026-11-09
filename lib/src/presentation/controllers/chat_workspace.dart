@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_update.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/conversation.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
@@ -19,6 +20,8 @@ class ChatWorkspace extends ChangeNotifier {
 
   final ChatRepository repository;
   final ChatService _chatService;
+  final Map<int, ContextUsage> _contextUsage = {};
+  ContextUsage? get contextUsage => _contextUsage[_selected?.id];
   BielikModel? _model;
   LlmComputeMode _computeMode = LlmComputeMode.cpu;
   LlmRuntimeInfo? _runtimeInfo;
@@ -52,6 +55,7 @@ class ChatWorkspace extends ChangeNotifier {
     LlmComputeMode computeMode = LlmComputeMode.cpu,
   }) {
     if (_sending || _releasing) throw StateError('Model jest zajęty.');
+    _contextUsage.clear();
     _model = model;
     _computeMode = computeMode;
     _runtimeInfo = null;
@@ -75,6 +79,7 @@ class ChatWorkspace extends ChangeNotifier {
         await stopGeneration();
         await _chatService.unload();
         _runtimeInfo = null;
+        _contextUsage.clear();
       } catch (error) {
         _error = 'Nie udało się zwolnić modelu: $error';
       } finally {
@@ -224,6 +229,7 @@ class ChatWorkspace extends ChangeNotifier {
         await repository.deleteConversation(conversation.id);
         if (_disposed) return;
         _conversations.remove(conversation);
+        _contextUsage.remove(conversation.id);
         if (_conversations.isEmpty) {
           _selected = null;
           _initialization = null;
@@ -287,6 +293,11 @@ class ChatWorkspace extends ChangeNotifier {
         history: target.messages,
         model: _model?.file,
         computeMode: _computeMode,
+        onContext: (usage) {
+          if (_disposed || !_conversations.contains(target)) return;
+          _contextUsage[target.id] = usage;
+          _notify();
+        },
         onLoaded: (runtime) {
           _runtimeInfo = runtime;
           _notify();
