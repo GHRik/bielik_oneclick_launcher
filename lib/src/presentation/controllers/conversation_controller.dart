@@ -48,7 +48,8 @@ class ConversationController extends ChangeNotifier {
 
   bool _textActionsOffered = false;
   bool get offersTextActions =>
-      _textActionsOffered && draft.text.trim().isNotEmpty;
+      attachment != null ||
+      (_textActionsOffered && draft.text.trim().isNotEmpty);
 
   void offerTextActions() {
     if (draft.text.trim().isEmpty) return;
