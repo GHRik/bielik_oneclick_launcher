@@ -43,15 +43,21 @@ class ModelRequirementsCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Wymagane / dostępne',
+              'Wymagania modelu i aktualnie wolne zasoby telefonu',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 20),
             RequirementStatusRow(
               requirement: 'Pamięć RAM',
-              availableLabel: 'Dostępny RAM',
+              availableLabel: 'Dostępne teraz',
               requiredGb: requirements.ram.requiredGb,
               availableGb: availableRamGb,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'RAM telefonu (całkowity): '
+              '${totalRamGb == null ? "brak danych" : "${totalRamGb!.toStringAsFixed(2).replaceAll('.', ',')} GB"}',
+              style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 20),
             RequirementStatusRow(

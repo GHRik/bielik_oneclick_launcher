@@ -31,6 +31,28 @@ Future<void> _card(WidgetTester tester, {double? ram, double? storage}) =>
 
 void main() {
   group('Resource bars', () {
+    testWidgets('Distinguishes required, available and total RAM', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ModelRequirementsCard(
+              model: bielikModels.last,
+              availableRamGb: 9,
+              totalRamGb: 16,
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.text('Wymagane: 8,00 GB · Dostępne teraz: 9,00 GB'),
+        findsOneWidget,
+      );
+      expect(find.text('RAM telefonu (całkowity): 16,00 GB'), findsOneWidget);
+    });
+
     testWidgets('Sufficient RAM fills only the required proportion in green', (
       tester,
     ) async {
@@ -135,6 +157,38 @@ void main() {
     await tester.tap(find.text(bielikModels.last.name).last);
     await tester.pumpAndSettle();
     expect(tester.widget<LinearProgressIndicator>(_bar('Pamięć RAM')).value, 1);
+  });
+
+  testWidgets('Deleting a model requires opening its options menu', (
+    tester,
+  ) async {
+    final repository = InMemoryModelFilesRepository()
+      ..downloaded.add(bielikModels.first.file!.name);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ModelManagementPanel(
+              models: bielikModels,
+              repository: repository,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Usuń model'), findsNothing);
+    await tester.ensureVisible(find.byTooltip('Opcje modelu'));
+    await tester.tap(find.byTooltip('Opcje modelu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Usuń model'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Usunąć model?'), findsOneWidget);
+    await tester.tap(find.text('Anuluj'));
+    await tester.pumpAndSettle();
+    expect(repository.downloaded, contains(bielikModels.first.file!.name));
   });
 
   testWidgets('Downloaded models hide resource bars', (tester) async {

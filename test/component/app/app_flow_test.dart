@@ -48,7 +48,10 @@ void main() {
       await _openHome(tester);
 
       expect(find.text('Miejsce na model'), findsOneWidget);
-      expect(find.text('1,70 GB / —'), findsOneWidget);
+      expect(
+        find.text('Wymagane: 1,70 GB · Wolne miejsce: brak danych'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Shows percentage, speed and ETA for an active download', (
@@ -87,8 +90,14 @@ void main() {
 
       await _selectLargerModel(tester);
 
-      expect(find.text('5,06 GB / —'), findsOneWidget);
-      expect(find.text('8,00 GB / —'), findsOneWidget);
+      expect(
+        find.text('Wymagane: 5,06 GB · Wolne miejsce: brak danych'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Wymagane: 8,00 GB · Dostępne teraz: brak danych'),
+        findsOneWidget,
+      );
     });
 
     testWidgets(

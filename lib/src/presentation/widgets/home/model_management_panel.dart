@@ -211,12 +211,17 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
               ),
             ),
             const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: _download.busy || _download.checking
-                  ? null
-                  : _deleteModel,
-              icon: const Icon(Icons.delete_outline, size: 18),
-              label: const Text('Usuń'),
+            Align(
+              alignment: Alignment.centerRight,
+              child: PopupMenuButton<String>(
+                tooltip: 'Opcje modelu',
+                enabled: !_download.busy && !_download.checking,
+                icon: const Icon(Icons.more_vert),
+                onSelected: (_) => _deleteModel(),
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'delete', child: Text('Usuń model')),
+                ],
+              ),
             ),
           ] else ...[
             const SizedBox(height: 24),

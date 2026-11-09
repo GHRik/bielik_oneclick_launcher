@@ -103,7 +103,8 @@ class RequirementStatusRow extends StatelessWidget {
             runSpacing: 4,
             children: [
               Text(
-                '${_gb(requiredGb)} / ${hasData ? _gb(availableGb!) : "—"}',
+                'Wymagane: ${_gb(requiredGb)} · '
+                '$availableLabel: ${hasData ? _gb(availableGb!) : "brak danych"}',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
