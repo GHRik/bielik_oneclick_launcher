@@ -14,5 +14,6 @@ abstract interface class ChatRepository {
   });
   Future<void> updateMessage(String id, String text);
   Future<void> saveDraft(int conversationId, String draft);
+  Future<void> markConversationUsed(int conversationId);
   Future<void> deleteConversation(int conversationId);
 }

@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 class AppDatabaseSchema {
-  static const version = 2;
+  static const version = 3;
 
   static Future<void> upgrade(
     Database database,
@@ -9,6 +9,14 @@ class AppDatabaseSchema {
     int newVersion,
   ) async {
     if (oldVersion < 2) await _createSettings(database);
+    if (oldVersion < 3) {
+      await database.execute(
+        'ALTER TABLE conversations ADD COLUMN last_used_at INTEGER NOT NULL DEFAULT 0',
+      );
+      await database.execute(
+        'UPDATE conversations SET last_used_at = created_at',
+      );
+    }
   }
 
   static Future<void> _createSettings(Database database) => database.execute(
@@ -23,7 +31,8 @@ class AppDatabaseSchema {
         title TEXT NOT NULL,
         draft TEXT NOT NULL DEFAULT '',
         created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
+        updated_at INTEGER NOT NULL,
+        last_used_at INTEGER NOT NULL DEFAULT 0
       )
     ''');
     await database.execute('''

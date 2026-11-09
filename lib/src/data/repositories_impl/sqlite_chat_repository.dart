@@ -76,6 +76,10 @@ class SqliteChatRepository implements ChatRepository {
       dataSource.saveDraft(conversationId, draft);
 
   @override
+  Future<void> markConversationUsed(int conversationId) =>
+      dataSource.markConversationUsed(conversationId);
+
+  @override
   Future<void> deleteConversation(int conversationId) =>
       dataSource.deleteConversation(conversationId);
 }
