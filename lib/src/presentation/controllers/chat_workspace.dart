@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
@@ -154,6 +156,15 @@ class ChatWorkspace extends ChangeNotifier {
     controller = ConversationController(
       conversation,
       messages: messages,
+      onAttachmentChanged: (attachment) {
+        unawaited(
+          _enqueue(() async {
+            if (_conversations.contains(controller)) {
+              await _chatService.saveDraftAttachment(controller.id, attachment);
+            }
+          }, errorMessage: 'Nie udało się zapisać załącznika.'),
+        );
+      },
       onDraftChanged: (draft) {
         unawaited(
           _enqueue(() async {
@@ -250,7 +261,11 @@ class ChatWorkspace extends ChangeNotifier {
 
   Future<void> sendMessage(String text) {
     final message = text.trim();
-    if (message.isEmpty || !ready || _disposed || _sending || _releasing) {
+    if (!ready ||
+        _disposed ||
+        _sending ||
+        _releasing ||
+        (message.isEmpty && selected.attachment == null)) {
       return Future.value();
     }
     if (_chatService.hasLlm && _model?.file == null) {
@@ -260,13 +275,21 @@ class ChatWorkspace extends ChangeNotifier {
     }
     final target = selected;
     final revision = target.draftRevision;
+    final attachmentRevision = target.attachmentRevision;
+    final attachment = target.attachment;
     _error = null;
     _sending = true;
     _stopRequested = false;
     _generationTarget = target;
     _stage = null;
     _notify();
-    final task = _sendAndGenerate(target, message, revision);
+    final task = _sendAndGenerate(
+      target,
+      message,
+      revision,
+      attachment,
+      attachmentRevision,
+    );
     _generationTask = task;
     return task;
   }
@@ -275,6 +298,8 @@ class ChatWorkspace extends ChangeNotifier {
     ConversationController target,
     String message,
     int revision,
+    TextAttachment? attachment,
+    int attachmentRevision,
   ) async {
     try {
       await flush();
@@ -284,6 +309,7 @@ class ChatWorkspace extends ChangeNotifier {
       await _chatService.send(
         conversationId: target.id,
         text: message,
+        attachment: attachment,
         history: target.messages,
         model: _model?.file,
         computeMode: _computeMode,
@@ -301,6 +327,10 @@ class ChatWorkspace extends ChangeNotifier {
             case ChatMessageSaved():
               await target.addMessage(
                 update.message,
+                submittedAttachmentRevision:
+                    update.message.role == ChatRole.user
+                    ? attachmentRevision
+                    : null,
                 submittedDraftRevision: update.message.role == ChatRole.user
                     ? revision
                     : null,

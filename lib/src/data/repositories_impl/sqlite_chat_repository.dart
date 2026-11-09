@@ -1,4 +1,6 @@
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/sqlite_chat_datasource.dart';
+import 'package:bielik_oneclick_launcher/src/data/datasources/local/text_attachment_codec.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/conversation.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
@@ -12,6 +14,7 @@ class SqliteChatRepository implements ChatRepository {
     id: row['id']! as int,
     title: row['title']! as String,
     draft: row['draft']! as String,
+    draftAttachment: TextAttachmentCodec.decode(row['draft_attachment']),
     createdAt: DateTime.fromMillisecondsSinceEpoch(
       row['created_at']! as int,
       isUtc: true,
@@ -27,6 +30,7 @@ class SqliteChatRepository implements ChatRepository {
     conversationId: row['conversation_id']! as int,
     authorId: row['author_id']! as String,
     text: row['text']! as String,
+    attachment: TextAttachmentCodec.decode(row['attachment']),
     createdAt: DateTime.fromMillisecondsSinceEpoch(
       row['created_at']! as int,
       isUtc: true,
@@ -56,6 +60,7 @@ class SqliteChatRepository implements ChatRepository {
     required String text,
     String? conversationTitle,
     bool clearDraft = false,
+    TextAttachment? attachment,
   }) async => _message(
     await dataSource.addMessage(
       conversationId: conversationId,
@@ -63,6 +68,7 @@ class SqliteChatRepository implements ChatRepository {
       text: text,
       conversationTitle: conversationTitle,
       clearDraft: clearDraft,
+      attachment: TextAttachmentCodec.encode(attachment),
       timestamp: DateTime.now().toUtc().millisecondsSinceEpoch,
     ),
   );
@@ -74,6 +80,15 @@ class SqliteChatRepository implements ChatRepository {
   @override
   Future<void> saveDraft(int conversationId, String draft) =>
       dataSource.saveDraft(conversationId, draft);
+
+  @override
+  Future<void> saveDraftAttachment(
+    int conversationId,
+    TextAttachment? attachment,
+  ) => dataSource.saveDraftAttachment(
+    conversationId,
+    TextAttachmentCodec.encode(attachment),
+  );
 
   @override
   Future<void> deleteConversation(int conversationId) =>
