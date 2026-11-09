@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/chat_text_action.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart';
@@ -232,6 +234,7 @@ class ChatWorkspace extends ChangeNotifier {
             : previous.length + 2 + text.length,
       ),
     );
+    target.offerTextActions();
     await flush();
     return !_disposed && _error == null;
   }
@@ -356,6 +359,17 @@ class ChatWorkspace extends ChangeNotifier {
       errorMessage:
           'Nie udało się zakończyć usuwania rozmowy. Spróbuj ponownie.',
     );
+  }
+
+  Future<void> sendTextAction(ChatTextAction action) {
+    if (!ready || _disposed || busy || sending || !selected.offersTextActions) {
+      return Future.value();
+    }
+    final prompt = action.prompt(
+      selected.draft.text,
+      hasAttachment: selected.attachment != null,
+    );
+    return sendMessage(prompt);
   }
 
   Future<void> sendMessage(String text) {

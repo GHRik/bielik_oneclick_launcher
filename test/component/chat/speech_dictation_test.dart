@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_chat_ui/flutter_chat_ui.dart' show Composer;
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/chat_input_composer.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/app.dart';
@@ -64,7 +64,10 @@ void main() {
   ) async {
     await open(tester);
     final microphone = tester.getCenter(find.byTooltip('Dyktuj wiadomość'));
-    expect(tester.getRect(find.byType(Composer)).contains(microphone), isTrue);
+    expect(
+      tester.getRect(find.byType(ChatInputComposer)).contains(microphone),
+      isTrue,
+    );
   });
 
   testWidgets('Speech updates the draft without sending it', (tester) async {

@@ -95,6 +95,46 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('Adding a TXT file offers actions without sending', (
+    tester,
+  ) async {
+    await open(tester);
+    await pick(tester);
+    expect(find.text('Przetłumacz'), findsOneWidget);
+    expect(find.text('Streść'), findsOneWidget);
+    expect(find.text('Analizuj'), findsOneWidget);
+    expect(llm.inputs, isEmpty);
+  });
+
+  testWidgets('Analyzing a file sends its complete text and instruction', (
+    tester,
+  ) async {
+    await open(tester);
+    await pick(tester);
+    await tester.tap(find.text('Analizuj'));
+    await tester.pumpAndSettle();
+    final input = llm.inputs.single.last.text;
+    expect(input, contains('Przeanalizuj'));
+    expect(llm.inputs.single.last.attachment?.text, attachments.next!.text);
+    expect(find.text('Analizuj'), findsNothing);
+  });
+
+  testWidgets('Removing a file hides actions for a typed-only draft', (
+    tester,
+  ) async {
+    await open(tester);
+    for (var length = 1; length <= 'Question'.length; length++) {
+      await tester.enterText(
+        find.byType(TextField),
+        'Question'.substring(0, length),
+      );
+    }
+    await pick(tester);
+    await tester.tap(find.byTooltip('Usuń załącznik'));
+    await tester.pumpAndSettle();
+    expect(find.text('Analizuj'), findsNothing);
+  });
+
   testWidgets('The system file picker does not unload the chat model', (
     tester,
   ) async {

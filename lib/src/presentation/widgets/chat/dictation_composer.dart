@@ -1,4 +1,4 @@
-import 'package:flutter_chat_ui/flutter_chat_ui.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/chat_input_composer.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/speech_dictation_controller.dart';
@@ -12,6 +12,9 @@ class DictationComposer extends StatelessWidget {
     required this.sending,
     required this.onSend,
     this.attachmentPreview,
+    this.quickActions,
+    this.onAttachmentTap,
+    this.onPasted,
     this.allowEmptyMessage = false,
     this.showAttachmentButton = false,
   });
@@ -22,43 +25,33 @@ class DictationComposer extends StatelessWidget {
   final bool sending;
   final ValueChanged<String> onSend;
   final Widget? attachmentPreview;
+  final Widget? quickActions;
+  final VoidCallback? onAttachmentTap;
+  final VoidCallback? onPasted;
   final bool allowEmptyMessage;
   final bool showAttachmentButton;
 
   @override
   Widget build(BuildContext context) {
     final speech = dictation;
-    final composer = Composer(
-      textEditingController: draft,
-      hintText: 'Napisz wiadomość…',
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
-      inputFillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      textColor: Theme.of(context).colorScheme.onSurface,
-      hintColor: Theme.of(context).colorScheme.onSurfaceVariant,
-      attachmentIconColor: Theme.of(context).colorScheme.primary,
-      sendIconColor: Theme.of(context).colorScheme.primary,
-      emptyFieldSendIconColor: Theme.of(context).colorScheme.onSurfaceVariant,
-      keyboardAppearance: Theme.of(context).brightness,
-      attachmentIcon: showAttachmentButton
-          ? const Icon(Icons.add, semanticLabel: 'Dodaj plik TXT')
-          : null,
+    final composer = ChatInputComposer(
+      draft: draft,
+      onSend: onSend,
+      onAttachmentTap: showAttachmentButton ? onAttachmentTap : null,
+      onPasted: onPasted,
       allowEmptyMessage: allowEmptyMessage,
-      sendButtonVisibilityMode: allowEmptyMessage
-          ? SendButtonVisibilityMode.always
-          : SendButtonVisibilityMode.disabled,
-      inputClearMode: InputClearMode.never,
-      sendButtonDisabled: sending || (speech?.active ?? false),
-      sendIcon: speech == null
-          ? const Icon(Icons.send, semanticLabel: 'Wyślij wiadomość')
-          : null,
-      padding: EdgeInsets.fromLTRB(8, 8, speech == null ? 8 : 112, 8),
+      sendDisabled: sending || (speech?.active ?? false),
+      showSendButton: speech == null,
+      trailingPadding: speech == null ? 8 : 112,
       topWidget:
-          attachmentPreview != null ||
+          quickActions != null ||
+              attachmentPreview != null ||
               speech?.error != null ||
               speech?.active == true
           ? Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                ?quickActions,
                 ?attachmentPreview,
                 if (speech?.error != null || speech?.active == true)
                   Padding(
