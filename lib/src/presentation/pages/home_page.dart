@@ -86,9 +86,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     } else {
       _statistics?.pause();
     }
-    if (state == AppLifecycleState.paused) {
-      unawaited(_chatWorkspace.releaseModel());
-    }
     if (state != AppLifecycleState.resumed) {
       unawaited(_chatWorkspace.flush());
     }
@@ -97,8 +94,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Future<void> _openChat() async {
     if (_chatOpen) return;
     setState(() => _chatOpen = true);
+    _chatWorkspace.retainModel();
     try {
-      await _chatWorkspace.releaseModel();
+      if (_chatWorkspace.modelName != _selectedModel.name) {
+        await _chatWorkspace.releaseModel();
+      }
       if (!mounted) return;
       _chatWorkspace.useModel(
         _selectedModel,
@@ -116,7 +116,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         ),
       );
     } finally {
-      await _chatWorkspace.releaseModel();
+      _chatWorkspace.releaseModelWhenIdle();
       if (mounted) {
         setState(() => _chatOpen = false);
         unawaited(_resources.refresh());
@@ -149,7 +149,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     MaterialPageRoute<void>(
                       builder: (_) => LlmSettingsPage(
                         draft: _settingsDraft,
-                        onSave: widget.onSaveLlmConfiguration,
+                        onSave: (configuration) async {
+                          await widget.onSaveLlmConfiguration?.call(
+                            configuration,
+                          );
+                          await _chatWorkspace.releaseModel();
+                        },
                         gpuConfiguration: _gpuConfiguration,
                         onSaveGpu: (configuration) {
                           widget.onSaveGpuConfiguration?.call(configuration);

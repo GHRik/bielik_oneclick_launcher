@@ -17,6 +17,27 @@ class ChatWorkspace extends ChangeNotifier {
   ChatWorkspace(this.repository, {LlmRepository? llmRepository})
     : _chatService = ChatService(repository, llmRepository: llmRepository);
 
+  Timer? _idleReleaseTimer;
+  bool _retainModel = true;
+
+  void retainModel() {
+    _retainModel = true;
+    _idleReleaseTimer?.cancel();
+  }
+
+  void releaseModelWhenIdle() {
+    _retainModel = false;
+    _scheduleIdleRelease();
+  }
+
+  void _scheduleIdleRelease() {
+    _idleReleaseTimer?.cancel();
+    if (_disposed || _retainModel || _sending || _releasing) return;
+    _idleReleaseTimer = Timer(const Duration(minutes: 2), () {
+      unawaited(releaseModel());
+    });
+  }
+
   final ChatRepository repository;
   final ChatService _chatService;
   BielikModel? _model;
@@ -51,6 +72,7 @@ class ChatWorkspace extends ChangeNotifier {
     BielikModel model, {
     LlmComputeMode computeMode = LlmComputeMode.cpu,
   }) {
+    if (_model == model && _computeMode == computeMode) return;
     if (_sending || _releasing) throw StateError('Model jest zajęty.');
     _model = model;
     _computeMode = computeMode;
@@ -67,6 +89,7 @@ class ChatWorkspace extends ChangeNotifier {
   }
 
   Future<void> releaseModel() {
+    _idleReleaseTimer?.cancel();
     if (_releaseTask != null) return _releaseTask!;
     _releasing = true;
     _notify();
@@ -260,6 +283,7 @@ class ChatWorkspace extends ChangeNotifier {
     }
     final target = selected;
     final revision = target.draftRevision;
+    _idleReleaseTimer?.cancel();
     _error = null;
     _sending = true;
     _stopRequested = false;
@@ -332,6 +356,7 @@ class ChatWorkspace extends ChangeNotifier {
       _sending = false;
       _generationTarget = null;
       _stage = null;
+      _scheduleIdleRelease();
       _notify();
     }
   }
@@ -349,6 +374,7 @@ class ChatWorkspace extends ChangeNotifier {
 
   @override
   void dispose() {
+    _idleReleaseTimer?.cancel();
     _disposed = true;
     _stopRequested = true;
     _chatService.stop();
