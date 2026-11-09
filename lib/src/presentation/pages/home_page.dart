@@ -84,6 +84,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _chatWorkspace = ChatWorkspace(
       widget.chatRepository,
       llmRepository: widget.llmRepository,
+      deviceResourcesRepository: widget.deviceResourcesRepository,
     );
     WidgetsBinding.instance.addObserver(this);
     unawaited(_chatWorkspace.initialize());

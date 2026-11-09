@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/device_resources_repository.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_text_action.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
@@ -18,12 +20,14 @@ import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/chat_service.dart';
-import 'package:bielik_oneclick_launcher/src/domain/services/model_memory_guard.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/conversation_controller.dart';
 
 class ChatWorkspace extends ChangeNotifier {
-  ChatWorkspace(this.repository, {LlmRepository? llmRepository})
-    : _chatService = ChatService(repository, llmRepository: llmRepository);
+  ChatWorkspace(
+    this.repository, {
+    LlmRepository? llmRepository,
+    this.deviceResourcesRepository,
+  }) : _chatService = ChatService(repository, llmRepository: llmRepository);
 
   Timer? _idleReleaseTimer;
   bool _retainModel = true;
@@ -44,6 +48,27 @@ class ChatWorkspace extends ChangeNotifier {
     _idleReleaseTimer = Timer(const Duration(minutes: 2), () {
       unawaited(releaseModel());
     });
+  }
+
+  final DeviceResourcesRepository? deviceResourcesRepository;
+  bool _lowMemory = false;
+  int _memoryRead = 0;
+  bool get showMemoryWarning =>
+      _stage == LlmStage.loading && _lowMemory && !_stopRequested;
+
+  Future<void> _checkLoadingMemory() async {
+    final request = ++_memoryRead;
+    final model = _model;
+    if (model == null || deviceResourcesRepository == null) return;
+    try {
+      final resources = await deviceResourcesRepository!.read();
+      if (_disposed || request != _memoryRead || _stage != LlmStage.loading) {
+        return;
+      }
+      final available = resources.availableRamGb;
+      _lowMemory = available != null && available < model.requiredFreeRamGb;
+      _notify();
+    } catch (_) {}
   }
 
   final ChatRepository repository;
@@ -441,6 +466,9 @@ class ChatWorkspace extends ChangeNotifier {
         },
         onStage: (stage) {
           _stage = stage;
+          _lowMemory = false;
+          _memoryRead++;
+          if (stage == LlmStage.loading) unawaited(_checkLoadingMemory());
           _notify();
         },
         onUpdate: (update) async {
@@ -470,16 +498,6 @@ class ChatWorkspace extends ChangeNotifier {
     } on UserMessageSaveFailure {
       _error =
           'Nie udało się zapisać wiadomości. Tekst pozostał w polu wpisywania.';
-    } on InsufficientModelMemory catch (error) {
-      _runtimeInfo = null;
-      if (!_stopRequested) {
-        String gb(double value) =>
-            value.toStringAsFixed(2).replaceAll('.', ',');
-        _error =
-            'Za mało dostępnej pamięci RAM. Model nie został załadowany. '
-            'Wymagane: ${gb(error.requiredGb)} GB, dostępne: ${gb(error.availableGb)} GB. '
-            'Wybierz mniejszy model lub spróbuj ponownie później.';
-      }
     } on GpuAccelerationFailure catch (error) {
       _runtimeInfo = null;
       if (!_stopRequested) {
@@ -501,6 +519,8 @@ class ChatWorkspace extends ChangeNotifier {
       _streamingMessageId = null;
       _generationTarget = null;
       _stage = null;
+      _lowMemory = false;
+      _memoryRead++;
       _scheduleIdleRelease();
       _notify();
     }

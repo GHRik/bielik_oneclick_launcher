@@ -22,7 +22,6 @@ class LocalLlmRepository implements LlmRepository {
     this._files, {
     required this.configurationFor,
     this.metrics,
-    this.beforeLoad,
     this.systemPrompt = '',
     this.runtimeAdapter = const CpuRuntimeAdapter(),
     LlmEngineLoader? loadEngine,
@@ -34,7 +33,6 @@ class LocalLlmRepository implements LlmRepository {
   final LlmRuntimeAdapter runtimeAdapter;
   final LlmConfiguration Function(ModelFile) configurationFor;
   final LlmEngineLoader _loadEngine;
-  final Future<void> Function(ModelFile)? beforeLoad;
   LlmConfiguration? _loadedConfiguration;
 
   static Future<LlamaEngine> _loadNativeEngine(
@@ -99,8 +97,6 @@ class LocalLlmRepository implements LlmRepository {
         _engine = null;
         _loadedPath = null;
         _contextConversationId = null;
-        if (_stopped) return;
-        await beforeLoad?.call(model);
         if (_stopped) return;
         _engine = await _loadEngine(
           file.path,

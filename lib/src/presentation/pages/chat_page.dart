@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_memory_warning_button.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
@@ -232,10 +234,20 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: Text(
-                                  widget.workspace.generationStatus,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                child: Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        widget.workspace.generationStatus,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (widget.workspace.showMemoryWarning)
+                                      ModelMemoryWarningButton(
+                                        modelName: widget.workspace.modelName!,
+                                      ),
+                                  ],
                                 ),
                               ),
                               TextButton.icon(

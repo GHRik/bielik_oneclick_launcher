@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/device_resources.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/device_resources_repository.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bielik_oneclick_launcher/configuration/bielik_models.dart';
@@ -13,7 +16,20 @@ import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_works
 
 import '../../support/in_memory_chat_repository.dart';
 
+class _Resources implements DeviceResourcesRepository {
+  _Resources(this.availableBytes);
+  final int? availableBytes;
+  int reads = 0;
+
+  @override
+  Future<DeviceResources> read() async {
+    reads++;
+    return DeviceResources(availableRamBytes: availableBytes);
+  }
+}
+
 class _Llm implements LlmRepository {
+  LlmStage initialStage = LlmStage.analyzing;
   final inputs = <List<ChatMessage>>[];
   final streams = <StreamController<String>>[];
   final contextCallbacks = <void Function(ContextUsage)?>[];
@@ -30,7 +46,7 @@ class _Llm implements LlmRepository {
     void Function(ContextUsage)? onContext,
     Future<void> Function()? onPromptAccepted,
   }) async* {
-    onStage(LlmStage.analyzing);
+    onStage(initialStage);
     await onPromptAccepted?.call();
     inputs.add(history);
     contextCallbacks.add(onContext);
@@ -65,13 +81,17 @@ void main() {
     Future<void> withWorkspace(
       WidgetTester tester,
       Future<void> Function(InMemoryChatRepository, _Llm, ChatWorkspace)
-      scenario,
-    ) async {
+      scenario, {
+      DeviceResourcesRepository? resources,
+    }) async {
       await tester.runAsync(() async {
         final repository = InMemoryChatRepository();
         final llm = _Llm();
-        final workspace = ChatWorkspace(repository, llmRepository: llm)
-          ..useModel(bielikModels.first);
+        final workspace = ChatWorkspace(
+          repository,
+          llmRepository: llm,
+          deviceResourcesRepository: resources,
+        )..useModel(bielikModels.first);
         await workspace.initialize();
         try {
           await scenario(repository, llm, workspace);
@@ -82,6 +102,31 @@ void main() {
         }
       });
       await tester.pump();
+    }
+
+    for (final available in <int?>[1000000000, 8000000000, null]) {
+      testWidgets(
+        'RAM warning during loading with $available available bytes',
+        (tester) async {
+          final resources = _Resources(available);
+          await withWorkspace(tester, (repository, llm, workspace) async {
+            expect(workspace.showMemoryWarning, isFalse);
+            llm.initialStage = LlmStage.loading;
+            final send = workspace.sendMessage('Question');
+            await _until(() => llm.streams.isNotEmpty && resources.reads > 0);
+
+            expect(
+              workspace.showMemoryWarning,
+              available != null && available < 4000000000,
+            );
+            llm.streams.last.add('Reply');
+            await llm.streams.last.close();
+            await send;
+            expect(workspace.showMemoryWarning, isFalse);
+            expect(workspace.error, isNull);
+          }, resources: resources);
+        },
+      );
     }
 
     testWidgets('Ignores a duplicate send while generation is active', (
