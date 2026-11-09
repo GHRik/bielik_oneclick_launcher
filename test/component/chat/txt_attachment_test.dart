@@ -114,7 +114,9 @@ void main() {
       await pick(tester);
       llm.loadGate = Completer<void>();
       await tester.enterText(find.byType(TextField), 'Question');
+      await tester.pump();
       await tester.tap(find.byIcon(Icons.send));
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(find.text('Question'), findsOneWidget);
@@ -125,10 +127,12 @@ void main() {
       expect(find.byKey(const ValueKey('pending-attachment')), findsNothing);
       expect(find.text('notatki.txt'), findsOneWidget);
       expect(llm.inputs, isEmpty);
+      final conversation = (await chats.getConversations()).single;
+      expect(await chats.getMessages(conversation.id), isEmpty);
 
       llm.loadGate!.complete();
       await tester.pumpAndSettle();
-      final conversation = (await chats.getConversations()).single;
+      expect(llm.inputs.single.last.text, 'Question');
       expect(
         (await chats.getMessages(conversation.id))
             .where((message) => message.role == ChatRole.user),
@@ -145,7 +149,9 @@ void main() {
     llm.loadGate = Completer<void>();
     llm.loadFailure = StateError('Loading failed');
     await tester.enterText(find.byType(TextField), 'Keep this');
+    await tester.pump();
     await tester.tap(find.byIcon(Icons.send));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
     llm.loadGate!.complete();
@@ -169,7 +175,9 @@ void main() {
     llm.loadGate = Completer<void>();
     llm.loadFailure = StateError('Loading failed');
     await tester.enterText(find.byType(TextField), 'Original');
+    await tester.pump();
     await tester.tap(find.byIcon(Icons.send));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.enterText(find.byType(TextField), 'New draft');
 
