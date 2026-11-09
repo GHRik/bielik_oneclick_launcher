@@ -1,10 +1,15 @@
 import 'dart:async';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
+
+import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_update.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/conversation.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
@@ -40,6 +45,8 @@ class ChatWorkspace extends ChangeNotifier {
 
   final ChatRepository repository;
   final ChatService _chatService;
+  final Map<int, ContextUsage> _contextUsage = {};
+  ContextUsage? get contextUsage => _contextUsage[_selected?.id];
   BielikModel? _model;
   LlmComputeMode _computeMode = LlmComputeMode.cpu;
   LlmRuntimeInfo? _runtimeInfo;
@@ -55,6 +62,9 @@ class ChatWorkspace extends ChangeNotifier {
   }
 
   ConversationController? _generationTarget;
+  String? _streamingMessageId;
+  String? get streamingMessageId =>
+      _selected == _generationTarget ? _streamingMessageId : null;
   Future<void>? _generationTask;
   Future<void>? _releaseTask;
   bool _stopRequested = false;
@@ -65,7 +75,9 @@ class ChatWorkspace extends ChangeNotifier {
       ? 'Zatrzymywanie…'
       : _stage == LlmStage.loading
       ? 'Ładowanie modelu…'
-      : 'Bielik pisze…';
+      : _stage == LlmStage.generating
+      ? 'Bielik pisze…'
+      : 'Bielik myśli…';
   String? get generatingTitle => _generationTarget?.title;
 
   void useModel(
@@ -74,6 +86,7 @@ class ChatWorkspace extends ChangeNotifier {
   }) {
     if (_model == model && _computeMode == computeMode) return;
     if (_sending || _releasing) throw StateError('Model jest zajęty.');
+    _contextUsage.clear();
     _model = model;
     _computeMode = computeMode;
     _runtimeInfo = null;
@@ -98,6 +111,7 @@ class ChatWorkspace extends ChangeNotifier {
         await stopGeneration();
         await _chatService.unload();
         _runtimeInfo = null;
+        _contextUsage.clear();
       } catch (error) {
         _error = 'Nie udało się zwolnić modelu: $error';
       } finally {
@@ -118,6 +132,8 @@ class ChatWorkspace extends ChangeNotifier {
   bool _loading = true;
   bool _busy = false;
   bool _sending = false;
+  bool _pickingAttachment = false;
+  bool get pickingAttachment => _pickingAttachment;
   String? _error;
 
   List<ConversationController> get conversations =>
@@ -125,7 +141,7 @@ class ChatWorkspace extends ChangeNotifier {
   ConversationController get selected => _selected!;
   bool get ready => _selected != null;
   bool get loading => _loading;
-  bool get busy => _busy || _releasing;
+  bool get busy => _busy || _releasing || _pickingAttachment;
   bool get sending => _sending;
   String? get error => _error;
 
@@ -177,6 +193,15 @@ class ChatWorkspace extends ChangeNotifier {
     controller = ConversationController(
       conversation,
       messages: messages,
+      onAttachmentChanged: (attachment) {
+        unawaited(
+          _enqueue(() async {
+            if (_conversations.contains(controller)) {
+              await _chatService.saveDraftAttachment(controller.id, attachment);
+            }
+          }, errorMessage: 'Nie udało się zapisać załącznika.'),
+        );
+      },
       onDraftChanged: (draft) {
         unawaited(
           _enqueue(() async {
@@ -188,6 +213,27 @@ class ChatWorkspace extends ChangeNotifier {
       },
     );
     return controller;
+  }
+
+  Future<bool> importText(String text) async {
+    if (_disposed || text.trim().isEmpty || text.length > 65536) return false;
+    _error = null;
+    await initialize();
+    await flush();
+    if (_disposed || !ready || _conversations.isEmpty) return false;
+    final target = _conversations.first;
+    selectConversation(target);
+    final previous = target.draft.text;
+    target.draft.value = TextEditingValue(
+      text: previous.isEmpty ? text : '$previous\n\n$text',
+      selection: TextSelection.collapsed(
+        offset: previous.isEmpty
+            ? text.length
+            : previous.length + 2 + text.length,
+      ),
+    );
+    await flush();
+    return !_disposed && _error == null;
   }
 
   Future<void> initialize() {
@@ -222,6 +268,37 @@ class ChatWorkspace extends ChangeNotifier {
     return task;
   }
 
+  Future<void> pickAttachment(AttachmentRepository repository) async {
+    if (!ready || _disposed || busy || sending) return;
+    final target = selected;
+    _pickingAttachment = true;
+    _error = null;
+    _notify();
+    try {
+      final attachment = await repository.pickTextAttachment();
+      if (!_disposed && attachment != null && _conversations.contains(target)) {
+        target.setAttachment(attachment);
+        await flush();
+      }
+    } on AttachmentException catch (error) {
+      _error = switch (error.failure) {
+        AttachmentFailure.unsupportedType =>
+          'Na razie można dołączać tylko pliki TXT.',
+        AttachmentFailure.tooLarge =>
+          'Plik TXT jest za duży. Limit wynosi 64 KiB.',
+        AttachmentFailure.invalidEncoding =>
+          'Plik nie jest poprawnym tekstem UTF-8. Zapisz go w UTF-8.',
+        AttachmentFailure.empty => 'Wybrany plik TXT jest pusty.',
+        AttachmentFailure.readFailed => 'Nie udało się odczytać pliku TXT.',
+      };
+    } catch (_) {
+      _error = 'Nie udało się odczytać pliku TXT.';
+    } finally {
+      _pickingAttachment = false;
+      _notify();
+    }
+  }
+
   Future<void> newChat() {
     if (!ready || _disposed) return Future.value();
     return _runAction(() async {
@@ -235,7 +312,16 @@ class ChatWorkspace extends ChangeNotifier {
   void selectConversation(ConversationController conversation) {
     if (!_conversations.contains(conversation) || _disposed) return;
     _selected = conversation;
+    _conversations.remove(conversation);
+    _conversations.insert(0, conversation);
     _notify();
+    unawaited(
+      _enqueue(() async {
+        if (_conversations.contains(conversation)) {
+          await repository.markConversationUsed(conversation.id);
+        }
+      }, errorMessage: 'Nie udało się zapisać kolejności rozmów.'),
+    );
   }
 
   Future<void> deleteConversation(ConversationController conversation) async {
@@ -247,6 +333,7 @@ class ChatWorkspace extends ChangeNotifier {
         await repository.deleteConversation(conversation.id);
         if (_disposed) return;
         _conversations.remove(conversation);
+        _contextUsage.remove(conversation.id);
         if (_conversations.isEmpty) {
           _selected = null;
           _initialization = null;
@@ -273,7 +360,12 @@ class ChatWorkspace extends ChangeNotifier {
 
   Future<void> sendMessage(String text) {
     final message = text.trim();
-    if (message.isEmpty || !ready || _disposed || _sending || _releasing) {
+    if (!ready ||
+        _disposed ||
+        _sending ||
+        _releasing ||
+        _pickingAttachment ||
+        (message.isEmpty && selected.attachment == null)) {
       return Future.value();
     }
     if (_chatService.hasLlm && _model?.file == null) {
@@ -282,15 +374,24 @@ class ChatWorkspace extends ChangeNotifier {
       return Future.value();
     }
     final target = selected;
+    selectConversation(target);
     final revision = target.draftRevision;
     _idleReleaseTimer?.cancel();
+    final attachmentRevision = target.attachmentRevision;
+    final attachment = target.attachment;
     _error = null;
     _sending = true;
     _stopRequested = false;
     _generationTarget = target;
     _stage = null;
     _notify();
-    final task = _sendAndGenerate(target, message, revision);
+    final task = _sendAndGenerate(
+      target,
+      message,
+      revision,
+      attachment,
+      attachmentRevision,
+    );
     _generationTask = task;
     return task;
   }
@@ -299,6 +400,8 @@ class ChatWorkspace extends ChangeNotifier {
     ConversationController target,
     String message,
     int revision,
+    TextAttachment? attachment,
+    int attachmentRevision,
   ) async {
     try {
       await flush();
@@ -308,9 +411,15 @@ class ChatWorkspace extends ChangeNotifier {
       await _chatService.send(
         conversationId: target.id,
         text: message,
+        attachment: attachment,
         history: target.messages,
         model: _model?.file,
         computeMode: _computeMode,
+        onContext: (usage) {
+          if (_disposed || !_conversations.contains(target)) return;
+          _contextUsage[target.id] = usage;
+          _notify();
+        },
         onLoaded: (runtime) {
           _runtimeInfo = runtime;
           _notify();
@@ -323,8 +432,16 @@ class ChatWorkspace extends ChangeNotifier {
           if (_disposed) return;
           switch (update) {
             case ChatMessageSaved():
+              if (update.message.role == ChatRole.assistant) {
+                _streamingMessageId = update.message.id;
+                _notify();
+              }
               await target.addMessage(
                 update.message,
+                submittedAttachmentRevision:
+                    update.message.role == ChatRole.user
+                    ? attachmentRevision
+                    : null,
                 submittedDraftRevision: update.message.role == ChatRole.user
                     ? revision
                     : null,
@@ -345,7 +462,7 @@ class ChatWorkspace extends ChangeNotifier {
             'Błąd akceleracji GPU. Wyłącz GPU w konfiguracji, aby użyć CPU. ${error.reason}';
       }
     } on ChatContextTooLong {
-      _error = 'Wiadomość jest za długa. Skróć ją i spróbuj ponownie.';
+      _error = 'Wiadomość lub załącznik przekracza kontekst modelu. Skróć tekst albo wybierz mniejszy plik.';
     } on EmptyModelReply {
       if (!_stopRequested) _error = 'Model nie zwrócił odpowiedzi.';
     } catch (error) {
@@ -354,6 +471,7 @@ class ChatWorkspace extends ChangeNotifier {
       }
     } finally {
       _sending = false;
+      _streamingMessageId = null;
       _generationTarget = null;
       _stage = null;
       _scheduleIdleRelease();

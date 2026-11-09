@@ -2,6 +2,7 @@ import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/conversation.dart';
 
 class ConversationController extends ChangeNotifier {
@@ -9,6 +10,7 @@ class ConversationController extends ChangeNotifier {
     Conversation conversation, {
     required List<ChatMessage> messages,
     required this.onDraftChanged,
+    this.onAttachmentChanged,
   }) : _conversation = conversation,
        _messages = List.of(messages),
        controller = InMemoryChatController(
@@ -29,6 +31,21 @@ class ConversationController extends ChangeNotifier {
   final InMemoryChatController controller;
   final TextEditingController draft;
   final ValueChanged<String> onDraftChanged;
+  final ValueChanged<TextAttachment?>? onAttachmentChanged;
+  int _attachmentRevision = 0;
+  int get attachmentRevision => _attachmentRevision;
+  TextAttachment? get attachment => _conversation.draftAttachment;
+
+  void setAttachment(TextAttachment? value) {
+    _attachmentRevision++;
+    _conversation = _conversation.copyWith(
+      draftAttachment: value,
+      clearDraftAttachment: value == null,
+    );
+    onAttachmentChanged?.call(value);
+    notifyListeners();
+  }
+
   bool hasMessages;
   int _messageContentBytes;
   int _draftRevision = 0;
@@ -59,6 +76,7 @@ class ConversationController extends ChangeNotifier {
   Future<void> addMessage(
     ChatMessage message, {
     int? submittedDraftRevision,
+    int? submittedAttachmentRevision,
     String? title,
   }) async {
     await controller.insertMessage(_viewMessage(message));
@@ -69,6 +87,10 @@ class ConversationController extends ChangeNotifier {
       title: title,
       updatedAt: message.createdAt,
     );
+    if (_attachmentRevision == submittedAttachmentRevision) {
+      _attachmentRevision++;
+      _conversation = _conversation.copyWith(clearDraftAttachment: true);
+    }
     if (_draftRevision == submittedDraftRevision) {
       _suppressDraftChanges = true;
       draft.clear();
@@ -89,6 +111,7 @@ class ConversationController extends ChangeNotifier {
       authorId: old.authorId,
       text: text,
       createdAt: old.createdAt,
+      attachment: old.attachment,
     );
     await controller.updateMessage(_viewMessage(old), _viewMessage(updated));
     _messages[index] = updated;

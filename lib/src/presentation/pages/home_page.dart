@@ -2,6 +2,10 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/speech_recognition_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/clipboard_repository.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/gpu_configuration.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
@@ -11,6 +15,7 @@ import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart
 import 'package:bielik_oneclick_launcher/src/domain/repositories/statistics_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/statistics_controller.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/chat_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/incoming_text_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/device_resources_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/device_resources_controller.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_repository.dart';
@@ -34,10 +39,15 @@ class HomePage extends StatefulWidget {
     required this.chatRepository,
     required this.statisticSeries,
     this.statisticsRepository,
+    this.attachmentRepository,
+    this.incomingTextRepository,
+    this.speechRepository,
+    this.clipboardRepository,
   });
 
   final DeviceResourcesRepository? deviceResourcesRepository;
   final ChatRepository chatRepository;
+  final IncomingTextRepository? incomingTextRepository;
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
   final LlmConfiguration llmConfiguration;
@@ -46,6 +56,9 @@ class HomePage extends StatefulWidget {
   final List<BielikModel> models;
   final List<StatisticSeries> statisticSeries;
   final StatisticsRepository? statisticsRepository;
+  final AttachmentRepository? attachmentRepository;
+  final SpeechRecognitionRepository? speechRepository;
+  final ClipboardRepository? clipboardRepository;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -60,6 +73,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   late BielikModel _selectedModel = widget.models.first;
   late final _settingsDraft = LlmSettingsDraft(widget.llmConfiguration);
   bool _chatOpen = false;
+  Route<void>? _chatRoute;
+  StreamSubscription<String>? _incomingText;
+  Future<void> _textImports = Future.value();
   GpuConfiguration _gpuConfiguration = const GpuConfiguration();
 
   @override
@@ -71,6 +87,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     );
     WidgetsBinding.instance.addObserver(this);
     unawaited(_chatWorkspace.initialize());
+    _incomingText = widget.incomingTextRepository?.incomingText.listen((text) {
+      _textImports = _textImports.then((_) => _importText(text));
+    }, onError: (Object error) => _showImportError());
     unawaited(_resources.refresh());
     final repository = widget.statisticsRepository;
     if (repository != null) {
@@ -91,8 +110,38 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
+  void _showImportError() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Nie udało się odebrać tekstu. Spróbuj ponownie.'),
+      ),
+    );
+  }
+
+  Future<void> _importText(String text) async {
+    if (!mounted) return;
+    try {
+      final imported = await _chatWorkspace.importText(text);
+      if (!mounted) return;
+      if (!imported) {
+        _showImportError();
+        return;
+      }
+      unawaited(_openChat());
+    } catch (_) {
+      _showImportError();
+    }
+  }
+
   Future<void> _openChat() async {
-    if (_chatOpen) return;
+    if (_chatOpen) {
+      final route = _chatRoute;
+      if (route != null) {
+        Navigator.of(context).popUntil((current) => current == route);
+      }
+      return;
+    }
     setState(() => _chatOpen = true);
     _chatWorkspace.retainModel();
     try {
@@ -106,16 +155,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ? LlmComputeMode.gpu
             : LlmComputeMode.cpu,
       );
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => ChatPage(
-            workspace: _chatWorkspace,
-            statisticSeries: widget.statisticSeries,
-            statisticsController: _statistics,
-          ),
+      final route = MaterialPageRoute<void>(
+        builder: (_) => ChatPage(
+          workspace: _chatWorkspace,
+          attachmentRepository: widget.attachmentRepository,
+          speechRepository: widget.speechRepository,
+          clipboardRepository: widget.clipboardRepository,
+          statisticSeries: widget.statisticSeries,
+          statisticsController: _statistics,
         ),
       );
+      _chatRoute = route;
+      await Navigator.of(context).push(route);
     } finally {
+      _chatRoute = null;
       _chatWorkspace.releaseModelWhenIdle();
       if (mounted) {
         setState(() => _chatOpen = false);
@@ -126,6 +179,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    unawaited(_incomingText?.cancel());
     WidgetsBinding.instance.removeObserver(this);
     _statistics?.dispose();
     _resources.dispose();

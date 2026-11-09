@@ -4,6 +4,7 @@ import 'package:bielik_oneclick_launcher/src/data/datasources/llm_runtime_adapte
 
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/model_file_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/llm_runtime_info.dart';
@@ -40,6 +41,7 @@ class LocalLlmRepository implements LlmRepository {
   ) => LlamaEngine.load(LlamaModel(ModelSource.path(path)), params: params);
   LlamaEngine? _engine;
   String? _loadedPath;
+  int? _contextConversationId;
   bool _active = false;
   bool _stopped = false;
 
@@ -63,8 +65,15 @@ class LocalLlmRepository implements LlmRepository {
     required void Function(LlmStage) onStage,
     LlmComputeMode? computeMode,
     void Function(LlmRuntimeInfo)? onLoaded,
+    void Function(ContextUsage)? onContext,
   }) async* {
     if (_active) throw StateError('Generowanie już trwa.');
+    final conversationId = history.isEmpty
+        ? null
+        : history.first.conversationId;
+    if (history.any((message) => message.conversationId != conversationId)) {
+      throw ArgumentError('A generation cannot combine conversations.');
+    }
     _active = true;
     _stopped = false;
     metrics?.begin();
@@ -86,6 +95,7 @@ class LocalLlmRepository implements LlmRepository {
         await _engine?.dispose();
         _engine = null;
         _loadedPath = null;
+        _contextConversationId = null;
         if (_stopped) return;
         _engine = await _loadEngine(
           file.path,
@@ -96,23 +106,36 @@ class LocalLlmRepository implements LlmRepository {
       }
       if (_stopped) return;
       final engine = _engine!;
+      var promptTokens = 0;
+      onStage(LlmStage.analyzing);
       final context = await contextPolicy.prepare(
         history,
         isCancelled: () => _stopped,
         countTokens: (messages) async {
           final template = await engine.chatTemplate(_engineMessages(messages));
-          return template.tokenCount ??
+          promptTokens =
+              template.tokenCount ??
               await engine.getTokenCount(template.prompt);
+          return promptTokens;
         },
       );
       if (_stopped) return;
       final runtime = await runtimeAdapter.inspect(engine);
       if (_stopped) return;
       onLoaded?.call(runtime);
-      onStage(LlmStage.generating);
+      onContext?.call(
+        ContextUsage(
+          promptTokens: promptTokens,
+          contextSize: configuration.contextSize,
+        ),
+      );
+      final reusePromptPrefix =
+          conversationId != null && _contextConversationId == conversationId;
+      _contextConversationId = conversationId;
       await for (final chunk in engine.create(
         _engineMessages(context),
         params: GenerationParams(
+          reusePromptPrefix: reusePromptPrefix,
           maxTokens: configuration.responseTokens,
           temp: configuration.temperature,
           topK: configuration.topK,
@@ -124,6 +147,13 @@ class LocalLlmRepository implements LlmRepository {
       )) {
         final usage = chunk.usage;
         if (usage != null) {
+          onContext?.call(
+            ContextUsage(
+              promptTokens: usage.promptTokens,
+              responseTokens: usage.completionTokens,
+              contextSize: configuration.contextSize,
+            ),
+          );
           metrics?.complete(
             tokens: usage.completionTokens,
             duration: usage.duration,
@@ -168,6 +198,7 @@ class LocalLlmRepository implements LlmRepository {
     final engine = _engine;
     _engine = null;
     _loadedPath = null;
+    _contextConversationId = null;
     _loadedConfiguration = null;
     await engine?.dispose();
   }

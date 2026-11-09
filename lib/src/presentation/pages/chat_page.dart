@@ -1,6 +1,15 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/controllers/speech_dictation_controller.dart';
+
+import 'package:bielik_oneclick_launcher/src/domain/repositories/speech_recognition_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/clipboard_repository.dart';
+
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/chat_model_header.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/context_usage_indicator.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/statistic_series.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/statistics_controller.dart';
@@ -17,20 +26,77 @@ class ChatPage extends StatefulWidget {
     required this.workspace,
     required this.statisticSeries,
     this.statisticsController,
+    this.attachmentRepository,
+    this.speechRepository,
+    this.clipboardRepository,
   });
 
   final ChatWorkspace workspace;
   final List<StatisticSeries> statisticSeries;
   final StatisticsController? statisticsController;
+  final AttachmentRepository? attachmentRepository;
+  final SpeechRecognitionRepository? speechRepository;
+  final ClipboardRepository? clipboardRepository;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  late final SpeechDictationController? _dictation =
+      widget.speechRepository == null
+      ? null
+      : SpeechDictationController(widget.speechRepository!);
+  late final _changes = Listenable.merge([widget.workspace, ?_dictation]);
+  ConversationController? _speechTarget;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    widget.workspace.addListener(_onWorkspaceChanged);
+  }
+
+  void _onWorkspaceChanged() {
+    if (_dictation?.active == true &&
+        (!widget.workspace.ready ||
+            widget.workspace.selected != _speechTarget ||
+            widget.workspace.sending ||
+            widget.workspace.busy)) {
+      unawaited(_dictation!.cancel());
+    }
+  }
+
+  void _cancelDictation() {
+    if (_dictation?.active == true) unawaited(_dictation!.cancel());
+  }
+
+  void _toggleDictation() {
+    _speechTarget = widget.workspace.selected;
+    unawaited(_dictation?.toggle(_speechTarget!.draft));
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached ||
+        (state == AppLifecycleState.inactive && _dictation?.starting != true)) {
+      _cancelDictation();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    widget.workspace.removeListener(_onWorkspaceChanged);
+    _dictation?.dispose();
+    super.dispose();
+  }
 
   void _closeSidebar() {
+    _cancelDictation();
     if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
       _scaffoldKey.currentState!.closeDrawer();
     }
@@ -43,6 +109,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _openStatistics() {
+    _cancelDictation();
     FocusManager.instance.primaryFocus?.unfocus();
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -62,7 +129,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: widget.workspace,
+      listenable: _changes,
       builder: (context, _) => LayoutBuilder(
         builder: (context, constraints) {
           if (!widget.workspace.ready) {
@@ -88,6 +155,7 @@ class _ChatPageState extends State<ChatPage> {
                         IconButton(
                           tooltip: 'Rozmowy',
                           onPressed: () {
+                            _cancelDictation();
                             FocusManager.instance.primaryFocus?.unfocus();
                             _scaffoldKey.currentState?.openDrawer();
                           },
@@ -102,6 +170,7 @@ class _ChatPageState extends State<ChatPage> {
                       modelName: widget.workspace.modelName!,
                     ),
               actions: [
+                ContextUsageIndicator(usage: widget.workspace.contextUsage),
                 IconButton(
                   tooltip: 'Statystyki',
                   onPressed: _openStatistics,
@@ -180,6 +249,17 @@ class _ChatPageState extends State<ChatPage> {
                       Expanded(
                         child: ConversationView(
                           conversation: widget.workspace.selected,
+                          onAttachmentTap: widget.attachmentRepository == null
+                              ? null
+                              : () => widget.workspace.pickAttachment(
+                                  widget.attachmentRepository!,
+                                ),
+                          pickingAttachment: widget.workspace.pickingAttachment,
+                          dictation: _dictation,
+                          onMicrophoneTap: _toggleDictation,
+                          streamingMessageId:
+                              widget.workspace.streamingMessageId,
+                          clipboardRepository: widget.clipboardRepository,
                           onMessageSend: widget.workspace.sendMessage,
                           sending:
                               widget.workspace.sending || widget.workspace.busy,
