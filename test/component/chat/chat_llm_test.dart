@@ -30,12 +30,12 @@ class _Llm implements LlmRepository {
     void Function(ContextUsage)? onContext,
     Future<void> Function()? onPromptAccepted,
   }) async* {
+    onStage(LlmStage.analyzing);
+    await onPromptAccepted?.call();
     inputs.add(history);
     contextCallbacks.add(onContext);
     final stream = StreamController<String>();
     streams.add(stream);
-    onStage(LlmStage.analyzing);
-    await onPromptAccepted?.call();
     yield* stream.stream;
   }
 
@@ -301,7 +301,7 @@ void main() {
     });
 
     testWidgets(
-      'A storage failure preserves the draft without invoking the engine',
+      'A storage failure preserves the draft without starting response generation',
       (tester) async {
         await withWorkspace(tester, (repository, llm, workspace) async {
           repository.failSend = true;
@@ -310,6 +310,7 @@ void main() {
           await workspace.sendMessage('Keep this');
 
           expect(workspace.selected.draft.text, 'Keep this');
+          expect(workspace.error, contains('Nie udało się zapisać wiadomości'));
           expect(llm.streams, isEmpty);
         });
       },

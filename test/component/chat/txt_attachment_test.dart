@@ -47,9 +47,9 @@ class _Llm implements LlmRepository {
     void Function(ContextUsage)? onContext,
     Future<void> Function()? onPromptAccepted,
   }) async* {
-    inputs.add(history);
     if (rejectContext) throw ChatContextTooLong();
     await onPromptAccepted?.call();
+    inputs.add(history);
     yield 'Odpowiedź';
   }
 

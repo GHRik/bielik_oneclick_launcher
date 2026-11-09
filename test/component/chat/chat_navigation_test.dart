@@ -121,8 +121,7 @@ void main() {
 
       expect(find.text('Statystyki'), findsOneWidget);
       expect(find.byType(StatisticsPage), findsOneWidget);
-      expect(find.text('Prędkość generowania'), findsOneWidget);
-      expect(find.text('RAM aplikacji'), findsOneWidget);
+      expect(find.text('Jak pracuje Bielik'), findsOneWidget);
     });
 
     testWidgets('Returning from statistics preserves the current draft', (
