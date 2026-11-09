@@ -2,9 +2,9 @@
 
 ## Publish a build
 
-Open **Actions → Release APK → Run workflow**, select the branch, and run it. The workflow analyzes the code, runs local Flutter tests, builds a signed ARM64 release APK, verifies its certificate, and always creates a GitHub prerelease, including builds from `master`. It never changes Latest automatically.
+Open **Actions → Release APK → Run workflow**, select the branch, optionally enter an app version such as `1.0.1`, and run it. Leaving the version empty uses `pubspec.yaml`. The workflow analyzes the code, runs local Flutter tests, builds a signed ARM64 release APK, verifies its certificate, and always creates a GitHub prerelease, including builds from `master`. It never changes Latest automatically.
 
-Testers can download the APK from that prerelease's assets. Prereleases are publicly visible in Releases, but the README and GitHub Pages download links continue to point to the latest stable release. The landing page's version and date also come from the latest stable release.
+Testers can download the APK from that prerelease's assets. Prereleases are publicly visible in Releases, but the README and GitHub Pages download links continue to point to the latest stable release. The landing page's version, date and APK links come from GitHub Releases. Its Polish patch notes are stored separately in `site/release-notes.pl.json`, keyed by the exact release tag. Its archive lists stable releases with an ARM64 APK and excludes drafts and prereleases. Older release descriptions and APKs remain accessible.
 
 After testing, edit the chosen release on GitHub, remove its prerelease flag, and mark it as **Latest**. Alternatively:
 
@@ -16,13 +16,25 @@ Promoting the existing release keeps the exact APK that was tested; no rebuild o
 
 Download `bielik-arm64.apk` directly from [the latest stable release](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk), or use **Releases → Assets**. Keep the asset name unchanged: the landing page uses GitHub's permanent latest-asset URL. Each release also includes its SHA-256 checksum, `BUILD.txt`, `SIGNING.txt`, and the MIT license. An artifact copy is retained for 30 days. The ARM64 debug build workflow is a separate CI check; use Release APK for distribution.
 
+## Version names and patch notes
+
+Use `MAJOR.MINOR.PATCH` versions: for example, `1.0.1` for a fix and `1.1.0` for a feature release. The workflow uses that value as Android's visible `versionName`.
+
+Release titles look like **Bielik OneClick 1.0.1 · build 42.1**. Tags look like `v1.0.1-build.42.1`; the workflow run number and attempt distinguish test builds of the same version. Existing release tags and download links are preserved.
+
+GitHub generates initial release notes from merged pull requests. Keep GitHub release descriptions in English. Before promoting a prerelease, edit its description into short, user-facing English patch notes and add a Polish translation to `site/release-notes.pl.json` under the exact release tag. Deploy Pages to publish that translation. Entries are displayed only when the corresponding release is stable and has an ARM64 APK; adding a translation early does not expose a prerelease.
+
+The website never inserts the English release body into its Polish content. Missing translations produce a Polish message with a link to the English GitHub description. English release notes and Polish translations are maintained explicitly; there is no automatic translation service. Version, date, archive availability and APK links still refresh from GitHub without redeploying Pages.
+
+Technical build details stay in the attached `BUILD.txt`. The large Android `versionCode` remains an internal increasing identifier, rather than the public release title. Avoid changing signing keys when changing version numbers.
+
 ## Updating an installation
 
 Download a newer signed release APK and install it over the existing installation. Android preserves the app's database, downloaded models, and settings when the application ID and signing certificate match. No uninstallation or app-managed updater is required.
 
 Older debug APKs may have different certificates and cannot be upgraded with this release key. Do not uninstall an old build if you need its local data; uninstalling removes private app storage. This setup establishes update compatibility between releases signed with the pinned key, not with every previous debug APK.
 
-The application ID remains `bielik.ai.bielik_oneclick_launcher`. CI derives `versionCode` from UTC seconds since 2020-01-01, so newly started release builds get higher codes, including reruns of older source revisions. All branches share one release concurrency group. `versionName` comes from `pubspec.yaml`. Local builds must also use a higher `--build-number` than the installed release.
+The application ID remains `bielik.ai.bielik_oneclick_launcher`. CI derives `versionCode` from UTC seconds since 2020-01-01, so newly started release builds get higher codes, including reruns of older source revisions. All branches share one release concurrency group. `versionName` comes from the workflow version input, falling back to `pubspec.yaml`. Local builds must also use a higher `--build-number` than the installed release.
 
 ## Signing identity
 
