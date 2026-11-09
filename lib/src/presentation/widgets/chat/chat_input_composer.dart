@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
@@ -68,6 +69,36 @@ class _ChatInputComposerState extends State<ChatInputComposer> {
 
   void _send() {
     if (_canSend) widget.onSend(widget.draft.text.trim());
+  }
+
+  TextEditingValue _keyboardEdit(
+    TextEditingValue before,
+    TextEditingValue after,
+  ) {
+    if (defaultTargetPlatform != TargetPlatform.android ||
+        !before.selection.isValid ||
+        !before.composing.isCollapsed ||
+        !after.composing.isCollapsed) {
+      return after;
+    }
+    final start = before.selection.start;
+    final end = before.selection.end;
+    final insertedLength = after.text.length - before.text.length + end - start;
+    if (insertedLength <= 1 ||
+        !after.text.startsWith(before.text.substring(0, start)) ||
+        !after.text.endsWith(before.text.substring(end))) {
+      return after;
+    }
+    final inserted = after.text.substring(start, start + insertedLength);
+    if (inserted.runes.length > 1 && inserted.trim().isNotEmpty) {
+      final draft = widget.draft;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.draft == draft && draft.text == after.text) {
+          widget.onPasted?.call();
+        }
+      });
+    }
+    return after;
   }
 
   void _pasteError() {
@@ -183,6 +214,9 @@ class _ChatInputComposerState extends State<ChatInputComposer> {
                             },
                             child: TextField(
                               controller: widget.draft,
+                              inputFormatters: [
+                                TextInputFormatter.withFunction(_keyboardEdit),
+                              ],
                               minLines: 1,
                               maxLines: 3,
                               keyboardType: TextInputType.multiline,

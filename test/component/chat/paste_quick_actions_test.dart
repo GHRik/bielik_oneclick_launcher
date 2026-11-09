@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -53,7 +54,55 @@ void main() {
 
   testWidgets('Normal typing does not show quick actions', (tester) async {
     await open(tester);
-    await tester.enterText(find.byType(TextField), 'Zwykłe pytanie');
+    for (var length = 1; length <= 'Zwykłe pytanie'.length; length++) {
+      tester.testTextInput.updateEditingValue(
+        TextEditingValue(
+          text: 'Zwykłe pytanie'.substring(0, length),
+          selection: TextSelection.collapsed(offset: length),
+        ),
+      );
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+    expect(find.byType(ChatQuickActions), findsNothing);
+  });
+
+  testWidgets('Android keyboard clipboard insertion offers actions', (
+    tester,
+  ) async {
+    expect(defaultTargetPlatform, TargetPlatform.android);
+    await open(tester);
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: pasted,
+        selection: TextSelection.collapsed(offset: pasted.length),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(ChatQuickActions), findsOneWidget);
+    final conversation = (await repository.getConversations()).first;
+    expect(await repository.getMessages(conversation.id), isEmpty);
+  });
+
+  testWidgets('IME composing text does not offer quick actions', (
+    tester,
+  ) async {
+    expect(defaultTargetPlatform, TargetPlatform.android);
+    await open(tester);
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'pisanie',
+        selection: TextSelection.collapsed(offset: 7),
+        composing: TextRange(start: 0, end: 7),
+      ),
+    );
+    await tester.pumpAndSettle();
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'pisanie',
+        selection: TextSelection.collapsed(offset: 7),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.byType(ChatQuickActions), findsNothing);
   });
