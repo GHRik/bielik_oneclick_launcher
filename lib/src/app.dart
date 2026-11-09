@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:bielik_oneclick_launcher/src/presentation/theme/landing_page_theme.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/app_theme_preference.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/app_theme_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/app_theme_controller.dart';
@@ -84,15 +86,8 @@ class _MyAppState extends State<MyApp> {
         listenable: _theme,
         builder: (context, _) => MaterialApp(
           title: 'Bielik',
-          theme: ThemeData(
-            colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-          ),
-          darkTheme: ThemeData(
-            colorScheme: .fromSeed(
-              seedColor: Colors.deepPurple,
-              brightness: Brightness.dark,
-            ),
-          ),
+          theme: landingPageTheme(Brightness.light),
+          darkTheme: landingPageTheme(Brightness.dark),
           themeMode: _theme.mode,
           home: HomePage(
             deviceResourcesRepository: widget.deviceResourcesRepository,
