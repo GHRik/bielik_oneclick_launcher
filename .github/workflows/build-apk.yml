@@ -139,23 +139,18 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish downloadable APK
+      - name: Publish prerelease APK for testing
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           SOURCE_SHA: ${{ github.sha }}
-          SOURCE_REF: ${{ github.ref_name }}
           RELEASE_TAG: ${{ steps.package.outputs.release_tag }}
           RELEASE_TITLE: Bielik APK · ${{ steps.version.outputs.build_number }} · ${{ steps.package.outputs.short_sha }}
         run: |
-          release_flags=(--prerelease --latest=false)
-          if [[ "$SOURCE_REF" == "master" ]]; then
-            release_flags=(--latest)
-          fi
           gh release create "$RELEASE_TAG" dist/* \
             --target "$SOURCE_SHA" \
             --title "$RELEASE_TITLE" \
             --notes-file dist/BUILD.txt \
-            "${release_flags[@]}"
+            --prerelease --latest=false
           release_url="$(gh release view "$RELEASE_TAG" --json url --jq .url)"
-          printf '### Signed APK ready\n\n[Download APK](%s)\n\nCommit: `%s`\n' "$release_url" "$SOURCE_SHA" >> "$GITHUB_STEP_SUMMARY"
+          printf '### Test APK ready (prerelease)\n\n[Download test APK](%s)\n\nCommit: `%s`\n\nAfter testing, remove the prerelease flag and mark this release as Latest to update the public download links.\n' "$release_url" "$SOURCE_SHA" >> "$GITHUB_STEP_SUMMARY"

@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/speech_dictation_controller.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/repositories/speech_recognition_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/clipboard_repository.dart';
 
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/chat_model_header.dart';
 
@@ -24,12 +25,14 @@ class ChatPage extends StatefulWidget {
     required this.statisticSeries,
     this.statisticsController,
     this.speechRepository,
+    this.clipboardRepository,
   });
 
   final ChatWorkspace workspace;
   final List<StatisticSeries> statisticSeries;
   final StatisticsController? statisticsController;
   final SpeechRecognitionRepository? speechRepository;
+  final ClipboardRepository? clipboardRepository;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -243,6 +246,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                           conversation: widget.workspace.selected,
                           dictation: _dictation,
                           onMicrophoneTap: _toggleDictation,
+                          streamingMessageId:
+                              widget.workspace.streamingMessageId,
+                          clipboardRepository: widget.clipboardRepository,
                           onMessageSend: widget.workspace.sendMessage,
                           sending:
                               widget.workspace.sending || widget.workspace.busy,
