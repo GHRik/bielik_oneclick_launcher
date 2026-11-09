@@ -142,6 +142,7 @@ class ConversationView extends StatelessWidget {
         composerBuilder: (context) => DictationComposer(
           key: ValueKey('composer-${conversation.id}'),
           draft: conversation.draft,
+          onSend: onMessageSend,
           dictation: dictation,
           onMicrophoneTap: onMicrophoneTap,
           sending: sending || pickingAttachment,

@@ -51,11 +51,11 @@ void main() {
     expect(find.byTooltip('Dyktuj wiadomość'), findsOneWidget);
   });
 
-  testWidgets('The microphone is beside the send button', (tester) async {
+  testWidgets('The microphone is left of the send button', (tester) async {
     await open(tester);
     expect(
       tester.getCenter(find.byTooltip('Dyktuj wiadomość')).dx,
-      greaterThan(tester.getCenter(find.byIcon(Icons.send)).dx),
+      lessThan(tester.getCenter(find.byIcon(Icons.send)).dx),
     );
   });
 

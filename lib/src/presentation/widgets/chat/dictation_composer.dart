@@ -10,6 +10,7 @@ class DictationComposer extends StatelessWidget {
     required this.dictation,
     required this.onMicrophoneTap,
     required this.sending,
+    required this.onSend,
     this.attachmentPreview,
     this.allowEmptyMessage = false,
     this.showAttachmentButton = false,
@@ -19,6 +20,7 @@ class DictationComposer extends StatelessWidget {
   final SpeechDictationController? dictation;
   final VoidCallback? onMicrophoneTap;
   final bool sending;
+  final ValueChanged<String> onSend;
   final Widget? attachmentPreview;
   final bool allowEmptyMessage;
   final bool showAttachmentButton;
@@ -46,8 +48,10 @@ class DictationComposer extends StatelessWidget {
           : SendButtonVisibilityMode.disabled,
       inputClearMode: InputClearMode.never,
       sendButtonDisabled: sending || (speech?.active ?? false),
-      sendIcon: const Icon(Icons.send, semanticLabel: 'Wyślij wiadomość'),
-      padding: EdgeInsets.fromLTRB(8, 8, speech == null ? 8 : 64, 8),
+      sendIcon: speech == null
+          ? const Icon(Icons.send, semanticLabel: 'Wyślij wiadomość')
+          : null,
+      padding: EdgeInsets.fromLTRB(8, 8, speech == null ? 8 : 112, 8),
       topWidget:
           attachmentPreview != null ||
               speech?.error != null ||
@@ -82,7 +86,7 @@ class DictationComposer extends StatelessWidget {
       children: [
         composer,
         Positioned(
-          right: 8,
+          right: 64,
           bottom: MediaQuery.paddingOf(context).bottom + 8,
           child: IconButton(
             tooltip: speech.active
@@ -98,6 +102,24 @@ class DictationComposer extends StatelessWidget {
             onPressed: sending || speech.finishing ? null : onMicrophoneTap,
             icon: const Icon(Icons.mic_none),
             selectedIcon: const Icon(Icons.mic),
+          ),
+        ),
+        Positioned(
+          right: 8,
+          bottom: MediaQuery.paddingOf(context).bottom + 8,
+          child: ValueListenableBuilder<TextEditingValue>(
+            valueListenable: draft,
+            builder: (context, value, _) => IconButton(
+              tooltip: 'Wyślij wiadomość',
+              color: Theme.of(context).colorScheme.primary,
+              onPressed:
+                  sending ||
+                      speech.active ||
+                      (value.text.trim().isEmpty && !allowEmptyMessage)
+                  ? null
+                  : () => onSend(value.text.trim()),
+              icon: const Icon(Icons.send, semanticLabel: 'Wyślij wiadomość'),
+            ),
           ),
         ),
       ],
