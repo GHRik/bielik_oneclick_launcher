@@ -7,6 +7,41 @@ import 'package:bielik_oneclick_launcher/src/presentation/controllers/llm_settin
 import 'package:bielik_oneclick_launcher/src/presentation/pages/llm_settings_page.dart';
 
 void main() {
+  testWidgets('Custom instruction is edited, restored and saved', (
+    tester,
+  ) async {
+    final draft = LlmSettingsDraft(defaultLlmConfiguration);
+    addTearDown(draft.dispose);
+    String? saved;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LlmSettingsPage(
+          draft: draft,
+          additionalSystemPrompt: 'Własna instrukcja',
+          onSaveAdditionalSystemPrompt: (value) async => saved = value,
+        ),
+      ),
+    );
+    final field = find.byKey(const ValueKey('system-prompt'));
+    await tester.ensureVisible(field);
+    expect(
+      tester.widget<TextField>(field).controller!.text,
+      'Własna instrukcja',
+    );
+    await tester.enterText(field, 'Odpowiadaj krótko.');
+    expect(saved, isNull);
+    final restore = find.text('Wyczyść dodatkowe instrukcje');
+    await tester.ensureVisible(restore);
+    await tester.tap(restore);
+    await tester.pump();
+    expect(tester.widget<TextField>(field).controller!.text, '');
+    await tester.enterText(field, 'Nowa instrukcja');
+    await tester.tap(find.text('Zapisz'));
+    await tester.pumpAndSettle();
+    expect(saved, 'Nowa instrukcja');
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('Tapping parameter help opens its explanation', (tester) async {
     final draft = LlmSettingsDraft(defaultLlmConfiguration);
     await tester.pumpWidget(MaterialApp(home: LlmSettingsPage(draft: draft)));

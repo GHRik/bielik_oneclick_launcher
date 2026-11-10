@@ -14,6 +14,7 @@ import 'package:bielik_oneclick_launcher/src/data/repositories_impl/compute_rout
 import 'package:bielik_oneclick_launcher/configuration/llm_configuration.dart';
 import 'package:bielik_oneclick_launcher/configuration/database_configuration.dart';
 import 'package:bielik_oneclick_launcher/configuration/system_prompt.dart';
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/sqlite_system_prompt_repository.dart';
 import 'package:bielik_oneclick_launcher/src/app.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/sqlite_app_theme_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_attachment_repository.dart';
@@ -46,6 +47,8 @@ Future<void> main() async {
   final database = await createAppDatabase();
   final settings = SqliteLlmSettingsRepository(LlmSettingsDataSource(database));
   var activeConfiguration = await settings.load();
+  final promptRepository = SqliteSystemPromptRepository(database);
+  var additionalPrompt = await promptRepository.load();
   var gpuConfiguration = const GpuConfiguration();
   final metrics = GenerationMetrics();
   const resources = LocalDeviceResourcesRepository(DeviceResourcesDataSource());
@@ -57,6 +60,11 @@ Future<void> main() async {
   runApp(
     MyApp(
       appVersion: appVersion,
+      additionalSystemPrompt: additionalPrompt,
+      onSaveAdditionalSystemPrompt: (prompt) async {
+        await promptRepository.save(prompt);
+        additionalPrompt = prompt;
+      },
       appUpdateRepository:
           appVersion != null &&
               (kDebugMode || const bool.fromEnvironment('BIELIK_APK_UPDATES'))
@@ -89,7 +97,8 @@ Future<void> main() async {
         createGpu: () => LocalLlmRepository(
           ModelFileDataSource(),
           metrics: metrics,
-          systemPrompt: bielikSystemPrompt,
+          systemPromptProvider: () =>
+              composeBielikSystemPrompt(additionalPrompt),
           runtimeAdapter: GpuInferenceAdapter(gpuConfiguration),
           configurationFor: (model) =>
               activeConfiguration ?? llmConfigurationFor(model),
@@ -97,7 +106,8 @@ Future<void> main() async {
         cpu: LocalLlmRepository(
           ModelFileDataSource(),
           metrics: metrics,
-          systemPrompt: bielikSystemPrompt,
+          systemPromptProvider: () =>
+              composeBielikSystemPrompt(additionalPrompt),
           configurationFor: (model) =>
               activeConfiguration ?? llmConfigurationFor(model),
         ),

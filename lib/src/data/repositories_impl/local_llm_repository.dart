@@ -23,6 +23,7 @@ class LocalLlmRepository implements LlmRepository {
     required this.configurationFor,
     this.metrics,
     this.systemPrompt = '',
+    this.systemPromptProvider,
     this.runtimeAdapter = const CpuRuntimeAdapter(),
     LlmEngineLoader? loadEngine,
   }) : _loadEngine = loadEngine ?? _loadNativeEngine;
@@ -30,6 +31,8 @@ class LocalLlmRepository implements LlmRepository {
   final ModelFileDataSource _files;
   final GenerationMetrics? metrics;
   final String systemPrompt;
+  final String Function()? systemPromptProvider;
+  String? _contextSystemPrompt;
   final LlmRuntimeAdapter runtimeAdapter;
   final LlmConfiguration Function(ModelFile) configurationFor;
   final LlmEngineLoader _loadEngine;
@@ -45,7 +48,10 @@ class LocalLlmRepository implements LlmRepository {
   bool _active = false;
   bool _stopped = false;
 
-  List<LlamaChatMessage> _engineMessages(List<ContextMessage> messages) => [
+  List<LlamaChatMessage> _engineMessages(
+    List<ContextMessage> messages,
+    String systemPrompt,
+  ) => [
     if (systemPrompt.trim().isNotEmpty)
       LlamaChatMessage.fromText(role: LlamaChatRole.system, text: systemPrompt),
     ...messages.map(
@@ -79,6 +85,7 @@ class LocalLlmRepository implements LlmRepository {
     _stopped = false;
     metrics?.begin();
     try {
+      final prompt = systemPromptProvider?.call() ?? systemPrompt;
       final configuration = configurationFor(model);
       final contextPolicy = ChatContextPolicy(
         contextSize: configuration.contextSize,
@@ -115,7 +122,9 @@ class LocalLlmRepository implements LlmRepository {
         isCancelled: () => _stopped,
         onOmittedMessages: (messages) => omitted = messages,
         countTokens: (messages) async {
-          final template = await engine.chatTemplate(_engineMessages(messages));
+          final template = await engine.chatTemplate(
+            _engineMessages(messages, prompt),
+          );
           promptTokens =
               template.tokenCount ??
               await engine.getTokenCount(template.prompt);
@@ -139,10 +148,13 @@ class LocalLlmRepository implements LlmRepository {
       await onPromptAccepted?.call();
       if (_stopped) return;
       final reusePromptPrefix =
-          conversationId != null && _contextConversationId == conversationId;
+          conversationId != null &&
+          _contextConversationId == conversationId &&
+          _contextSystemPrompt == prompt;
       _contextConversationId = conversationId;
+      _contextSystemPrompt = prompt;
       await for (final chunk in engine.create(
-        _engineMessages(context),
+        _engineMessages(context, prompt),
         params: GenerationParams(
           reusePromptPrefix: reusePromptPrefix,
           maxTokens: configuration.responseTokens,

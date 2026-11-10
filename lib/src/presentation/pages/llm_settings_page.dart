@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/settings/parameter_help_button.dart';
@@ -17,13 +19,17 @@ class LlmSettingsPage extends StatefulWidget {
     super.key,
     required this.draft,
     this.onSave,
+    this.additionalSystemPrompt = '',
+    this.onSaveAdditionalSystemPrompt,
     this.gpuConfiguration = const GpuConfiguration(),
     this.onSaveGpu,
   });
 
   final LlmSettingsDraft draft;
+  final String additionalSystemPrompt;
+  final Future<void> Function(String)? onSaveAdditionalSystemPrompt;
   final GpuConfiguration gpuConfiguration;
-  final ValueChanged<GpuConfiguration>? onSaveGpu;
+  final FutureOr<void> Function(GpuConfiguration)? onSaveGpu;
   final Future<void> Function(LlmConfiguration)? onSave;
 
   @override
@@ -33,6 +39,9 @@ class LlmSettingsPage extends StatefulWidget {
 class _LlmSettingsPageState extends State<LlmSettingsPage> {
   LlmSettingsDraft get draft => widget.draft;
   late final _gpuDraft = GpuSettingsDraft(widget.gpuConfiguration);
+  late final _prompt = TextEditingController(
+    text: widget.additionalSystemPrompt,
+  );
   bool _saving = false;
   String? _error;
 
@@ -45,7 +54,8 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
       final configuration = draft.configuration();
       final gpu = _gpuDraft.configuration(configuration.batchSize);
       await widget.onSave?.call(configuration);
-      widget.onSaveGpu?.call(gpu);
+      await widget.onSaveGpu?.call(gpu);
+      await widget.onSaveAdditionalSystemPrompt?.call(_prompt.text);
       if (!mounted) return;
       draft.save();
       Navigator.of(context).pop();
@@ -70,6 +80,7 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
 
   @override
   void dispose() {
+    _prompt.dispose();
     _gpuDraft.dispose();
     super.dispose();
   }
@@ -160,6 +171,29 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
                     ),
                   ),
                 const SizedBox(height: 16),
+                _section('Dodatkowe instrukcje dla Bielika', [
+                  const Text(
+                    'Dopisz własne preferencje do stałej instrukcji Bielika. Obowiązują we wszystkich czatach i zajmują część kontekstu.',
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const ValueKey('system-prompt'),
+                    controller: _prompt,
+                    enabled: !_saving,
+                    minLines: 4,
+                    maxLines: 10,
+                    decoration: const InputDecoration(
+                      labelText: 'Twoje dodatkowe instrukcje',
+                      hintText: 'Np. Odpowiadaj krótko i podawaj przykłady.',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: _saving ? null : () => _prompt.text = '',
+                    icon: const Icon(Icons.clear),
+                    label: const Text('Wyczyść dodatkowe instrukcje'),
+                  ),
+                ]),
                 _section('Kontekst i odpowiedź', [
                   _field('contextSize'),
                   _field('responseTokens'),
@@ -185,6 +219,7 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
                       : () => setState(() {
                           draft.reset();
                           _gpuDraft.reset();
+                          _prompt.text = '';
                         }),
                   icon: const Icon(Icons.restore),
                   label: const Text('Przywróć domyślne ustawienia'),

@@ -20,8 +20,10 @@ enum ChatTextAction {
     final instruction = switch (this) {
       translate =>
         'Przetłumacz tekst źródłowy na język ${targetLanguage.promptName}. '
+            'Wykonaj tłumaczenie samodzielnie i podaj jego wynik jako tekst. '
             'Zachowaj sens, nazwy i liczby. Zwróć tylko tłumaczenie, '
-            'bez komentarzy i znaczników załącznika. '
+            'bez komentarzy, opakowania JSON i znaczników załącznika. '
+            'Nie zwracaj wywołania funkcji ani jej argumentów. '
             'Jeśli tekst jest już w języku docelowym, zwróć go bez zmian.',
       summarize =>
         'Streść tekst źródłowy po polsku w maksymalnie 3 krótkich punktach. '

@@ -37,6 +37,8 @@ class HomePage extends StatefulWidget {
     required this.models,
     required this.llmConfiguration,
     this.onSaveLlmConfiguration,
+    this.additionalSystemPrompt = '',
+    this.onSaveAdditionalSystemPrompt,
     this.onSaveGpuConfiguration,
     required this.modelFilesRepository,
     this.llmRepository,
@@ -60,6 +62,8 @@ class HomePage extends StatefulWidget {
   final AppVersion? appVersion;
   final AppUpdateRepository? appUpdateRepository;
   final LlmConfiguration llmConfiguration;
+  final String additionalSystemPrompt;
+  final Future<void> Function(String)? onSaveAdditionalSystemPrompt;
   final ValueChanged<GpuConfiguration>? onSaveGpuConfiguration;
   final Future<void> Function(LlmConfiguration)? onSaveLlmConfiguration;
   final List<BielikModel> models;
@@ -81,6 +85,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   );
   late BielikModel _selectedModel = widget.models.first;
   late final _settingsDraft = LlmSettingsDraft(widget.llmConfiguration);
+  late String _additionalSystemPrompt = widget.additionalSystemPrompt;
+  late LlmConfiguration _savedConfiguration = widget.llmConfiguration;
   bool _chatOpen = false;
   Route<void>? _chatRoute;
   StreamSubscription<String>? _incomingText;
@@ -203,12 +209,42 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       MaterialPageRoute<void>(
         builder: (_) => LlmSettingsPage(
           draft: _settingsDraft,
+          additionalSystemPrompt: _additionalSystemPrompt,
+          onSaveAdditionalSystemPrompt: (prompt) async {
+            await widget.onSaveAdditionalSystemPrompt?.call(prompt);
+            _additionalSystemPrompt = prompt;
+          },
           onSave: (configuration) async {
-            await widget.onSaveLlmConfiguration?.call(configuration);
-            await _chatWorkspace.releaseModel();
+            final previous = _savedConfiguration;
+            final unchanged =
+                previous.contextSize == configuration.contextSize &&
+                previous.responseTokens == configuration.responseTokens &&
+                previous.safetyTokens == configuration.safetyTokens &&
+                previous.numberOfThreads == configuration.numberOfThreads &&
+                previous.batchSize == configuration.batchSize &&
+                previous.temperature == configuration.temperature &&
+                previous.topK == configuration.topK &&
+                previous.topP == configuration.topP &&
+                previous.minP == configuration.minP &&
+                previous.repeatPenalty == configuration.repeatPenalty &&
+                previous.seed == configuration.seed;
+            if (!unchanged) {
+              await widget.onSaveLlmConfiguration?.call(configuration);
+              await _chatWorkspace.releaseModel();
+              _savedConfiguration = configuration;
+            }
           },
           gpuConfiguration: _gpuConfiguration,
-          onSaveGpu: (configuration) {
+          onSaveGpu: (configuration) async {
+            if (configuration.enabled != _gpuConfiguration.enabled ||
+                configuration.backend != _gpuConfiguration.backend ||
+                configuration.layers != _gpuConfiguration.layers ||
+                configuration.microBatchSize !=
+                    _gpuConfiguration.microBatchSize ||
+                configuration.flashAttention !=
+                    _gpuConfiguration.flashAttention) {
+              await _chatWorkspace.releaseModel();
+            }
             widget.onSaveGpuConfiguration?.call(configuration);
             _gpuConfiguration = configuration;
           },

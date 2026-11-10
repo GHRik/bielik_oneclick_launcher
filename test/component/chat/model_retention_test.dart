@@ -120,12 +120,43 @@ void main() {
     await close(tester);
   });
 
-  testWidgets('Saving settings unloads the retained model', (tester) async {
+  testWidgets('Saving only the prompt retains the model and editor value', (
+    tester,
+  ) async {
     await open(tester);
     await tester.pageBack();
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Konfiguracja LLM'));
     await tester.pumpAndSettle();
+    final field = find.byKey(const ValueKey('system-prompt'));
+    await tester.ensureVisible(field);
+    await tester.enterText(field, 'Odpowiadaj zwięźle.');
+    await tester.tap(find.text('Zapisz'));
+    await tester.pumpAndSettle();
+    expect(llm.unloads, 0);
+    await tester.tap(find.byTooltip('Konfiguracja LLM'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(field).controller!.text,
+      'Odpowiadaj zwięźle.',
+    );
+    await close(tester);
+  });
+
+  testWidgets('Changing model settings unloads the retained model', (
+    tester,
+  ) async {
+    await open(tester);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Konfiguracja LLM'));
+    await tester.pumpAndSettle();
+    final contextField = find.widgetWithText(
+      TextField,
+      'Rozmiar kontekstu (tokeny)',
+    );
+    await tester.ensureVisible(contextField);
+    await tester.enterText(contextField, '4096');
     await tester.tap(find.text('Zapisz'));
     await tester.pumpAndSettle();
     expect(llm.unloads, 1);

@@ -40,6 +40,8 @@ class MyApp extends StatefulWidget {
     this.appUpdateRepository,
     this.llmConfiguration = defaultLlmConfiguration,
     this.onSaveLlmConfiguration,
+    this.additionalSystemPrompt = '',
+    this.onSaveAdditionalSystemPrompt,
     this.onSaveGpuConfiguration,
     this.deviceResourcesRepository,
     this.modelRepository = const ConfiguredModelCatalogRepository(bielikModels),
@@ -61,6 +63,8 @@ class MyApp extends StatefulWidget {
   final AppVersion? appVersion;
   final AppUpdateRepository? appUpdateRepository;
   final LlmConfiguration llmConfiguration;
+  final String additionalSystemPrompt;
+  final Future<void> Function(String)? onSaveAdditionalSystemPrompt;
   final ValueChanged<GpuConfiguration>? onSaveGpuConfiguration;
   final Future<void> Function(LlmConfiguration)? onSaveLlmConfiguration;
   final ModelCatalogRepository modelRepository;
@@ -114,6 +118,8 @@ class _MyAppState extends State<MyApp> {
               llmRepository: widget.llmRepository,
               llmConfiguration: widget.llmConfiguration,
               onSaveLlmConfiguration: widget.onSaveLlmConfiguration,
+              additionalSystemPrompt: widget.additionalSystemPrompt,
+              onSaveAdditionalSystemPrompt: widget.onSaveAdditionalSystemPrompt,
               onSaveGpuConfiguration: widget.onSaveGpuConfiguration,
               models: widget.modelRepository.getModels(),
               statisticSeries:

@@ -17,6 +17,8 @@ class _Engine extends Fake implements LlamaEngine {
   final counted = <List<LlamaChatMessage>>[];
   final generated = <List<LlamaChatMessage>>[];
   List<LlamaCompletionChunk> chunks = [];
+  final reuse = <bool>[];
+  int loads = 0;
   @override
   dynamic noSuchMethod(Invocation invocation) {
     final messages = invocation.positionalArguments.isEmpty
@@ -38,6 +40,10 @@ class _Engine extends Fake implements LlamaEngine {
         return Future.value('CPU');
       case #create:
         generated.add(messages);
+        reuse.add(
+          (invocation.namedArguments[#params] as GenerationParams)
+              .reusePromptPrefix,
+        );
         return Stream<LlamaCompletionChunk>.fromIterable(chunks);
       case #dispose:
         return Future<void>.value();
@@ -51,6 +57,7 @@ void main() {
     late _Engine engine;
     late LocalLlmRepository repository;
     var configuration = defaultLlmConfiguration;
+    var prompt = '';
     const model = ModelFile(
       name: 'test.gguf',
       url: '',
@@ -64,15 +71,19 @@ void main() {
       final folder = await Directory('${directory.path}/models').create();
       await File('${folder.path}/test.gguf').writeAsBytes([1]);
       engine = _Engine();
+      prompt = '';
       configuration = defaultLlmConfiguration.copyWith(
         contextSize: bielikSystemPrompt.length + 224,
         responseTokens: 64,
       );
       repository = LocalLlmRepository(
         ModelFileDataSource(directory: () async => directory),
-        systemPrompt: bielikSystemPrompt,
+        systemPromptProvider: () => composeBielikSystemPrompt(prompt),
         configurationFor: (_) => configuration,
-        loadEngine: (_, _) async => engine,
+        loadEngine: (_, _) async {
+          engine.loads++;
+          return engine;
+        },
       );
 
       addTearDown(repository.unload);
@@ -106,6 +117,26 @@ void main() {
             hasLength(1),
           );
         }
+      },
+    );
+
+    test(
+      'Prompt changes rebuild context without reloading the model',
+      () async {
+        await generateTrimmedHistory();
+        await generateTrimmedHistory();
+        prompt = 'Odpowiadaj krótko.';
+        await generateTrimmedHistory();
+        expect(engine.reuse, [false, true, false]);
+        expect(engine.loads, 1);
+        expect(
+          engine.generated.last.first.content,
+          composeBielikSystemPrompt(prompt),
+        );
+        expect(
+          engine.counted.last.first.content,
+          composeBielikSystemPrompt(prompt),
+        );
       },
     );
 
