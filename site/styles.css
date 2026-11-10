@@ -31,6 +31,8 @@
 .ask-flow-steps .annotated-screen{width:100%}
 .screen-annotation{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .screen-annotation ellipse{fill:none;stroke:#ff4b4b;stroke-width:14;filter:drop-shadow(0 1px 2px #0008)}
+.annotation-step circle{fill:#ff4b4b;stroke:#151613;stroke-width:8}
+.annotation-step text{fill:#fff;font:700 64px system-ui,sans-serif;text-anchor:middle;dominant-baseline:middle}
 @media(max-width:760px){.ask-flow-steps{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:18px}.ask-flow-steps figure{flex:0 0 82%;scroll-snap-align:center}.ask-flow-steps figcaption{min-height:44px}.ask-flow-steps img{border-radius:14px}}
 html{scroll-behavior:smooth;scroll-padding-top:24px}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:"Plus Jakarta Sans","Segoe UI",Arial,sans-serif;font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}
@@ -94,6 +96,18 @@ h1 em{color:var(--display-ink);font-weight:500}
 .setup-phone img,.setup-phone video{display:block;width:100%;height:auto;border-radius:22px}
 .setup-phone video{cursor:pointer}
 .setup-phone video:focus-visible{outline:3px solid var(--accent);outline-offset:-4px}
+.hero-feature{position:absolute;z-index:2;display:flex;align-items:center;min-height:48px;padding:6px;border:1px solid var(--strong-line);border-radius:12px;background:var(--surface);box-shadow:0 8px 24px #0002;animation:feature-float 6s ease-in-out infinite}
+.hero-feature:hover{border-color:var(--accent)}
+.hero-feature:focus-visible{animation-play-state:paused;outline-offset:4px}
+.hero-screen-crop{display:block;width:100%;height:auto;overflow:hidden;border-radius:7px}
+.hero-feature-ask{left:4px;top:28px;width:210px;animation-delay:-1s}
+.hero-feature-actions{left:0;bottom:14px;width:260px;flex-direction:column;align-items:stretch;gap:6px;animation-delay:-4s}
+.hero-feature-caption{display:flex;align-items:center;gap:5px;padding:2px 5px;font-size:10px;font-weight:600;color:var(--muted)}
+.hero-feature-caption svg{color:var(--accent)}
+@keyframes feature-float{0%,100%{transform:translateY(0);box-shadow:0 8px 24px #0002}50%{transform:translateY(-7px);box-shadow:0 12px 28px #0003}}
+@media(max-width:760px){.hero-feature-ask{left:0;top:8px;width:175px}.hero-feature-actions{left:0;bottom:0;width:210px}}
+@media(prefers-reduced-motion:reduce){.hero-feature{animation:none}}
+:root[data-theme="contrast"] .hero-feature{animation:none;border-width:2px}
 .slides.slider-ready{position:relative;display:flex;align-items:stretch;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
 .slides.slider-ready::-webkit-scrollbar{display:none}
 .slider-ready .feature-slide{flex:0 0 100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always}
