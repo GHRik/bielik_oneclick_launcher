@@ -1,6 +1,8 @@
 import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:markdown/markdown.dart' as md;
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/math_markdown.dart';
 import 'package:material_ui/material_ui.dart';
 
 class AssistantMarkdownMessage extends StatelessWidget {
@@ -29,6 +31,9 @@ class AssistantMarkdownMessage extends StatelessWidget {
             children: [
               MarkdownBody(
                 data: message.text,
+                inlineSyntaxes: [MathInlineSyntax()],
+                extensionSet: md.ExtensionSet.gitHubFlavored,
+                builders: {'math': MathElementBuilder(textStyle)},
                 fitContent: true,
                 softLineBreak: true,
                 styleSheet: MarkdownStyleSheet(

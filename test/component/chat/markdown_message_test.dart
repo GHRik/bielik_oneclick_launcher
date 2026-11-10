@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
@@ -66,6 +67,77 @@ Future<ConversationController> _open(
 }
 
 void main() {
+  group('Assistant math formatting', () {
+    for (final expression in [
+      r'$\frac{h}{2}$',
+      r'\(\frac{h}{2}\)',
+      r'\[\frac{h}{2}\]',
+      '\$\$\n\\frac{h}{2}\n\$\$',
+      r'\frac{h}{2}',
+      r'\frac{\sqrt{h}}{2}',
+    ]) {
+      testWidgets('Renders $expression as a mathematical expression', (
+        tester,
+      ) async {
+        await _open(tester, 'Wynik: $expression.');
+        expect(find.byType(Math), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets('Keeps LaTeX examples inside code literal', (tester) async {
+      await _open(tester, '`\\frac{h}{2}`\n\n```latex\n\\frac{h}{2}\n```');
+      expect(find.byType(Math), findsNothing);
+      expect(
+        _visibleRuns(tester).where((run) => run.text.contains(r'\frac{h}{2}')),
+        hasLength(2),
+      );
+    });
+
+    testWidgets('Malformed math falls back to readable source', (tester) async {
+      await _open(tester, r'$\unknowncommand{h}$');
+      expect(find.text(r'$\unknowncommand{h}$'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('A partial streamed expression does not hide following text', (
+      tester,
+    ) async {
+      final conversation = await _open(tester, r'Wynik: \frac{h}{');
+      expect(find.byType(Math), findsNothing);
+      await conversation.updateMessage(
+        'message',
+        r'Wynik: \frac{h}{2}. Gotowe.',
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(Math), findsOneWidget);
+      expect(
+        _visibleRuns(tester).any((run) => run.text.contains('Gotowe.')),
+        isTrue,
+      );
+    });
+
+    testWidgets(
+      'Long equations fit a narrow screen without altering saved text',
+      (tester) async {
+        final source =
+            r'$$' + List.filled(30, r'\frac{h}{2}').join('+') + r'$$';
+        final conversation = await _open(tester, source, width: 320);
+        expect(find.byType(Math), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        expect(conversation.messages.single.text, source);
+      },
+    );
+
+    testWidgets('Currency and escaped dollars remain ordinary text', (
+      tester,
+    ) async {
+      await _open(tester, r'Cena: $5 albo $10. Koszt: \$20.');
+      expect(find.byType(Math), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
   group('Assistant message Markdown', () {
     testWidgets('Renders double asterisks as bold text', (tester) async {
       await _open(tester, 'To jest **pogrubione**.');
