@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/app_version.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
@@ -35,6 +37,7 @@ class HomePage extends StatefulWidget {
     this.onSaveGpuConfiguration,
     required this.modelFilesRepository,
     this.llmRepository,
+    this.appVersion,
     this.deviceResourcesRepository,
     required this.chatRepository,
     required this.statisticSeries,
@@ -50,6 +53,7 @@ class HomePage extends StatefulWidget {
   final IncomingTextRepository? incomingTextRepository;
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
+  final AppVersion? appVersion;
   final LlmConfiguration llmConfiguration;
   final ValueChanged<GpuConfiguration>? onSaveGpuConfiguration;
   final Future<void> Function(LlmConfiguration)? onSaveLlmConfiguration;
@@ -213,11 +217,28 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bielik'),
+        toolbarHeight: widget.appVersion == null ? null : 80,
         actions: [
-          IconButton(
-            tooltip: 'Konfiguracja LLM',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: _chatOpen ? null : _openSettings,
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                tooltip: 'Konfiguracja LLM',
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: _chatOpen ? null : _openSettings,
+              ),
+              if (widget.appVersion case final version?)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Tooltip(
+                    message: 'Kompilacja ${version.build}',
+                    child: Text(
+                      'Wersja ${version.name}',
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
