@@ -301,6 +301,84 @@ void main() {
       });
     });
 
+    testWidgets(
+      'Acknowledging omissions hides the warning until new messages are omitted',
+      (tester) async {
+        await withWorkspace(tester, (repository, llm, workspace) async {
+          final send = workspace.sendMessage('Question');
+          await _until(() => llm.streams.isNotEmpty);
+          final report = llm.contextCallbacks.last!;
+          const usage = ContextUsage(
+            promptTokens: 42,
+            contextSize: 100,
+            omittedMessageIds: ['old-user', 'old-answer'],
+          );
+          report(usage);
+          expect(workspace.hasUnseenContextOmissions, isTrue);
+          workspace.acknowledgeContextOmissions();
+          expect(workspace.hasUnseenContextOmissions, isFalse);
+          report(usage);
+          expect(workspace.hasUnseenContextOmissions, isFalse);
+          report(
+            const ContextUsage(
+              promptTokens: 40,
+              contextSize: 100,
+              omittedMessageIds: ['old-user', 'old-answer', 'next-user'],
+            ),
+          );
+          expect(workspace.hasUnseenContextOmissions, isTrue);
+          await llm.streams.last.close();
+          await send;
+        });
+      },
+    );
+
+    testWidgets('Context acknowledgements belong to their conversation', (
+      tester,
+    ) async {
+      await withWorkspace(tester, (repository, llm, workspace) async {
+        final original = workspace.selected;
+        final send = workspace.sendMessage('Question');
+        await _until(() => llm.streams.isNotEmpty);
+        llm.contextCallbacks.last!(
+          const ContextUsage(
+            promptTokens: 42,
+            contextSize: 100,
+            omittedMessageIds: ['old'],
+          ),
+        );
+        await workspace.newChat();
+        workspace.acknowledgeContextOmissions();
+        expect(workspace.hasUnseenContextOmissions, isFalse);
+        workspace.selectConversation(original);
+        expect(workspace.hasUnseenContextOmissions, isTrue);
+        workspace.acknowledgeContextOmissions();
+        await workspace.newChat();
+        workspace.selectConversation(original);
+        expect(workspace.hasUnseenContextOmissions, isFalse);
+        await llm.streams.last.close();
+        await send;
+      });
+    });
+
+    testWidgets('A lower percentage alone does not signal omitted history', (
+      tester,
+    ) async {
+      await withWorkspace(tester, (repository, llm, workspace) async {
+        final send = workspace.sendMessage('Question');
+        await _until(() => llm.streams.isNotEmpty);
+        llm.contextCallbacks.last!(
+          const ContextUsage(promptTokens: 80, contextSize: 100),
+        );
+        llm.contextCallbacks.last!(
+          const ContextUsage(promptTokens: 42, contextSize: 100),
+        );
+        expect(workspace.hasUnseenContextOmissions, isFalse);
+        await llm.streams.last.close();
+        await send;
+      });
+    });
+
     testWidgets('Releasing the model unloads the engine', (tester) async {
       await withWorkspace(tester, (repository, llm, workspace) async {
         await workspace.releaseModel();

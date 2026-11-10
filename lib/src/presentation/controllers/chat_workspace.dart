@@ -75,6 +75,26 @@ class ChatWorkspace extends ChangeNotifier {
   final ChatService _chatService;
   final Map<int, ContextUsage> _contextUsage = {};
   ContextUsage? get contextUsage => _contextUsage[_selected?.id];
+  final Map<int, Set<String>> _acknowledgedOmissions = {};
+  bool get hasUnseenContextOmissions {
+    final acknowledged =
+        _acknowledgedOmissions[_selected?.id] ?? const <String>{};
+    return contextUsage?.omittedMessageIds.any(
+          (id) => !acknowledged.contains(id),
+        ) ??
+        false;
+  }
+
+  void acknowledgeContextOmissions() {
+    final conversation = _selected;
+    final usage = contextUsage;
+    if (conversation == null || usage == null) return;
+    (_acknowledgedOmissions[conversation.id] ??= {}).addAll(
+      usage.omittedMessageIds,
+    );
+    _notify();
+  }
+
   BielikModel? _model;
   LlmComputeMode _computeMode = LlmComputeMode.cpu;
   LlmRuntimeInfo? _runtimeInfo;
@@ -363,6 +383,7 @@ class ChatWorkspace extends ChangeNotifier {
         if (_disposed) return;
         _conversations.remove(conversation);
         _contextUsage.remove(conversation.id);
+        _acknowledgedOmissions.remove(conversation.id);
         if (_conversations.isEmpty) {
           _selected = null;
           _initialization = null;

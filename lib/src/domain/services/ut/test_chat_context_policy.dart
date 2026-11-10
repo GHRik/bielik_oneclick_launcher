@@ -14,6 +14,70 @@ ChatMessage _message(String text, String author) => ChatMessage(
 );
 
 void main() {
+  group('Omitted history reporting', () {
+    test('Reports original messages from merged and removed turns', () async {
+      List<ChatMessage>? omitted;
+      final history = [
+        _message('Old first', ChatAuthors.user),
+        _message('Old second', ChatAuthors.user),
+        _message('Old reply', ChatAuthors.assistant),
+        _message('New question', ChatAuthors.user),
+      ];
+      await const ChatContextPolicy(
+        contextSize: 60,
+        responseTokens: 30,
+        safetyTokens: 5,
+      ).prepare(
+        history,
+        countTokens: (messages) async => messages.length * 20,
+        onOmittedMessages: (messages) => omitted = messages,
+      );
+      expect(omitted, orderedEquals(history.take(3)));
+    });
+
+    test('Reports no omissions when the complete history fits', () async {
+      List<ChatMessage>? omitted;
+      await const ChatContextPolicy().prepare(
+        [_message('Question', ChatAuthors.user)],
+        countTokens: (_) async => 1,
+        onOmittedMessages: (messages) => omitted = messages,
+      );
+      expect(omitted, isEmpty);
+    });
+
+    test('Does not publish omissions for a rejected prompt', () async {
+      var reported = false;
+      await expectLater(
+        const ChatContextPolicy().prepare(
+          [
+            _message('Old', ChatAuthors.user),
+            _message('Reply', ChatAuthors.assistant),
+            _message('Too long', ChatAuthors.user),
+          ],
+          countTokens: (_) async => 10000,
+          onOmittedMessages: (_) => reported = true,
+        ),
+        throwsA(isA<ChatContextTooLong>()),
+      );
+      expect(reported, isFalse);
+    });
+
+    test('Does not publish omissions after cancellation', () async {
+      var stopped = false;
+      var reported = false;
+      await const ChatContextPolicy().prepare(
+        [_message('Question', ChatAuthors.user)],
+        isCancelled: () => stopped,
+        countTokens: (_) async {
+          stopped = true;
+          return 1;
+        },
+        onOmittedMessages: (_) => reported = true,
+      );
+      expect(reported, isFalse);
+    });
+  });
+
   test('Includes attachment-only messages in the model context', () async {
     final message = ChatMessage(
       id: 'file',
