@@ -408,13 +408,17 @@ class ChatWorkspace extends ChangeNotifier {
     );
   }
 
-  Future<void> sendTextAction(ChatTextAction action) {
+  Future<void> sendTextAction(
+    ChatTextAction action, {
+    TranslationLanguage targetLanguage = TranslationLanguage.polish,
+  }) {
     if (!ready || _disposed || busy || sending || !selected.offersTextActions) {
       return Future.value();
     }
     final prompt = action.prompt(
       selected.draft.text,
       hasAttachment: selected.attachment != null,
+      targetLanguage: targetLanguage,
     );
     return sendMessage(prompt);
   }

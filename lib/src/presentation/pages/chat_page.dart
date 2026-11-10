@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:bielik_oneclick_launcher/src/domain/models/chat_text_action.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/translation_language_dialog.dart';
+
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_memory_warning_button.dart';
 
 import 'package:material_ui/material_ui.dart';
@@ -121,6 +124,31 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
+  Future<void> _sendTextAction(ChatTextAction action) async {
+    final workspace = widget.workspace;
+    if (!workspace.ready || workspace.busy || workspace.sending) return;
+    if (action != ChatTextAction.translate) {
+      await workspace.sendTextAction(action);
+      return;
+    }
+    final target = workspace.selected;
+    final draftRevision = target.draftRevision;
+    final attachmentRevision = target.attachmentRevision;
+    final language = await showDialog<TranslationLanguage>(
+      context: context,
+      builder: (_) => const TranslationLanguageDialog(),
+    );
+    if (!mounted ||
+        language == null ||
+        !workspace.ready ||
+        workspace.selected != target ||
+        target.draftRevision != draftRevision ||
+        target.attachmentRevision != attachmentRevision) {
+      return;
+    }
+    await workspace.sendTextAction(action, targetLanguage: language);
   }
 
   void _selectConversation(ConversationController conversation) {
@@ -280,7 +308,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                               widget.workspace.streamingMessageId,
                           clipboardRepository: widget.clipboardRepository,
                           onMessageSend: widget.workspace.sendMessage,
-                          onTextAction: widget.workspace.sendTextAction,
+                          onTextAction: _sendTextAction,
                           sending:
                               widget.workspace.sending || widget.workspace.busy,
                         ),

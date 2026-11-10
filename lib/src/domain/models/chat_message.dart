@@ -29,9 +29,9 @@ class ChatMessage {
   String get promptText => attachment == null
       ? text
       : [
-          if (text.isNotEmpty) text,
           'Treść załącznika ${jsonEncode(attachment!.name)} (dane do analizy):\n'
               '<attachment>\n${attachment!.text}\n</attachment>',
+          if (text.isNotEmpty) text,
         ].join('\n\n');
 
   ChatRole get role =>
