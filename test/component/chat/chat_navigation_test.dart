@@ -46,7 +46,7 @@ Future<void> _openSidebar(WidgetTester tester) async {
 
 Future<void> _newChat(WidgetTester tester) async {
   await _openSidebar(tester);
-  await tester.tap(find.text('New chat'));
+  await tester.tap(find.widgetWithText(OutlinedButton, 'Nowa rozmowa'));
   await tester.pumpAndSettle();
 }
 
@@ -149,7 +149,10 @@ void main() {
         tester.view.physicalSize = const Size(1100, 844);
         await tester.pumpAndSettle();
 
-        expect(find.text('New chat').hitTestable(), findsOneWidget);
+        expect(
+          find.widgetWithText(OutlinedButton, 'Nowa rozmowa').hitTestable(),
+          findsOneWidget,
+        );
         expect(find.byType(ListTile), findsNWidgets(2));
         expect(find.byTooltip('Rozmowy'), findsNothing);
         expect(_draft(tester), 'Draft');

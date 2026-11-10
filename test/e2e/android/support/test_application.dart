@@ -242,7 +242,11 @@ Future<void> openSidebar(WidgetTester tester) async {
     await tester.tap(menu);
     await waitFor(
       tester,
-      () => find.text('New chat').hitTestable().evaluate().isNotEmpty,
+      () => find
+          .widgetWithText(OutlinedButton, 'Nowa rozmowa')
+          .hitTestable()
+          .evaluate()
+          .isNotEmpty,
       description: 'conversation sidebar',
     );
   }
@@ -252,7 +256,7 @@ Future<void> newChat(WidgetTester tester) async {
   final workspace = tester.widget<ChatPage>(find.byType(ChatPage)).workspace;
   final previousId = workspace.selected.id;
   await openSidebar(tester);
-  await tester.tap(find.text('New chat'));
+  await tester.tap(find.widgetWithText(OutlinedButton, 'Nowa rozmowa'));
   await waitFor(
     tester,
     () =>

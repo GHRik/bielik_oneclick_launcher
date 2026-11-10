@@ -19,7 +19,7 @@ class SidebarHeader extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: onNewChat,
             icon: const Icon(Icons.add),
-            label: const Text('New chat'),
+            label: const Text('Nowa rozmowa'),
           ),
         ),
         Padding(

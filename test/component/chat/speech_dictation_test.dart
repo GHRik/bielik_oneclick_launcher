@@ -128,7 +128,7 @@ void main() {
     final lateResult = speech.text!;
     await tester.tap(find.byTooltip('Rozmowy'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('New chat'));
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Nowa rozmowa'));
     await tester.pumpAndSettle();
     lateResult('Wrong chat');
     await tester.pumpAndSettle();
