@@ -40,6 +40,14 @@ The website never inserts the English release body into its Polish content. Miss
 
 Technical build details stay in the attached `BUILD.txt`. The large Android `versionCode` remains an internal increasing identifier, rather than the public release title. Avoid changing signing keys when changing version numbers.
 
+## In-app APK updater (temporary)
+
+The home screen displays the installed Android version below the settings icon. The APK updater checks GitHub's latest stable release only when the user presses **Sprawdź aktualizacje**. It compares the increasing version code in `BUILD.txt`, downloads `bielik-arm64.apk` after consent, verifies its size and SHA-256, then asks Android to open the installer. The native adapter also checks the application ID, increasing version code, current signing identity and pinned release certificate. Android still requires user confirmation and may first ask for permission to install from this app. Debug installations cannot be replaced by release APKs signed with a different key.
+
+`Release APK` enables this temporary feature with `--dart-define=BIELIK_APK_UPDATES=true`. Debug builds enable it for testing. Release/AAB builds without this flag hide the updater, disable its native channel and omit `REQUEST_INSTALL_PACKAGES`. Keep the AAB workflow free of this flag. To remove the updater later, remove the injected repository/button, APK update channel, provider, manifest overlay and APK workflow flag; version display is independent.
+
+Downloads use private cache storage and run while the update dialog is open. Cancelling removes an incomplete download; retry starts again. Completed APKs older than a day are cleaned up on the next download. No chat content is sent to GitHub.
+
 ## Updating an installation
 
 Download a newer signed release APK and install it over the existing installation. Android preserves the app's database, downloaded models, and settings when the application ID and signing certificate match. No uninstallation or app-managed updater is required.

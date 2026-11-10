@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/app_update_repository.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/app_update_button.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/app_version.dart';
 
 import 'package:material_ui/material_ui.dart';
@@ -38,6 +41,7 @@ class HomePage extends StatefulWidget {
     required this.modelFilesRepository,
     this.llmRepository,
     this.appVersion,
+    this.appUpdateRepository,
     this.deviceResourcesRepository,
     required this.chatRepository,
     required this.statisticSeries,
@@ -54,6 +58,7 @@ class HomePage extends StatefulWidget {
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
   final AppVersion? appVersion;
+  final AppUpdateRepository? appUpdateRepository;
   final LlmConfiguration llmConfiguration;
   final ValueChanged<GpuConfiguration>? onSaveGpuConfiguration;
   final Future<void> Function(LlmConfiguration)? onSaveLlmConfiguration;
@@ -218,6 +223,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       appBar: AppBar(
         title: const Text('Bielik'),
         toolbarHeight: widget.appVersion == null ? null : 80,
+        bottom: widget.appUpdateRepository != null && widget.appVersion != null
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(40),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: AppUpdateButton(
+                    repository: widget.appUpdateRepository!,
+                    version: widget.appVersion!,
+                  ),
+                ),
+              )
+            : null,
         actions: [
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
