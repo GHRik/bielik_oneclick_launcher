@@ -36,6 +36,7 @@ app.*.map.json
 
 .widget_preview/
 .agent-staging/
+**/bielik-awards-2026-zgloszenie.md
 /android/key.properties
 /android/signing/
 *.jks

@@ -103,6 +103,8 @@ h2{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:34px;letter-sp
 .section-heading p{color:var(--muted);font-size:12px;margin-top:9px}
 .feature-slide{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);align-items:center;gap:44px;min-height:0;padding:34px 36px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
 .feature-slide figure{display:flex;justify-content:center}
+#slide-dictation figure{flex-direction:column;align-items:center;gap:10px}
+#slide-dictation figcaption{font-size:10px;color:var(--muted)}
 .phone-screen{width:300px;border:5px solid #45483b;border-radius:24px;background:#fff}
 .slide-copy h3{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:clamp(27px,3vw,37px);letter-spacing:-.6px;line-height:1.15;margin-block:15px 20px}
 .slide-copy>p:not(.eyebrow){font-size:13px;line-height:1.9;color:var(--muted);margin-top:14px}
@@ -133,6 +135,7 @@ h2{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:34px;letter-sp
 .roadmap-statuses strong{font-size:16px;font-weight:600}
 .roadmap-state{display:flex;align-items:center;justify-content:center;gap:5px;color:var(--muted);font-size:12px}
 .roadmap-state svg{color:var(--accent)}
+.roadmap-detail{font-size:11px;line-height:1.6;color:var(--muted);max-width:190px}
 .slide-copy>.text-link{margin-top:20px}
 @media(max-width:600px){.roadmap-statuses{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}}
 .demo-section{display:flex;flex-direction:column;align-items:center;text-align:center;padding-block:50px}
