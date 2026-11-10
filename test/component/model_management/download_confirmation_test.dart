@@ -36,7 +36,6 @@ void main() {
       'both resource readings are missing': (null, null),
       'storage is unknown': (null, 4),
       'RAM is unknown': (2, null),
-      'storage is insufficient': (1, 4),
       'RAM is insufficient': (2, 3),
     };
     for (final entry in cases.entries) {
@@ -50,6 +49,44 @@ void main() {
         expect(find.text('Anuluj pobieranie'), findsNothing);
       });
     }
+
+    for (final ram in <double?>[null, 0, 4]) {
+      testWidgets('Insufficient storage blocks downloading with $ram GB RAM', (
+        tester,
+      ) async {
+        await _openPanel(tester, 1, ram);
+        await tester.tap(find.text('Pobierz'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Za mało miejsca'), findsOneWidget);
+        expect(
+          find.text('Proszę zwolnić miejsce, aby pobrać model.'),
+          findsOneWidget,
+        );
+        expect(find.text('Pobierz mimo to'), findsNothing);
+        expect(find.text('Czy na pewno chcesz pobrać?'), findsNothing);
+        expect(find.text('Anuluj pobieranie'), findsNothing);
+
+        await tester.tap(find.text('Zamknij'));
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.text('Anuluj pobieranie'), findsNothing);
+      });
+    }
+
+    testWidgets(
+      'Insufficient RAM can still be accepted when storage is sufficient',
+      (tester) async {
+        await _openPanel(tester, 2, 0);
+        await tester.tap(find.text('Pobierz'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Pobierz mimo to'));
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.text('Anuluj pobieranie'), findsOneWidget);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
 
     testWidgets('Cancelling leaves the download stopped', (tester) async {
       await _openPanel(tester, null, null);
