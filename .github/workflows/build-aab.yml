@@ -4,8 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       source_release:
-        description: 'OneClick APK release tag (e.g. v1.0.6-build.12.1)'
-        required: true
+        description: 'Existing APK release tag, or latest for the latest stable APK (not a new release name)'
+        default: latest
+        required: false
         type: string
 
 permissions:
@@ -29,11 +30,20 @@ jobs:
           GH_REPO: ${{ github.repository }}
           SOURCE_RELEASE: ${{ inputs.source_release }}
         run: |
+          SOURCE_RELEASE="$(printf '%s' "$SOURCE_RELEASE" | xargs)"
+          if [[ -z "$SOURCE_RELEASE" || "$SOURCE_RELEASE" == latest ]]; then
+            SOURCE_RELEASE="$(gh release view --json tagName --jq .tagName)"
+          fi
           if [[ ! "$SOURCE_RELEASE" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ || "$SOURCE_RELEASE" == google-play-* ]]; then
             printf '::error::Enter the tag of an APK release.\n'
             exit 1
           fi
-          gh release view "$SOURCE_RELEASE" --json isDraft,assets,url > "$RUNNER_TEMP/source-release.json"
+          if ! gh release view "$SOURCE_RELEASE" --json isDraft,assets,url > "$RUNNER_TEMP/source-release.json"; then
+            printf '::error::No APK release exists with tag "%s". Use latest or copy an existing release tag from the list below.\n' "$SOURCE_RELEASE"
+            gh release list --limit 10
+            exit 1
+          fi
+          printf 'release_tag=%s\n' "$SOURCE_RELEASE" >> "$GITHUB_OUTPUT"
           jq -e '.isDraft == false and any(.assets[]; .name == "bielik-arm64.apk")' "$RUNNER_TEMP/source-release.json" > /dev/null
           gh release download "$SOURCE_RELEASE" --pattern BUILD.txt --dir "$RUNNER_TEMP/source-release"
           app_version="$(awk -F ': ' '/^Version: / {print $2; exit}' "$RUNNER_TEMP/source-release/BUILD.txt")"
@@ -150,7 +160,7 @@ jobs:
 
       - name: Prepare Google Play download and release notes
         env:
-          SOURCE_RELEASE: ${{ inputs.source_release }}
+          SOURCE_RELEASE: ${{ steps.source.outputs.release_tag }}
           SOURCE_URL: ${{ steps.source.outputs.url }}
           SOURCE_SHA: ${{ steps.source.outputs.sha }}
           APP_VERSION: ${{ steps.source.outputs.app_version }}

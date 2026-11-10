@@ -18,7 +18,7 @@ Download `bielik-arm64.apk` directly from [the latest stable release](https://gi
 
 ## Build an AAB for Google Play
 
-Open **Actions → Release Google Play AAB → Run workflow** on `master`. Enter the exact tag of an existing OneClick APK release, for example `v1.0.6-build.12.1`. Stable releases and published APK prereleases are supported. The release must include `bielik-arm64.apk` and `BUILD.txt`.
+Open **Actions → Release Google Play AAB → Run workflow** on `master`. Leave `source_release` as `latest` (or empty) to build from the latest stable APK. To select another release, enter its exact existing tag, for example `v1.0.6-build.12.1`. This is the source release, not a name for the new AAB. Stable releases and published APK prereleases are supported. The release must include `bielik-arm64.apk` and `BUILD.txt`. A missing tag produces an error with a list of available releases.
 
 The workflow resolves the release tag to its exact commit and checks it against `BUILD.txt`. It reuses the source release's visible app version, assigns a new increasing Android version code, analyzes and tests the source, then builds a signed ARM64 Android App Bundle. It uses the same signing secrets and pinned certificate as the APK workflow. APK and AAB jobs share a concurrency group.
 
