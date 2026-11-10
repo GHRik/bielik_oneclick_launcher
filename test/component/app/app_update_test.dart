@@ -1,5 +1,10 @@
 import 'dart:async';
 
+import 'package:bielik_oneclick_launcher/src/app.dart';
+
+import '../../support/in_memory_chat_repository.dart';
+import '../../support/in_memory_model_files_repository.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/app_version.dart';
@@ -10,12 +15,14 @@ import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/app_updat
 class _Updates implements AppUpdateRepository {
   AppUpdate? update;
   UpdateFailure? failure;
+  int checks = 0;
   int downloads = 0;
   int installs = 0;
   bool permitted = true;
   Completer<String>? pending;
   @override
   Future<AppUpdate?> check(int installedBuild) async {
+    checks++;
     if (failure != null) throw failure!;
     return update;
   }
@@ -51,7 +58,7 @@ Future<void> _open(WidgetTester tester, _Updates updates) async {
       ),
     ),
   );
-  await tester.tap(find.text('Sprawdź aktualizacje'));
+  await tester.tap(find.text('Aktualizuj'));
   await tester.pumpAndSettle();
 }
 
@@ -66,6 +73,37 @@ AppUpdate _release() => AppUpdate(
 );
 
 void main() {
+  testWidgets(
+    'Update button is centered below the version without checking on startup',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final updates = _Updates();
+      await tester.pumpWidget(
+        MyApp(
+          appVersion: const AppVersion(name: '1.0.9', build: 42),
+          appUpdateRepository: updates,
+          chatRepository: InMemoryChatRepository(),
+          modelFilesRepository: InMemoryModelFilesRepository(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final version = find.text('Wersja 1.0.9');
+      final button = find.text('Aktualizuj');
+      expect(
+        tester.getCenter(button).dx,
+        closeTo(tester.getCenter(version).dx, 1),
+      );
+      expect(
+        tester.getTopLeft(button).dy,
+        greaterThan(tester.getBottomLeft(version).dy),
+      );
+      expect(updates.checks, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('No update reports the current version without downloading', (
     tester,
   ) async {

@@ -13,9 +13,13 @@ class AppUpdateButton extends StatelessWidget {
   final AppVersion version;
 
   @override
-  Widget build(BuildContext context) => TextButton.icon(
-    icon: const Icon(Icons.system_update, size: 18),
-    label: const Text('Sprawdź aktualizacje'),
+  Widget build(BuildContext context) => TextButton(
+    style: TextButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      minimumSize: const Size(88, 36),
+      textStyle: Theme.of(context).textTheme.labelSmall,
+    ),
+    child: const Text('Aktualizuj'),
     onPressed: () => showDialog<void>(
       context: context,
       barrierDismissible: false,

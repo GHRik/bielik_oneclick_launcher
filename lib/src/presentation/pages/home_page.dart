@@ -222,19 +222,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bielik'),
-        toolbarHeight: widget.appVersion == null ? null : 80,
-        bottom: widget.appUpdateRepository != null && widget.appVersion != null
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(40),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: AppUpdateButton(
-                    repository: widget.appUpdateRepository!,
-                    version: widget.appVersion!,
-                  ),
-                ),
-              )
-            : null,
+        toolbarHeight: widget.appVersion == null
+            ? null
+            : widget.appUpdateRepository == null
+            ? 80
+            : 112,
         actions: [
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -254,6 +246,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       style: Theme.of(context).textTheme.labelSmall,
                     ),
                   ),
+                ),
+              if (widget.appUpdateRepository != null &&
+                  widget.appVersion != null)
+                AppUpdateButton(
+                  repository: widget.appUpdateRepository!,
+                  version: widget.appVersion!,
                 ),
             ],
           ),
