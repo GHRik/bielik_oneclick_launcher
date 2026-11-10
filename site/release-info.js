@@ -25,6 +25,20 @@
     .catch(() => {});
   const seen = new Set();
   let page = 1;
+  let latestRequest;
+
+  function currentRelease() {
+    if (!latestRequest) {
+      latestRequest = request(`${api}/latest`).then(release => {
+        if (!stable(release)) throw new Error('No stable APK');
+        return release;
+      }).catch(error => {
+        latestRequest = null;
+        throw error;
+      });
+    }
+    return latestRequest;
+  }
 
   function link(label, href) {
     const element = document.createElement('a');
@@ -71,9 +85,8 @@
 
   async function latest() {
     try {
-      const release = await request(`${api}/latest`);
+      const release = await currentRelease();
       await translations;
-      if (!stable(release)) throw new Error('No stable APK');
       const time = document.createElement('time');
       time.dateTime = release.published_at;
       time.textContent = date(release);
@@ -96,10 +109,11 @@
     more.disabled = true;
     more.textContent = 'Wczytywanie…';
     try {
-      const releases = await request(`${api}?per_page=30&page=${page}`);
-      await translations;
+      const [releases, current] = await Promise.all([
+        request(`${api}?per_page=30&page=${page}`), currentRelease(), translations,
+      ]);
       for (const release of releases.filter(stable)) {
-        if (seen.has(release.id)) continue;
+        if (release.id === current.id || seen.has(release.id)) continue;
         seen.add(release.id);
         const item = document.createElement('details');
         item.className = 'release-entry';
