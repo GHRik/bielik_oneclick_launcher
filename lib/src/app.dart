@@ -1,4 +1,6 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/app_exit_repository.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/app_exit_notice.dart';
 
 import 'package:bielik_oneclick_launcher/src/presentation/theme/landing_page_theme.dart';
 
@@ -44,6 +46,7 @@ class MyApp extends StatefulWidget {
     this.clipboardRepository,
     this.themePreference = AppThemePreference.system,
     this.themeRepository,
+    this.appExitRepository = const UnavailableAppExitRepository(),
   });
 
   final DeviceResourcesRepository? deviceResourcesRepository;
@@ -61,6 +64,7 @@ class MyApp extends StatefulWidget {
   final ClipboardRepository? clipboardRepository;
   final AppThemePreference themePreference;
   final AppThemeRepository? themeRepository;
+  final AppExitRepository appExitRepository;
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -89,22 +93,25 @@ class _MyAppState extends State<MyApp> {
           theme: landingPageTheme(Brightness.light),
           darkTheme: landingPageTheme(Brightness.dark),
           themeMode: _theme.mode,
-          home: HomePage(
-            deviceResourcesRepository: widget.deviceResourcesRepository,
-            chatRepository: widget.chatRepository,
-            attachmentRepository: widget.attachmentRepository,
-            incomingTextRepository: widget.incomingTextRepository,
-            speechRepository: widget.speechRepository,
-            clipboardRepository: widget.clipboardRepository,
-            modelFilesRepository: widget.modelFilesRepository,
-            llmRepository: widget.llmRepository,
-            llmConfiguration: widget.llmConfiguration,
-            onSaveLlmConfiguration: widget.onSaveLlmConfiguration,
-            onSaveGpuConfiguration: widget.onSaveGpuConfiguration,
-            models: widget.modelRepository.getModels(),
-            statisticSeries:
-                widget.statisticsRepository?.getSeries() ?? const [],
-            statisticsRepository: widget.statisticsRepository,
+          home: AppExitNotice(
+            repository: widget.appExitRepository,
+            child: HomePage(
+              deviceResourcesRepository: widget.deviceResourcesRepository,
+              chatRepository: widget.chatRepository,
+              attachmentRepository: widget.attachmentRepository,
+              incomingTextRepository: widget.incomingTextRepository,
+              speechRepository: widget.speechRepository,
+              clipboardRepository: widget.clipboardRepository,
+              modelFilesRepository: widget.modelFilesRepository,
+              llmRepository: widget.llmRepository,
+              llmConfiguration: widget.llmConfiguration,
+              onSaveLlmConfiguration: widget.onSaveLlmConfiguration,
+              onSaveGpuConfiguration: widget.onSaveGpuConfiguration,
+              models: widget.modelRepository.getModels(),
+              statisticSeries:
+                  widget.statisticsRepository?.getSeries() ?? const [],
+              statisticsRepository: widget.statisticsRepository,
+            ),
           ),
         ),
       ),
