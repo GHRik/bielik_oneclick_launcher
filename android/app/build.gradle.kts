@@ -11,6 +11,11 @@ val e2eBuild = (project.findProperty("dart-defines") as? String)
     ?.any { String(Base64.getDecoder().decode(it)) == "BIELIK_E2E=true" }
     ?: false
 
+val apkUpdates = (project.findProperty("dart-defines") as? String)
+    ?.split(",")
+    ?.any { String(Base64.getDecoder().decode(it)) == "BIELIK_APK_UPDATES=true" }
+    ?: false
+
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
@@ -47,6 +52,8 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
+    buildFeatures { buildConfig = true }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -58,6 +65,11 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        buildConfigField("boolean", "APK_UPDATES", apkUpdates.toString())
+    }
+
+    if (apkUpdates) {
+        sourceSets.getByName("release").manifest.srcFile("src/apkUpdates/AndroidManifest.xml")
     }
 
     signingConfigs {
@@ -70,6 +82,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "APK_UPDATES", "true")
+        }
         release {
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(

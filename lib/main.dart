@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart'
     show kDebugMode, kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:llamadart/llamadart.dart';
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/github_app_update_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/android_app_info.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/android_app_exit_repository.dart';
@@ -56,6 +57,11 @@ Future<void> main() async {
   runApp(
     MyApp(
       appVersion: appVersion,
+      appUpdateRepository:
+          appVersion != null &&
+              (kDebugMode || const bool.fromEnvironment('BIELIK_APK_UPDATES'))
+          ? GithubAppUpdateRepository()
+          : null,
       appExitRepository:
           !kIsWeb && defaultTargetPlatform == TargetPlatform.android
           ? const AndroidAppExitRepository()

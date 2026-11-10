@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:bielik_oneclick_launcher/src/domain/repositories/app_update_repository.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/app_update_button.dart';
+
 import 'package:bielik_oneclick_launcher/src/domain/models/app_version.dart';
 
 import 'package:material_ui/material_ui.dart';
@@ -38,6 +41,7 @@ class HomePage extends StatefulWidget {
     required this.modelFilesRepository,
     this.llmRepository,
     this.appVersion,
+    this.appUpdateRepository,
     this.deviceResourcesRepository,
     required this.chatRepository,
     required this.statisticSeries,
@@ -54,6 +58,7 @@ class HomePage extends StatefulWidget {
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
   final AppVersion? appVersion;
+  final AppUpdateRepository? appUpdateRepository;
   final LlmConfiguration llmConfiguration;
   final ValueChanged<GpuConfiguration>? onSaveGpuConfiguration;
   final Future<void> Function(LlmConfiguration)? onSaveLlmConfiguration;
@@ -217,7 +222,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bielik'),
-        toolbarHeight: widget.appVersion == null ? null : 80,
+        toolbarHeight: widget.appVersion == null
+            ? null
+            : widget.appUpdateRepository == null
+            ? 80
+            : 112,
         actions: [
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -237,6 +246,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       style: Theme.of(context).textTheme.labelSmall,
                     ),
                   ),
+                ),
+              if (widget.appUpdateRepository != null &&
+                  widget.appVersion != null)
+                AppUpdateButton(
+                  repository: widget.appUpdateRepository!,
+                  version: widget.appVersion!,
                 ),
             ],
           ),
