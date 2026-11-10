@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_requirements.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/resource_requirement.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/model_download_controller.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/download_confirmation_dialog.dart';
@@ -61,6 +62,28 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
       availableStorageGb: widget.availableStorageGb,
       availableRamGb: widget.availableRamGb,
     );
+
+    if (requirements.storage.status == RequirementStatus.insufficient) {
+      _downloadDialogOpen = true;
+      try {
+        await showDialog<void>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Za mało miejsca'),
+            content: const Text('Proszę zwolnić miejsce, aby pobrać model.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Zamknij'),
+              ),
+            ],
+          ),
+        );
+      } finally {
+        _downloadDialogOpen = false;
+      }
+      return;
+    }
 
     if (requirements.requiresConfirmation) {
       _downloadDialogOpen = true;
