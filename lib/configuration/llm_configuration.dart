@@ -7,11 +7,11 @@ const defaultLlmConfiguration = LlmConfiguration(
   safetyTokens: 32,
   numberOfThreads: 4,
   batchSize: 128,
-  temperature: 0.8,
+  temperature: 0.2,
   topK: 40,
   topP: 0.9,
   minP: 0,
-  repeatPenalty: 1.1,
+  repeatPenalty: 1.2,
 );
 
 final modelLlmConfigurations = <String, LlmConfiguration>{};
