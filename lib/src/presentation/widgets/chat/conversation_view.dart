@@ -120,7 +120,10 @@ class ConversationView extends StatelessWidget {
                   : () => clipboardRepository!.copyText(message.text),
               child: isSentByMe
                   ? _userMessage(context, message, index)
-                  : AssistantMarkdownMessage(message: message),
+                  : AssistantMarkdownMessage(
+                      message: message,
+                      streaming: message.id == streamingMessageId,
+                    ),
             ),
         emptyChatListBuilder: (context) => Center(
           child: Padding(

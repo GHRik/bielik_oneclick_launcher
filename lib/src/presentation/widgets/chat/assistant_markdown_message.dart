@@ -1,4 +1,5 @@
 import 'package:flutter_chat_core/flutter_chat_core.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/streaming_text_reveal.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
@@ -6,9 +7,14 @@ import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/math_mark
 import 'package:material_ui/material_ui.dart';
 
 class AssistantMarkdownMessage extends StatelessWidget {
-  const AssistantMarkdownMessage({super.key, required this.message});
+  const AssistantMarkdownMessage({
+    super.key,
+    required this.message,
+    this.streaming = false,
+  });
 
   final TextMessage message;
+  final bool streaming;
 
   @override
   Widget build(BuildContext context) {
@@ -29,42 +35,48 @@ class AssistantMarkdownMessage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              MarkdownBody(
-                data: message.text,
-                inlineSyntaxes: [MathInlineSyntax()],
-                extensionSet: md.ExtensionSet.gitHubFlavored,
-                builders: {
-                  'math': MathElementBuilder(textStyle),
-                  'math-block': MathElementBuilder(textStyle, block: true),
-                },
-                fitContent: true,
-                softLineBreak: true,
-                styleSheet: MarkdownStyleSheet(
-                  p: textStyle,
-                  a: TextStyle(color: theme.colorScheme.primary),
-                  listBullet: textStyle,
-                  strong: const TextStyle(fontWeight: FontWeight.bold),
-                  em: const TextStyle(fontStyle: FontStyle.italic),
-                  code: textStyle.copyWith(
-                    fontFamily: 'monospace',
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              StreamingTextReveal(
+                key: ValueKey(message.id),
+                revision: message.text,
+                streaming: streaming,
+                child: MarkdownBody(
+                  data: message.text,
+                  inlineSyntaxes: [MathInlineSyntax()],
+                  extensionSet: md.ExtensionSet.gitHubFlavored,
+                  builders: {
+                    'math': MathElementBuilder(textStyle),
+                    'math-block': MathElementBuilder(textStyle, block: true),
+                  },
+                  fitContent: true,
+                  softLineBreak: true,
+                  styleSheet: MarkdownStyleSheet(
+                    p: textStyle,
+                    a: TextStyle(color: theme.colorScheme.primary),
+                    listBullet: textStyle,
+                    strong: const TextStyle(fontWeight: FontWeight.bold),
+                    em: const TextStyle(fontStyle: FontStyle.italic),
+                    code: textStyle.copyWith(
+                      fontFamily: 'monospace',
+                      backgroundColor:
+                          theme.colorScheme.surfaceContainerHighest,
+                    ),
+                    h1: textStyle.copyWith(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    h2: textStyle.copyWith(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    h3: textStyle.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  h1: textStyle.copyWith(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+                  imageBuilder: (uri, title, alt) => Text(
+                    alt?.isNotEmpty == true ? alt! : uri.toString(),
+                    style: textStyle,
                   ),
-                  h2: textStyle.copyWith(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  h3: textStyle.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                imageBuilder: (uri, title, alt) => Text(
-                  alt?.isNotEmpty == true ? alt! : uri.toString(),
-                  style: textStyle,
                 ),
               ),
               const SizedBox(height: 4),
