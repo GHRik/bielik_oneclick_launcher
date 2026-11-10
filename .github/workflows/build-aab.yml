@@ -1,0 +1,200 @@
+name: Release Google Play AAB
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_release:
+        description: 'OneClick APK release tag (e.g. v1.0.6-build.12.1)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apk-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - name: Resolve source APK release
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_RELEASE: ${{ inputs.source_release }}
+        run: |
+          if [[ ! "$SOURCE_RELEASE" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ || "$SOURCE_RELEASE" == google-play-* ]]; then
+            printf '::error::Enter the tag of an APK release.\n'
+            exit 1
+          fi
+          gh release view "$SOURCE_RELEASE" --json isDraft,assets,url > "$RUNNER_TEMP/source-release.json"
+          jq -e '.isDraft == false and any(.assets[]; .name == "bielik-arm64.apk")' "$RUNNER_TEMP/source-release.json" > /dev/null
+          gh release download "$SOURCE_RELEASE" --pattern BUILD.txt --dir "$RUNNER_TEMP/source-release"
+          app_version="$(awk -F ': ' '/^Version: / {print $2; exit}' "$RUNNER_TEMP/source-release/BUILD.txt")"
+          if [[ ! "$app_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            printf '::error::The source release must contain BUILD.txt with a semantic Version.\n'
+            exit 1
+          fi
+          ref_json="$(gh api "repos/$GH_REPO/git/ref/tags/$SOURCE_RELEASE")"
+          sha="$(jq -r '.object.sha' <<< "$ref_json")"
+          object_type="$(jq -r '.object.type' <<< "$ref_json")"
+          while [[ "$object_type" == tag ]]; do
+            ref_json="$(gh api "repos/$GH_REPO/git/tags/$sha")"
+            sha="$(jq -r '.object.sha' <<< "$ref_json")"
+            object_type="$(jq -r '.object.type' <<< "$ref_json")"
+          done
+          [[ "$object_type" == commit && "$sha" =~ ^[0-9a-f]{40}$ ]]
+          recorded_sha="$(awk -F ': ' '/^Commit: / {print $2; exit}' "$RUNNER_TEMP/source-release/BUILD.txt")"
+          if [[ "$sha" != "$recorded_sha" ]]; then
+            printf '::error::Source release tag and BUILD.txt refer to different commits.\n'
+            exit 1
+          fi
+          printf 'sha=%s\napp_version=%s\n' "$sha" "$app_version" >> "$GITHUB_OUTPUT"
+          printf 'url=%s\n' "$(jq -r .url "$RUNNER_TEMP/source-release.json")" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout exact release source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.source.outputs.sha }}
+          persist-credentials: false
+
+      - name: Check signing secrets
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [[ -z "${!name}" ]]; then
+              printf '::error::Missing signing secret: %s. See docs/RELEASING.md\n' "$name"
+              exit 1
+            fi
+          done
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+
+      - name: Install locked dependencies
+        run: flutter pub get --enforce-lockfile
+
+      - name: Analyze
+        run: flutter analyze --no-pub
+
+      - name: Test
+        run: flutter test --no-pub
+
+      - name: Assign increasing Android version code
+        id: version
+        run: |
+          build_number=$(( $(date -u +%s) - 1577836800 ))
+          if (( build_number <= 0 || build_number >= 2100000000 )); then
+            printf '::error::Android version code is outside the supported range.\n'
+            exit 1
+          fi
+          printf 'build_number=%s\n' "$build_number" >> "$GITHUB_OUTPUT"
+
+      - name: Restore release keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/bielik-release.jks"
+
+      - name: Build signed ARM64 app bundle
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/bielik-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          APP_VERSION: ${{ steps.source.outputs.app_version }}
+          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
+        run: flutter build appbundle --release --target-platform android-arm64 --build-name="$APP_VERSION" --build-number="$BUILD_NUMBER"
+
+      - name: Remove private keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/bielik-release.jks"
+
+      - name: Verify bundle signature and pinned certificate
+        env:
+          LC_ALL: C
+        run: |
+          mkdir -p dist
+          bundle=build/app/outputs/bundle/release/app-release.aab
+          jarsigner -verify "$bundle" > dist/SIGNATURE.txt
+          cat dist/SIGNATURE.txt
+          grep -q 'jar verified\.' dist/SIGNATURE.txt
+          keytool -printcert -jarfile "$bundle" > dist/SIGNING.txt
+          actual="$(awk '/SHA256:/ {sub(/^.*SHA256:[[:space:]]*/, ""); gsub(/[:[:space:]]/, ""); print tolower($0)}' dist/SIGNING.txt | sort -u)"
+          expected="$(tr -d '[:space:]' < android/release-signing.sha256 | tr '[:upper:]' '[:lower:]')"
+          if [[ ! "$expected" =~ ^[0-9a-f]{64}$ || ! "$actual" =~ ^[0-9a-f]{64}$ || "$actual" != "$expected" ]]; then
+            printf '::error::The AAB signing certificate does not match the pinned release identity.\n'
+            exit 1
+          fi
+
+      - name: Prepare Google Play download and release notes
+        env:
+          SOURCE_RELEASE: ${{ inputs.source_release }}
+          SOURCE_URL: ${{ steps.source.outputs.url }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+          APP_VERSION: ${{ steps.source.outputs.app_version }}
+          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
+        run: |
+          cp build/app/outputs/bundle/release/app-release.aab dist/bielik-google-play.aab
+          (cd dist && sha256sum bielik-google-play.aab > bielik-google-play.aab.sha256)
+          cp LICENSE dist/LICENSE
+          {
+            printf 'Version: %s\nSource release: %s\nCommit: %s\nAndroid version code: %s\n' "$APP_VERSION" "$SOURCE_RELEASE" "$SOURCE_SHA" "$BUILD_NUMBER"
+            printf 'Source release URL: %s\n' "$SOURCE_URL"
+            printf 'Build: https://github.com/%s/actions/runs/%s\n' "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+            printf 'Flutter: 3.47.9\nFormat: signed ARM64 Android App Bundle for Google Play\n'
+          } > dist/BUILD.txt
+          {
+            printf '## Google Play bundle — Bielik OneClick %s\n\n' "$APP_VERSION"
+            printf 'Built from OneClick release [%s](%s).\n\n' "$SOURCE_RELEASE" "$SOURCE_URL"
+            printf -- '- Source commit: `%s`\n- Android version code: `%s`\n' "$SOURCE_SHA" "$BUILD_NUMBER"
+            printf -- '- Build: https://github.com/%s/actions/runs/%s\n\n' "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+            printf 'Download **bielik-google-play.aab** and upload it manually in Google Play Console. An AAB cannot be installed directly as an APK.\n\n'
+            printf 'This release is updated by manual workflow runs. It is kept as a prerelease and never replaces the public Latest APK. Each build also has an Actions artifact retained for 30 days.\n'
+          } > "$RUNNER_TEMP/aab-notes.md"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bielik-google-play-${{ steps.source.outputs.app_version }}-${{ steps.version.outputs.build_number }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Update google-play-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+          APP_VERSION: ${{ steps.source.outputs.app_version }}
+        run: |
+          tag=google-play-latest
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release upload "$tag" dist/* --clobber
+            gh api --method PATCH "repos/$GH_REPO/git/refs/tags/$tag" -f sha="$SOURCE_SHA" -F force=true > /dev/null
+            gh release edit "$tag" --title "Google Play latest — Bielik OneClick $APP_VERSION" --notes-file "$RUNNER_TEMP/aab-notes.md" --prerelease --latest=false
+          else
+            gh release create "$tag" dist/* --target "$SOURCE_SHA" --title "Google Play latest — Bielik OneClick $APP_VERSION" --notes-file "$RUNNER_TEMP/aab-notes.md" --prerelease --latest=false
+          fi
+          printf '### Google Play AAB ready\n\n[Download AAB](https://github.com/%s/releases/download/google-play-latest/bielik-google-play.aab)\n\nUpload it manually in Google Play Console. The public Latest APK is unchanged.\n' "$GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"

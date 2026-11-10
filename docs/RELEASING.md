@@ -16,6 +16,18 @@ Promoting the existing release keeps the exact APK that was tested; no rebuild o
 
 Download `bielik-arm64.apk` directly from [the latest stable release](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk), or use **Releases → Assets**. Keep the asset name unchanged: the landing page uses GitHub's permanent latest-asset URL. Each release also includes its SHA-256 checksum, `BUILD.txt`, `SIGNING.txt`, and the MIT license. An artifact copy is retained for 30 days. The ARM64 debug build workflow is a separate CI check; use Release APK for distribution.
 
+## Build an AAB for Google Play
+
+Open **Actions → Release Google Play AAB → Run workflow** on `master`. Enter the exact tag of an existing OneClick APK release, for example `v1.0.6-build.12.1`. Stable releases and published APK prereleases are supported. The release must include `bielik-arm64.apk` and `BUILD.txt`.
+
+The workflow resolves the release tag to its exact commit and checks it against `BUILD.txt`. It reuses the source release's visible app version, assigns a new increasing Android version code, analyzes and tests the source, then builds a signed ARM64 Android App Bundle. It uses the same signing secrets and pinned certificate as the APK workflow. APK and AAB jobs share a concurrency group.
+
+Download `bielik-google-play.aab` from the **google-play-latest** release and upload it manually to Google Play Console. The release description and attached `BUILD.txt` identify the original OneClick release, source commit, version code and workflow run. A SHA-256 checksum and signature details are attached.
+
+GitHub releases do not support issue-style labels: `google-play-latest` is a dedicated moving tag and release. Successful builds replace its assets and update its source commit and notes. Each build also remains available as an Actions artifact for 30 days.
+
+This release stays a **prerelease** with **Latest disabled**, so the website and README continue to offer the stable APK. It does not upload anything to Google Play automatically. An AAB cannot be installed directly like an APK.
+
 ## Version names and patch notes
 
 Use `MAJOR.MINOR.PATCH` versions: for example, `1.0.1` for a fix and `1.1.0` for a feature release. The workflow uses that value as Android's visible `versionName`.
