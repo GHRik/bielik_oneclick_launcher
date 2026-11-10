@@ -50,7 +50,8 @@
   function body(release) {
     const element = document.createElement('div');
     element.className = 'release-body';
-    const translated = polishNotes[release.tag_name];
+    const version = release.tag_name.match(/^v(\d+\.\d+\.\d+)(?:-build\.\d+\.\d+)?$/)?.[1];
+    const translated = polishNotes[release.tag_name] ?? polishNotes[version];
     if (typeof translated !== 'string' || !translated.trim()) {
       element.textContent = 'Polski opis zmian nie jest jeszcze dostępny. Angielski opis znajdziesz na GitHubie.';
       return element;
