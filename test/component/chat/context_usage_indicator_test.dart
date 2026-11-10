@@ -84,6 +84,30 @@ void main() {
     );
   });
 
+  testWidgets('Acknowledged omissions show the ordinary context details', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ContextUsageIndicator(
+            usage: ContextUsage(
+              promptTokens: 42,
+              contextSize: 100,
+              omittedMessageIds: ['old'],
+              omittedAttachmentNames: ['facts.txt'],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byType(ContextUsageIndicator));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('42 / 100'), findsOneWidget);
+    expect(find.textContaining('Pominięte wiadomości:'), findsNothing);
+    expect(find.textContaining('facts.txt'), findsNothing);
+  });
+
   testWidgets('Omission pulse finishes while the unread badge remains', (
     tester,
   ) async {

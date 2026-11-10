@@ -62,7 +62,8 @@ class _ContextUsageIndicatorState extends State<ContextUsageIndicator>
 
   void _showDetails() {
     final value = widget.usage;
-    widget.onOmissionsAcknowledged?.call();
+    final showOmissions = widget.showOmissionWarning;
+    if (showOmissions) widget.onOmissionsAcknowledged?.call();
     showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
@@ -75,7 +76,7 @@ class _ContextUsageIndicatorState extends State<ContextUsageIndicator>
                 : [
                     '${value.usedTokens} / ${value.contextSize} tokenów (${value.percent}%).',
                     'Wejście: ${value.promptTokens}. Odpowiedź: ${value.responseTokens}.',
-                    if (value.hasOmittedHistory) ...[
+                    if (showOmissions && value.hasOmittedHistory) ...[
                       'Pominięte wiadomości: ${value.omittedMessageIds.length}. '
                           'Część wcześniejszej rozmowy nie została przekazana do modelu '
                           'z powodu limitu kontekstu. Wiadomości nadal są zapisane w czacie.',
