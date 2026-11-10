@@ -29,6 +29,7 @@ public class MainActivity extends FlutterActivity {
     public void configureFlutterEngine(io.flutter.embedding.engine.FlutterEngine flutterEngine) {
         super.configureFlutterEngine(flutterEngine);
         incomingText = new IncomingTextChannel(flutterEngine.getDartExecutor().getBinaryMessenger());
+        AppInfoChannel.register(getApplicationContext(), flutterEngine.getDartExecutor().getBinaryMessenger());
         AppExitChannel.register(getApplicationContext(), flutterEngine.getDartExecutor().getBinaryMessenger());
         DeviceResourcesChannel.register(
             getApplicationContext(),

@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/app_version.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/app_exit_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/app_exit_notice.dart';
 
@@ -34,6 +35,7 @@ class MyApp extends StatefulWidget {
     required this.chatRepository,
     required this.modelFilesRepository,
     this.llmRepository,
+    this.appVersion,
     this.llmConfiguration = defaultLlmConfiguration,
     this.onSaveLlmConfiguration,
     this.onSaveGpuConfiguration,
@@ -54,6 +56,7 @@ class MyApp extends StatefulWidget {
   final IncomingTextRepository? incomingTextRepository;
   final ModelFilesRepository modelFilesRepository;
   final LlmRepository? llmRepository;
+  final AppVersion? appVersion;
   final LlmConfiguration llmConfiguration;
   final ValueChanged<GpuConfiguration>? onSaveGpuConfiguration;
   final Future<void> Function(LlmConfiguration)? onSaveLlmConfiguration;
@@ -96,6 +99,7 @@ class _MyAppState extends State<MyApp> {
           home: AppExitNotice(
             repository: widget.appExitRepository,
             child: HomePage(
+              appVersion: widget.appVersion,
               deviceResourcesRepository: widget.deviceResourcesRepository,
               chatRepository: widget.chatRepository,
               attachmentRepository: widget.attachmentRepository,

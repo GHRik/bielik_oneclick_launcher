@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart'
     show kDebugMode, kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:llamadart/llamadart.dart';
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/android_app_info.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/android_app_exit_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/app_exit_repository.dart';
@@ -49,8 +50,12 @@ Future<void> main() async {
   const resources = LocalDeviceResourcesRepository(DeviceResourcesDataSource());
   final themeRepository = SqliteAppThemeRepository(database);
   final themePreference = await themeRepository.load();
+  final appVersion = !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+      ? await AndroidAppInfo.version()
+      : null;
   runApp(
     MyApp(
+      appVersion: appVersion,
       appExitRepository:
           !kIsWeb && defaultTargetPlatform == TargetPlatform.android
           ? const AndroidAppExitRepository()
