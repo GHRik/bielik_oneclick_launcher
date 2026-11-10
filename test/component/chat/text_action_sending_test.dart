@@ -35,7 +35,7 @@ void main() {
         await workspace.sendTextAction(action);
         final messages = await repository.getMessages(workspace.selected.id);
         expect(messages.single.text, action.prompt(text));
-        expect(messages.single.text.endsWith(text), isTrue);
+        expect(messages.single.text, contains(text));
         expect(workspace.selected.offersTextActions, isFalse);
       },
     );

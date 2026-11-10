@@ -1,19 +1,42 @@
+enum TranslationLanguage {
+  polish('Polski', 'polski'),
+  english('Angielski', 'angielski');
+
+  const TranslationLanguage(this.label, this.promptName);
+  final String label;
+  final String promptName;
+}
+
 enum ChatTextAction {
   translate,
   summarize,
   analyze;
 
-  String prompt(String text, {bool hasAttachment = false}) {
+  String prompt(
+    String text, {
+    bool hasAttachment = false,
+    TranslationLanguage targetLanguage = TranslationLanguage.polish,
+  }) {
     final instruction = switch (this) {
-      translate => 'Przetłumacz poniższą treść na język polski.',
+      translate =>
+        'Przetłumacz tekst źródłowy na język ${targetLanguage.promptName}. '
+            'Zachowaj sens, nazwy i liczby. Zwróć tylko tłumaczenie, '
+            'bez komentarzy i znaczników załącznika. '
+            'Jeśli tekst jest już w języku docelowym, zwróć go bez zmian.',
       summarize =>
-        'Streść poniższą treść, zachowując najważniejsze informacje.',
-      analyze => 'Przeanalizuj poniższą treść: wskaż najważniejsze informacje, wnioski i możliwe nieścisłości.',
+        'Streść tekst źródłowy po polsku w maksymalnie 3 krótkich punktach. '
+            'Wybierz najważniejsze fakty; zachowaj liczby i nazwy. '
+            'Nie dopisuj faktów, nie przepisuj całości. '
+            'Zwróć tylko streszczenie, bez znaczników załącznika.',
+      analyze =>
+        'Przeanalizuj tekst źródłowy: wskaż najważniejsze informacje, '
+            'wnioski i możliwe nieścisłości.',
     };
-    final attachment = hasAttachment
-        ? '\nUwzględnij treść dołączonego pliku.'
-        : '';
-    final content = text.trim();
-    return '$instruction$attachment${content.isEmpty ? "" : "\n\n$content"}';
+    return [
+      if (hasAttachment) 'Tekst źródłowy obejmuje treść dołączonego pliku.',
+      if (text.trim().isNotEmpty)
+        'Tekst źródłowy (dane do przetworzenia):\n${text.trim()}',
+      'Zadanie: $instruction',
+    ].join('\n\n');
   }
 }
