@@ -48,6 +48,12 @@ Older debug APKs may have different certificates and cannot be upgraded with thi
 
 The production application ID is `bielik.ai`. Older APKs used `bielik.ai.bielik_oneclick_launcher`; Android treats these as separate applications, so there is no in-place upgrade or automatic transfer of local data between them, even with the same signing key. The internal Java namespace and isolated E2E package remain unchanged. To build an AAB with the new ID, first publish an APK release containing this change and select its tag in the AAB workflow; rebuilding an older source release preserves its old ID. CI derives `versionCode` from UTC seconds since 2020-01-01, so newly started release builds get higher codes, including reruns of older source revisions. All branches share one release concurrency group. `versionName` comes from the workflow version input, falling back to `pubspec.yaml`. Local builds must also use a higher `--build-number` than the installed release.
 
+## Previous process exit notice
+
+On Android 11 and newer, the app checks the latest recorded exit of its main process at startup. A confirmed low-memory exit shows advice about using a smaller model or context; other unexpected exits show `ANDROID_EXIT_<reason>_STATUS_<status>`. This is an OS termination reason and status, not necessarily an application exception code. Unknown reasons are not attributed to RAM.
+
+Expected exits such as a force-stop, package update or permission change are ignored. Pressing **OK** acknowledges the exit timestamp in Android preferences so that it is not shown again. No diagnostics are uploaded. Older Android versions and other platforms return no report through the repository fallback. This notice does not prevent an out-of-memory kill or change model settings.
+
 ## Signing identity
 
 The public certificate SHA-256 is pinned in [android/release-signing.sha256](../android/release-signing.sha256). The workflow verifies the signed APK against it before uploading anything.
