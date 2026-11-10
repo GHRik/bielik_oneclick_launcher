@@ -161,7 +161,17 @@ h2{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:34px;letter-sp
 .contribution-links{display:flex;flex-wrap:wrap;gap:16px 24px;margin-top:18px}
 .contribute-section code{overflow-wrap:anywhere}
 .site-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;border-top:1px solid var(--line);padding-block:25px}
-.site-footer p,.site-footer>a:last-child{font-size:11px;color:var(--muted)}
+.site-footer p,.site-footer>a:not(.brand){font-size:11px;color:var(--muted)}
+.policy-page{max-width:820px;padding-block:32px 56px;font-size:15px;line-height:1.8;overflow-wrap:anywhere}
+.policy-page h1{font-size:clamp(32px,6vw,48px);letter-spacing:-1px;line-height:1.15;margin-block:12px 16px}
+.policy-page h2{font-size:21px;line-height:1.4;margin-bottom:12px}
+.policy-page section{margin-top:32px;padding-top:24px;border-top:1px solid var(--line)}
+.policy-page p+p,.policy-page ul+p{margin-top:12px}
+.policy-page a{color:var(--accent);text-decoration:underline;text-underline-offset:4px}
+.policy-page ul{padding-left:22px;margin-block:12px}
+.policy-page li+li{margin-top:8px}
+.policy-page .policy-date{color:var(--muted);font-size:13px;margin-bottom:16px}
+.policy-summary{padding:20px;margin-top:24px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
 @keyframes air-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:760px){.wrap{width:calc(100% - 40px)}.site-header{gap:12px}.brand{font-size:20px}.brand img{width:30px;height:30px}nav{gap:12px}.nav-link:not(.nav-demo){display:none}.nav-demo{display:inline-flex;align-items:center;min-height:44px}.intro{padding-top:16px}.intro::before{inset:0;opacity:.7}.intro-copy>p:not(.eyebrow){font-size:13px}h1{font-size:42px;letter-spacing:-1px}.setup-visual{height:360px;max-width:460px}.setup-phone{width:155px;right:25px;top:10px}.terminal{left:0;top:75px;width:300px;max-width:75%;transform:perspective(700px) rotateY(10deg) rotate(-5deg)}.terminal-code{font-size:10px;padding:18px}.feature-slide{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr;align-items:start;gap:26px;padding:25px;min-height:0}.phone-screen{width:260px}.slide-copy h3{font-size:30px}.download-steps{font-size:10px}}
 @media(max-width:360px){.wrap{width:calc(100% - 32px)}.brand{font-size:18px}nav{gap:8px}.button-small{padding-inline:10px}h1{font-size:38px}.setup-phone{width:145px;right:20px}.setup-visual{height:340px}}

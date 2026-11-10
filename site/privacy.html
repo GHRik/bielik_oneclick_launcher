@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#151613">
+  <meta name="description" content="Polityka prywatności aplikacji Bielik OneClick Launcher i jej strony internetowej. Rozmowy lokalne, dyktowanie, pobieranie modeli i usuwanie danych.">
+  <title>Polityka prywatności — Bielik OneClick</title>
+  <link rel="canonical" href="https://ghrik.github.io/bielik_oneclick_launcher/privacy.html">
+  <link rel="icon" type="image/svg+xml" href="assets/mark.svg">
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="styles.css?v=privacy-policy">
+</head>
+<body>
+  <a class="skip-link" href="#main">Przejdź do treści</a>
+  <header class="site-header wrap">
+    <a class="brand" href="./" aria-label="Bielik OneClick — strona główna">
+      <img src="assets/mark.svg" width="36" height="36" alt="">
+      <span>Bielik<span class="brand-sub">ONECLICK</span></span>
+    </a>
+    <a class="text-link" href="./">Wróć na stronę główną <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main class="policy-page wrap" id="main">
+    <p class="eyebrow">BIELIK ONECLICK LAUNCHER</p>
+    <h1>Polityka prywatności</h1>
+    <p class="policy-date">Ostatnia aktualizacja: <time datetime="2026-11-10">10 listopada 2026 r.</time></p>
+    <p>Ten dokument opisuje przetwarzanie danych w aplikacji Bielik OneClick Launcher na Androida oraz na stronie projektu.</p>
+
+    <aside class="policy-summary" aria-label="Najważniejsze informacje">
+      <p><strong>Rozmowa z Bielikiem działa lokalnie.</strong> Autor aplikacji nie otrzymuje automatycznie Twoich wiadomości ani załączników.</p>
+      <p>Dyktowanie korzysta z usługi systemowej, która może przetwarzać dźwięk online. Kopie zapasowe zależą od ustawień Androida. Strona internetowa korzysta z usług zewnętrznych opisanych poniżej.</p>
+    </aside>
+
+    <section aria-labelledby="autor">
+      <h2 id="autor">1. Autor i kontakt</h2>
+      <p>Aplikację i stronę rozwija Damian Panasiuk. W sprawach prywatności możesz napisać przez <a href="https://www.linkedin.com/in/panasiuk-damian/">LinkedIn</a>. Kod źródłowy jest dostępny w <a href="https://github.com/GHRik/bielik_oneclick_launcher">repozytorium GitHub</a>.</p>
+      <p>Bielik to modele SpeakLeash (Spichlerz) i ACK Cyfronet AGH. Aplikacja jest niezależnym launcherem i nie jest oficjalnym produktem tych podmiotów.</p>
+    </section>
+
+    <section aria-labelledby="lokalne-dane">
+      <h2 id="lokalne-dane">2. Rozmowy i dane na telefonie</h2>
+      <p>Generowanie odpowiedzi odbywa się na urządzeniu. Do modelu trafiają instrukcja systemowa, odpowiednia część historii bieżącej rozmowy, Twoja wiadomość i treść dołączonego TXT-u.</p>
+      <ul>
+        <li>Wiadomości, odpowiedzi, nazwy rozmów, szkice oraz nazwy i treść załączników TXT są przechowywane w lokalnej bazie aplikacji.</li>
+        <li>Ustawienia modelu i motywu oraz pobrane modele są zapisywane na urządzeniu.</li>
+        <li>Aplikacja nie wymaga konta. Nie ma własnego systemu reklamowego, analityki użytkowników ani automatycznego wysyłania rozmów lub raportów błędów do autora.</li>
+      </ul>
+      <p>„Zapytaj Bielika” odbiera tekst, który samodzielnie zaznaczysz lub udostępnisz z innej aplikacji. Załączniki wybierasz przez systemowy wybór pliku. Wybranie pliku z chmury może wymagać połączenia z jej dostawcą.</p>
+    </section>
+
+    <section aria-labelledby="mikrofon">
+      <h2 id="mikrofon">3. Mikrofon i dyktowanie</h2>
+      <p>Mikrofon służy do uruchamianego przez Ciebie dyktowania i wymaga zgody Androida. Rozpoznawanie mowy realizuje usługa systemowa lub dostawca ustawiony na telefonie, np. Google. W zależności od urządzenia i ustawień może ona przesyłać dźwięk na swoje serwery. Aplikacja nie wymusza rozpoznawania wyłącznie offline.</p>
+      <p>Aplikacja nie zapisuje własnych plików z nagraniami. Otrzymany tekst trafia do szkicu, a po wysłaniu do rozmowy. Uprawnienie mikrofonu możesz wyłączyć w ustawieniach Androida; pozostałe funkcje czatu nie wymagają dyktowania.</p>
+      <p>Więcej o działaniu usługi: <a href="https://developer.android.com/reference/android/speech/SpeechRecognizer">dokumentacja rozpoznawania mowy w Androidzie</a>. Warunki przetwarzania dźwięku określa dostawca używanej usługi.</p>
+    </section>
+
+    <section aria-labelledby="polaczenia">
+      <h2 id="polaczenia">4. Pobieranie i połączenia z internetem</h2>
+      <p>Pobieranie modeli wymaga połączenia z Hugging Face i infrastrukturą dostarczającą pliki. Pobieranie APK lub otwieranie repozytorium prowadzi do GitHuba. Dostawcy tych usług otrzymują dane techniczne połączenia, takie jak adres IP, czas żądania i żądany plik. Treść czatu nie jest dołączana do żądań pobierania modeli.</p>
+      <p>Po pobraniu modelu generowanie odpowiedzi nie wymaga internetu. Dyktowanie, przeglądanie strony i otwieranie zewnętrznych odnośników są odrębnymi funkcjami.</p>
+      <p>Polityki dostawców: <a href="https://huggingface.co/privacy">Hugging Face</a> i <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub</a>.</p>
+    </section>
+
+    <section aria-labelledby="statystyki">
+      <h2 id="statystyki">5. Statystyki i schowek</h2>
+      <p>Aplikacja odczytuje dostępne pomiary RAM-u, miejsca na pliki, CPU, GPU, temperatur i szybkości generowania, aby wyświetlać wymagania oraz statystyki. Historia wykresów jest utrzymywana w pamięci bieżącej sesji i nie jest wysyłana autorowi.</p>
+      <p>Przycisk kopiowania zapisuje wybraną wiadomość w schowku systemowym. Dalsza dostępność i synchronizacja schowka zależą od systemu i jego ustawień.</p>
+    </section>
+
+    <section aria-labelledby="usuwanie">
+      <h2 id="usuwanie">6. Przechowywanie i usuwanie danych</h2>
+      <p>Rozmowy i ustawienia pozostają na urządzeniu do ich usunięcia. Rozmowę usuniesz z listy czatów, a pobrany model z jego menu opcji. Usunięcie rozmowy nie usuwa oryginalnego pliku TXT z miejsca, z którego został wybrany.</p>
+      <p>Wyczyszczenie danych aplikacji w Androidzie usuwa jej lokalne dane. Odinstalowanie usuwa dane przechowywane w prywatnej przestrzeni aplikacji. Nie usuwa to automatycznie kopii zapasowych, plików źródłowych ani danych, które samodzielnie skopiujesz lub przekażesz innym usługom.</p>
+      <p>Aplikacja nie dodaje własnego szyfrowania bazy rozmów; ochrona danych zależy również od zabezpieczeń urządzenia.</p>
+    </section>
+
+    <section aria-labelledby="kopie">
+      <h2 id="kopie">7. Kopie zapasowe Androida</h2>
+      <p>Aplikacja nie wyłącza systemowych kopii zapasowych. W zależności od ustawień telefonu, wersji Androida i dostawcy kopii dane aplikacji mogą być uwzględniane w kopii lub przenoszone na inne urządzenie. Nie jest to wysyłanie rozmów na serwer autora aplikacji.</p>
+      <p>Kopiami i ich usuwaniem zarządzasz w ustawieniach systemu oraz u dostawcy kopii. Szczegóły: <a href="https://developer.android.com/identity/data/autobackup">kopie zapasowe danych aplikacji w Androidzie</a>.</p>
+    </section>
+
+    <section aria-labelledby="strona">
+      <h2 id="strona">8. Strona internetowa</h2>
+      <p>Strona projektu nie jest częścią lokalnego silnika Bielika. Samo jej odwiedzenie wiąże się z połączeniami internetowymi:</p>
+      <ul>
+        <li><strong>GitHub Pages</strong> udostępnia stronę; GitHub zapisuje adresy IP odwiedzających dla celów bezpieczeństwa. Strona pobiera też informacje o wydaniach przez API GitHuba.</li>
+        <li><strong>Google Fonts</strong> dostarcza czcionki strony głównej, co wymaga połączenia z serwerami Google i przekazania danych technicznych żądania, w tym adresu IP.</li>
+        <li><strong>YouTube</strong> dostarcza osadzone filmy w domenie <code>youtube-nocookie.com</code>. Tryb ten nie oznacza braku połączeń ani przetwarzania danych przez dostawcę odtwarzacza.</li>
+        <li><strong>Pamięć przeglądarki</strong> przechowuje wybrany motyw pod kluczem <code>bielik-theme</code> w <code>localStorage</code>. Zapis możesz usunąć, czyszcząc dane witryny.</li>
+      </ul>
+      <p>Nie dodaję własnych narzędzi reklamowych ani analityki odwiedzin. Usługi zewnętrzne stosują własne zasady przechowywania danych i mogą przetwarzać je poza Europejskim Obszarem Gospodarczym. Zobacz <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages#data-collection">informacje GitHub Pages</a> oraz <a href="https://policies.google.com/privacy?hl=pl">politykę prywatności Google</a>.</p>
+    </section>
+
+    <section aria-labelledby="kontakt-dane">
+      <h2 id="kontakt-dane">9. Kontakt i zgłoszenia</h2>
+      <p>Jeżeli skontaktujesz się z autorem, przekazujesz dane zawarte w wiadomości i swoim profilu. Damian Panasiuk przetwarza je w celu obsługi korespondencji lub zgłoszenia, na podstawie prawnie uzasadnionego interesu polegającego na udzielaniu odpowiedzi i rozwijaniu projektu (art. 6 ust. 1 lit. f RODO). Dane są przechowywane przez okres potrzebny do obsługi sprawy i ewentualnego ustalenia lub obrony roszczeń.</p>
+      <p>Kontakt przez LinkedIn i GitHub odbywa się na zasadach tych serwisów. Publiczne issues mogą być widoczne dla każdego — nie publikuj w nich prywatnych rozmów, dokumentów ani danych wrażliwych.</p>
+    </section>
+
+    <section aria-labelledby="prawa">
+      <h2 id="prawa">10. Twoje prawa</h2>
+      <p>W zakresie wynikającym z przepisów możesz żądać dostępu do danych osobowych przetwarzanych przez autora, ich sprostowania, usunięcia lub ograniczenia przetwarzania, wnieść sprzeciw oraz skorzystać z prawa do przenoszenia danych, gdy ma zastosowanie. Możesz też złożyć skargę do Prezesa Urzędu Ochrony Danych Osobowych.</p>
+      <p>Autor nie ma zdalnego dostępu do lokalnej historii czatu; jej usunięcie wykonujesz na urządzeniu. Pytania dotyczące danych przetwarzanych przez autora kieruj przez <a href="https://www.linkedin.com/in/panasiuk-damian/">LinkedIn</a>. Prawa wobec dostawców usług zewnętrznych realizujesz u tych dostawców.</p>
+    </section>
+
+    <section aria-labelledby="zmiany">
+      <h2 id="zmiany">11. Zmiany polityki</h2>
+      <p>Dokument będzie aktualizowany wraz ze zmianami sposobu przetwarzania danych. Aktualna wersja jest dostępna pod tym adresem; data aktualizacji znajduje się na początku strony.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer wrap">
+    <a class="brand" href="./"><img src="assets/mark.svg" width="28" height="28" alt=""><span>Bielik<span class="brand-sub">ONECLICK</span></span></a>
+    <a class="text-link" href="./">Strona główna</a>
+    <a href="https://github.com/GHRik/bielik_oneclick_launcher">Kod źródłowy <span aria-hidden="true">↗</span></a>
+  </footer>
+</body>
+</html>
