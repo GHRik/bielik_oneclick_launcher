@@ -10,11 +10,13 @@ import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_llm_re
 import 'package:bielik_oneclick_launcher/src/domain/models/chat_message.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/context_usage.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/text_attachment.dart';
 import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy.dart';
 
 class _Engine extends Fake implements LlamaEngine {
   final counted = <List<LlamaChatMessage>>[];
   final generated = <List<LlamaChatMessage>>[];
+  List<LlamaCompletionChunk> chunks = [];
   @override
   dynamic noSuchMethod(Invocation invocation) {
     final messages = invocation.positionalArguments.isEmpty
@@ -36,7 +38,7 @@ class _Engine extends Fake implements LlamaEngine {
         return Future.value('CPU');
       case #create:
         generated.add(messages);
-        return const Stream<LlamaCompletionChunk>.empty();
+        return Stream<LlamaCompletionChunk>.fromIterable(chunks);
       case #dispose:
         return Future<void>.value();
     }
@@ -158,6 +160,54 @@ void main() {
 
       expect(accepted, isFalse);
     });
+
+    test(
+      'Reports omitted text and attachment turns before and after generation',
+      () async {
+        engine.chunks = [
+          LlamaCompletionChunk(
+            id: 'reply',
+            object: 'chat.completion.chunk',
+            created: 0,
+            model: 'test',
+            choices: [],
+            usage: const LlamaGenerationUsage(
+              promptTokens: 50,
+              completionTokens: 5,
+            ),
+          ),
+        ];
+        final measurements = <ContextUsage>[];
+        await repository
+            .generate(
+              model,
+              [
+                ChatMessage(
+                  id: 'file',
+                  conversationId: 1,
+                  authorId: ChatAuthors.user,
+                  text: 'Read this',
+                  createdAt: DateTime.utc(2026),
+                  attachment: TextAttachment(
+                    name: 'facts.txt',
+                    text: 'x' * 300,
+                    sizeBytes: 300,
+                  ),
+                ),
+                message('answer', 'b' * 200, ChatAuthors.assistant),
+                message('question', 'Cześć', ChatAuthors.user),
+              ],
+              onStage: (_) {},
+              onContext: measurements.add,
+            )
+            .drain<void>();
+        expect(measurements, hasLength(2));
+        for (final usage in measurements) {
+          expect(usage.omittedMessageIds, ['file', 'answer']);
+          expect(usage.omittedAttachmentNames, ['facts.txt']);
+        }
+      },
+    );
 
     test('Preserves the system prompt when old turns are trimmed', () async {
       await generateTrimmedHistory();

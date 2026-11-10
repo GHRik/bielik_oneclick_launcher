@@ -108,10 +108,12 @@ class LocalLlmRepository implements LlmRepository {
       if (_stopped) return;
       final engine = _engine!;
       var promptTokens = 0;
+      var omitted = <ChatMessage>[];
       onStage(LlmStage.analyzing);
       final context = await contextPolicy.prepare(
         history,
         isCancelled: () => _stopped,
+        onOmittedMessages: (messages) => omitted = messages,
         countTokens: (messages) async {
           final template = await engine.chatTemplate(_engineMessages(messages));
           promptTokens =
@@ -128,6 +130,10 @@ class LocalLlmRepository implements LlmRepository {
         ContextUsage(
           promptTokens: promptTokens,
           contextSize: configuration.contextSize,
+          omittedMessageIds: List.unmodifiable(omitted.map((m) => m.id)),
+          omittedAttachmentNames: List.unmodifiable(
+            omitted.map((m) => m.attachment?.name).whereType<String>().toSet(),
+          ),
         ),
       );
       await onPromptAccepted?.call();
@@ -155,6 +161,13 @@ class LocalLlmRepository implements LlmRepository {
               promptTokens: usage.promptTokens,
               responseTokens: usage.completionTokens,
               contextSize: configuration.contextSize,
+              omittedMessageIds: List.unmodifiable(omitted.map((m) => m.id)),
+              omittedAttachmentNames: List.unmodifiable(
+                omitted
+                    .map((m) => m.attachment?.name)
+                    .whereType<String>()
+                    .toSet(),
+              ),
             ),
           );
           metrics?.complete(

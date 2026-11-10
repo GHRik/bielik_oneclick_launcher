@@ -172,7 +172,14 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                       modelName: widget.workspace.modelName!,
                     ),
               actions: [
-                ContextUsageIndicator(usage: widget.workspace.contextUsage),
+                ContextUsageIndicator(
+                  key: ValueKey('context-${widget.workspace.selected.id}'),
+                  usage: widget.workspace.contextUsage,
+                  showOmissionWarning:
+                      widget.workspace.hasUnseenContextOmissions,
+                  onOmissionsAcknowledged:
+                      widget.workspace.acknowledgeContextOmissions,
+                ),
                 IconButton(
                   tooltip: 'Statystyki',
                   onPressed: _openStatistics,
