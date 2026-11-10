@@ -83,6 +83,40 @@ void main() {
     );
   });
 
+  testWidgets('Finishing dictation shows text actions without sending', (
+    tester,
+  ) async {
+    await open(tester);
+    await start(tester);
+    speech.text!('Tekst do streszczenia');
+    await tester.pumpAndSettle();
+    expect(find.text('Streść'), findsNothing);
+    speech.done!();
+    await tester.pumpAndSettle();
+    for (final label in ['Przetłumacz', 'Streść', 'Analizuj']) {
+      expect(find.text(label), findsOneWidget);
+    }
+    expect(draft(tester), 'Tekst do streszczenia');
+    expect(
+      await chats.getMessages((await chats.getConversations()).first.id),
+      isEmpty,
+    );
+  });
+
+  testWidgets(
+    'Finishing without recognized speech does not offer actions for an existing draft',
+    (tester) async {
+      await open(tester);
+      tester.widget<TextField>(find.byType(TextField)).controller!.text =
+          'Wpisany tekst';
+      await start(tester);
+      speech.done!();
+      await tester.pumpAndSettle();
+      expect(find.text('Streść'), findsNothing);
+      expect(draft(tester), 'Wpisany tekst');
+    },
+  );
+
   testWidgets('A second tap stops dictation before manual sending', (
     tester,
   ) async {

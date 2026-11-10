@@ -52,7 +52,16 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   late final SpeechDictationController? _dictation =
       widget.speechRepository == null
       ? null
-      : SpeechDictationController(widget.speechRepository!);
+      : SpeechDictationController(
+          widget.speechRepository!,
+          onCompleted: () {
+            if (mounted &&
+                widget.workspace.ready &&
+                widget.workspace.selected == _speechTarget) {
+              _speechTarget?.offerTextActions();
+            }
+          },
+        );
   late final _changes = Listenable.merge([widget.workspace, ?_dictation]);
   ConversationController? _speechTarget;
 

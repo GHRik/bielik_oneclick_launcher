@@ -5,7 +5,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/speech_recognition_repository.dart';
 
 class SpeechDictationController extends ChangeNotifier {
-  SpeechDictationController(this.repository);
+  SpeechDictationController(this.repository, {this.onCompleted});
+
+  final VoidCallback? onCompleted;
 
   final SpeechRecognitionRepository repository;
   TextEditingController? _target;
@@ -32,12 +34,14 @@ class SpeechDictationController extends ChangeNotifier {
     error = null;
     starting = true;
     notifyListeners();
+    var receivedText = false;
     try {
       await repository.cancel();
       if (!_current(session)) return;
       final started = await repository.start(
         onText: (text) {
-          if (!_current(session) || text.isEmpty) return;
+          if (!_current(session) || text.trim().isEmpty) return;
+          receivedText = true;
           final before = _prefix.isNotEmpty && !RegExp(r'\s$').hasMatch(_prefix)
               ? ' '
               : '';
@@ -57,7 +61,9 @@ class SpeechDictationController extends ChangeNotifier {
           }
         },
         onDone: () {
-          if (_current(session)) unawaited(cancel());
+          if (!_current(session)) return;
+          unawaited(cancel());
+          if (receivedText && error == null) onCompleted?.call();
         },
         onError: (failure) {
           if (!_current(session)) return;
