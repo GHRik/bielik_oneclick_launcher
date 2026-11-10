@@ -5,8 +5,21 @@ import 'package:material_ui/material_ui.dart';
 
 /// Recognizes complete math expressions without rewriting Markdown code spans.
 class MathInlineSyntax extends md.InlineSyntax {
+  static const _script = r'(?:[_^](?:\{[A-Za-z0-9+\- ]+\}|[A-Za-z0-9]))*';
+  static const _atom = r'[A-Za-z0-9]+' + _script;
+
   MathInlineSyntax()
-    : super(r'\$\$|\$|\\\(|\\\[|\\(?:dfrac|tfrac|frac|sqrt)\b');
+    : super(
+        r'\\(?:textbf|mathbf|mathrm)\{[A-Za-z]\}' +
+            _script +
+            r'[ \t]*=[ \t]*' +
+            _atom +
+            r'(?:[ \t]*[+\-*/=][ \t]*' +
+            _atom +
+            r')*' +
+            r'|\\begin\{(?:align\*?|aligned|gather\*?)\}'
+                r'|\$\$|\$|\\\(|\\\[|\\(?:dfrac|tfrac|frac|sqrt)\b',
+      );
 
   bool _escaped(String source, int index) {
     var backslashes = 0;
@@ -47,7 +60,21 @@ class MathInlineSyntax extends md.InlineSyntax {
       r'\[' => r'\]',
       _ => null,
     };
-    if (closing != null) {
+    if (opening.startsWith(r'\begin{')) {
+      final environment = opening.substring(7, opening.length - 1);
+      final closingEnvironment = '\\end{$environment}';
+      final closeAt = source.indexOf(closingEnvironment, end);
+      if (closeAt < 0) return literal();
+      var body = source.substring(end, closeAt);
+      // Some small models emit a single backslash at a row boundary.
+      body = body.replaceAll(RegExp(r'(?<!\\)\\[ \t]*\n'), '\\\\\n');
+      final target = environment.startsWith('gather') ? 'gathered' : 'aligned';
+      equation = '\\begin{$target}$body\\end{$target}';
+      end = closeAt + closingEnvironment.length;
+      display = true;
+    } else if (opening.contains('=') && opening.startsWith(r'\')) {
+      equation = opening;
+    } else if (closing != null) {
       if (opening == r'$' &&
           match.start > 0 &&
           source[match.start - 1] == r'$') {
@@ -78,7 +105,7 @@ class MathInlineSyntax extends md.InlineSyntax {
       }
       equation = source.substring(match.start, end);
     }
-    final element = md.Element.text('math', equation);
+    final element = md.Element.text(display ? 'math-block' : 'math', equation);
     element.attributes['source'] = source.substring(match.start, end);
     element.attributes['display'] = '$display';
     parser.addNode(element);
@@ -88,8 +115,12 @@ class MathInlineSyntax extends md.InlineSyntax {
 }
 
 class MathElementBuilder extends MarkdownElementBuilder {
-  MathElementBuilder(this.textStyle);
+  MathElementBuilder(this.textStyle, {this.block = false});
   final TextStyle textStyle;
+  final bool block;
+
+  @override
+  bool isBlockElement() => block;
 
   @override
   Widget visitElementAfterWithContext(
@@ -97,18 +128,21 @@ class MathElementBuilder extends MarkdownElementBuilder {
     md.Element element,
     TextStyle? preferredStyle,
     TextStyle? parentStyle,
-  ) => SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: Math.tex(
-      element.textContent,
-      mathStyle: element.attributes['display'] == 'true'
-          ? MathStyle.display
-          : MathStyle.text,
-      textStyle: textStyle,
-      textScaleFactor: MediaQuery.textScalerOf(context).scale(1),
-      onErrorFallback: (_) => Text(
-        element.attributes['source'] ?? element.textContent,
-        style: textStyle.copyWith(fontFamily: 'monospace'),
+  ) => Padding(
+    padding: block ? const EdgeInsets.symmetric(vertical: 8) : EdgeInsets.zero,
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Math.tex(
+        element.textContent,
+        mathStyle: element.attributes['display'] == 'true'
+            ? MathStyle.display
+            : MathStyle.text,
+        textStyle: textStyle,
+        textScaleFactor: MediaQuery.textScalerOf(context).scale(1),
+        onErrorFallback: (_) => Text(
+          element.attributes['source'] ?? element.textContent,
+          style: textStyle.copyWith(fontFamily: 'monospace'),
+        ),
       ),
     ),
   );

@@ -33,7 +33,10 @@ class AssistantMarkdownMessage extends StatelessWidget {
                 data: message.text,
                 inlineSyntaxes: [MathInlineSyntax()],
                 extensionSet: md.ExtensionSet.gitHubFlavored,
-                builders: {'math': MathElementBuilder(textStyle)},
+                builders: {
+                  'math': MathElementBuilder(textStyle),
+                  'math-block': MathElementBuilder(textStyle, block: true),
+                },
                 fitContent: true,
                 softLineBreak: true,
                 styleSheet: MarkdownStyleSheet(

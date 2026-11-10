@@ -85,6 +85,100 @@ void main() {
       });
     }
 
+    testWidgets('Renders Fibonacci equations with subscripts in prose', (
+      tester,
+    ) async {
+      await _open(
+        tester,
+        r'Ciąg Fibonacciego: \(F_n = F_{n-1} + F_{n-2}\), gdzie \(F_0 = 0\) i \(F_1 = 1\). Dla \(n = 20\): \(F_{20} = 6765\).',
+      );
+      expect(find.byType(Math), findsNWidgets(5));
+      expect(
+        _visibleRuns(
+          tester,
+        ).any((run) => run.text.contains(r'\(') || run.text.contains(r'F_{')),
+        isFalse,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Renders an unwrapped styled equation without swallowing prose', (
+      tester,
+    ) async {
+      const source =
+          r'Oto wzór dla ciągu Fibonacciego: \textbf{C}_n = C_{n-1} + C_{n-2}, gdzie \( C_0 = 42 \) i \( C_1 = 35. \)';
+      final conversation = await _open(tester, source);
+      expect(find.byType(Math), findsNWidgets(3));
+      expect(
+        _visibleRuns(tester).any(
+          (run) => run.text.contains(r'\textbf') || run.text.contains(r'C_{'),
+        ),
+        isFalse,
+      );
+      expect(
+        _visibleRuns(tester).any((run) => run.text.contains('gdzie')),
+        isTrue,
+      );
+      expect(conversation.messages.single.text, source);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Keeps an unwrapped equation inside code literal', (
+      tester,
+    ) async {
+      await _open(tester, r'`\textbf{C}_n = C_{n-1} + C_{n-2}`');
+      expect(find.byType(Math), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets(
+      'Renders a complete align environment and preserves following prose',
+      (tester) async {
+        const source = r'''\begin{align*}
+& \rho(\mathbf{x}) =  \int \vec E dV - , \
+& \nabla \times \vec E = -, \
+& \rho(\mathbf{x}) =  \int \vec D dV, \
+& \nabla \times \vec B = \mu_0 \vec J + \mu_0 \vec E.
+\end{align*}Gdzie:''';
+        final conversation = await _open(tester, source, width: 320);
+        expect(find.byType(Math), findsOneWidget);
+        expect(
+          _visibleRuns(tester).any(
+            (run) => run.text.contains(r'\begin') || run.text.contains(r'\rho'),
+          ),
+          isFalse,
+        );
+        expect(
+          _visibleRuns(tester).any((run) => run.text.contains('Gdzie:')),
+          isTrue,
+        );
+        expect(conversation.messages.single.text, source);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets('Display equations put the following example on a new line', (
+      tester,
+    ) async {
+      await _open(
+        tester,
+        r'Wzór: \[A = 4\pi r^2\]**Przykład:** Dla \(r = 5\).',
+        width: 360,
+      );
+      final formula = find.byType(Math).first;
+      final example = find.byWidgetPredicate(
+        (widget) =>
+            widget is RichText &&
+            widget.text.toPlainText().contains('Przykład:'),
+      );
+      expect(example, findsOneWidget);
+      expect(
+        tester.getTopLeft(example).dy,
+        greaterThan(tester.getBottomLeft(formula).dy),
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('Keeps LaTeX examples inside code literal', (tester) async {
       await _open(tester, '`\\frac{h}{2}`\n\n```latex\n\\frac{h}{2}\n```');
       expect(find.byType(Math), findsNothing);
