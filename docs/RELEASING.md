@@ -46,7 +46,7 @@ Download a newer signed release APK and install it over the existing installatio
 
 Older debug APKs may have different certificates and cannot be upgraded with this release key. Do not uninstall an old build if you need its local data; uninstalling removes private app storage. This setup establishes update compatibility between releases signed with the pinned key, not with every previous debug APK.
 
-The application ID remains `bielik.ai.bielik_oneclick_launcher`. CI derives `versionCode` from UTC seconds since 2020-01-01, so newly started release builds get higher codes, including reruns of older source revisions. All branches share one release concurrency group. `versionName` comes from the workflow version input, falling back to `pubspec.yaml`. Local builds must also use a higher `--build-number` than the installed release.
+The production application ID is `bielik.ai`. Older APKs used `bielik.ai.bielik_oneclick_launcher`; Android treats these as separate applications, so there is no in-place upgrade or automatic transfer of local data between them, even with the same signing key. The internal Java namespace and isolated E2E package remain unchanged. To build an AAB with the new ID, first publish an APK release containing this change and select its tag in the AAB workflow; rebuilding an older source release preserves its old ID. CI derives `versionCode` from UTC seconds since 2020-01-01, so newly started release builds get higher codes, including reruns of older source revisions. All branches share one release concurrency group. `versionName` comes from the workflow version input, falling back to `pubspec.yaml`. Local builds must also use a higher `--build-number` than the installed release.
 
 ## Signing identity
 

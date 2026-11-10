@@ -53,7 +53,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = if (e2eBuild) "bielik.ai.bielik_oneclick_launcher.e2e" else "bielik.ai.bielik_oneclick_launcher"
+        applicationId = if (e2eBuild) "bielik.ai.bielik_oneclick_launcher.e2e" else "bielik.ai"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
