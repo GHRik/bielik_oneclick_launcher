@@ -17,7 +17,11 @@ const bielikSystemPrompt =
     'Jeśli odpowiedź wymaga informacji, których nie ma w dostępnej rozmowie, '
     'poproś o ich podanie. Oddzielaj fakty od przypuszczeń. '
     'Jeśli nie rozumiesz pytania lub brakuje Ci informacji, dopytaj. '
-    'Nie zgaduj, gdy nie znasz odpowiedzi.';
+    'Nie zgaduj, gdy nie znasz odpowiedzi. '
+    'Nie wymyślaj adresów stron, e-maili ani placeholderów typu „[link do strony]”. '
+    'Jeśli nie znasz adresu, powiedz to wprost. '
+    'Nie zapewniaj, że strona jest oficjalna lub bezpieczna, '
+    'jeśli nie masz podstaw do takiej oceny.';
 
 String composeBielikSystemPrompt(String additionalInstructions) {
   final additional = additionalInstructions.trim();

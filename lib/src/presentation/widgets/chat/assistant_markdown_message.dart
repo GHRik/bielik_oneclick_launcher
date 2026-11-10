@@ -1,4 +1,5 @@
 import 'package:flutter_chat_core/flutter_chat_core.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/chat_link.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/chat/streaming_text_reveal.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
@@ -41,6 +42,7 @@ class AssistantMarkdownMessage extends StatelessWidget {
                 streaming: streaming,
                 child: MarkdownBody(
                   data: message.text,
+                  onTapLink: (_, href, _) => openChatLink(context, href),
                   inlineSyntaxes: [MathInlineSyntax()],
                   extensionSet: md.ExtensionSet.gitHubFlavored,
                   builders: {

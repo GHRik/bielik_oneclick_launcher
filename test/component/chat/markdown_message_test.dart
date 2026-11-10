@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -66,7 +67,89 @@ Future<ConversationController> _open(
   return conversation;
 }
 
+class _Links extends UrlLauncherPlatform {
+  @override
+  get linkDelegate => null;
+  final opened = <String>[];
+  bool succeeds = true;
+  bool fails = false;
+  @override
+  Future<bool> launchUrl(String url, LaunchOptions options) async {
+    expect(options.mode, PreferredLaunchMode.externalApplication);
+    opened.add(url);
+    if (fails) throw StateError('No handler');
+    return succeeds;
+  }
+}
+
 void main() {
+  group('Assistant links', () {
+    late _Links links;
+    late UrlLauncherPlatform previous;
+    setUp(() {
+      previous = UrlLauncherPlatform.instance;
+      links = _Links();
+      UrlLauncherPlatform.instance = links;
+    });
+    tearDown(() => UrlLauncherPlatform.instance = previous);
+
+    for (final url in [
+      'https://example.org/help',
+      'http://example.org',
+      'mailto:test@example.org',
+    ]) {
+      testWidgets('Tapping a Markdown link opens $url externally', (
+        tester,
+      ) async {
+        await _open(tester, '[Otwórz]($url)');
+        await tester.tap(find.text('Otwórz', findRichText: true));
+        await tester.pumpAndSettle();
+        expect(links.opened, [url]);
+      });
+    }
+
+    for (final url in [
+      'javascript:alert(1)',
+      'file:///tmp/test',
+      'https:',
+      '#fragment',
+    ]) {
+      testWidgets('Does not launch unsupported or incomplete address $url', (
+        tester,
+      ) async {
+        await _open(tester, '[Otwórz]($url)');
+        await tester.tap(find.text('Otwórz', findRichText: true));
+        await tester.pumpAndSettle();
+        expect(links.opened, isEmpty);
+        expect(
+          find.text('Ten link nie zawiera obsługiwanego adresu.'),
+          findsOneWidget,
+        );
+      });
+    }
+
+    for (final throwsError in [false, true]) {
+      testWidgets(
+        'Shows feedback when launching fails (throws: $throwsError)',
+        (tester) async {
+          links.succeeds = false;
+          links.fails = throwsError;
+          await _open(tester, '[Otwórz](https://example.org)');
+          await tester.tap(find.text('Otwórz', findRichText: true));
+          await tester.pumpAndSettle();
+          expect(find.text('Nie udało się otworzyć linku.'), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+
+    testWidgets('An address-free placeholder stays literal', (tester) async {
+      await _open(tester, '[link do strony]');
+      expect(find.text('[link do strony]', findRichText: true), findsOneWidget);
+      expect(links.opened, isEmpty);
+    });
+  });
+
   group('Assistant math formatting', () {
     for (final expression in [
       r'$\frac{h}{2}$',
