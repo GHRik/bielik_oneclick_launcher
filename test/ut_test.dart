@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/ut/test_github_app_update_repository.dart'
+    as app_updates;
 import 'package:bielik_oneclick_launcher/src/domain/models/ut/test_chat_text_action.dart'
     as text_actions;
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/ut/test_android_app_exit_repository.dart'
@@ -58,6 +60,10 @@ import 'package:bielik_oneclick_launcher/src/presentation/formatters/ut/test_sto
     as suite17;
 
 void main() {
+  group(
+    'src/data/repositories_impl/github_app_update_repository.dart',
+    app_updates.main,
+  );
   group('src/domain/models/chat_text_action.dart', text_actions.main);
   group(
     'src/data/repositories_impl/android_app_exit_repository.dart',

@@ -98,7 +98,7 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: flutter build apk --release --target-platform android-arm64 --build-name="${{ steps.version.outputs.app_version }}" --build-number="${{ steps.version.outputs.build_number }}"
+        run: flutter build apk --release --dart-define=BIELIK_APK_UPDATES=true --target-platform android-arm64 --build-name="${{ steps.version.outputs.app_version }}" --build-number="${{ steps.version.outputs.build_number }}"
 
       - name: Remove private keystore
         if: always()
