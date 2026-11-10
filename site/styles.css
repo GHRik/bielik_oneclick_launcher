@@ -104,6 +104,15 @@ h1 em{color:var(--display-ink);font-weight:500}
 .hero-feature-actions{left:0;bottom:14px;width:260px;flex-direction:column;align-items:stretch;gap:6px;animation-delay:.35s,1.5s}
 .hero-feature-caption{display:flex;align-items:center;gap:5px;padding:2px 5px;font-size:10px;font-weight:600;color:var(--muted)}
 .hero-feature-caption svg{color:var(--accent)}
+.hero-update{position:absolute;z-index:3;right:0;top:285px;width:180px;text-align:left;animation:feature-pop .5s cubic-bezier(.2,.8,.3,1) 1s both}
+.hero-update-title,.hero-update-note{display:block;padding:10px 12px;border:1px solid var(--strong-line);border-radius:12px;background:var(--surface);box-shadow:0 6px 18px #0002}
+.hero-update-title{font-size:11px;font-weight:600;line-height:1.5}
+.hero-update-title svg{display:inline-block;vertical-align:-3px;margin-right:4px;color:var(--accent)}
+.hero-update-note{margin-top:5px;font-size:10px;line-height:1.6;color:var(--muted);animation:feature-pop .45s ease-out 1.55s both}
+.hero-update:hover .hero-update-title{border-color:var(--accent)}
+@media(max-width:760px){.hero-update{top:192px;width:150px}.hero-update-title,.hero-update-note{padding:8px 10px}.hero-update-title{font-size:10px}.hero-update-note{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.hero-update,.hero-update-note{animation:none}}
+:root[data-theme="contrast"] .hero-update,:root[data-theme="contrast"] .hero-update-note{animation:none}
 @keyframes feature-pop{0%{opacity:0;scale:.75}70%{opacity:1;scale:1.06}100%{opacity:1;scale:1}}
 @keyframes feature-float{0%,100%{transform:translateY(0);box-shadow:0 8px 24px #0002}50%{transform:translateY(-12px);box-shadow:0 14px 30px #0003}}
 @media(max-width:760px){.hero-feature-ask{left:0;top:8px;width:175px}.hero-feature-actions{left:0;bottom:0;width:210px}}
