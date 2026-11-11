@@ -58,7 +58,7 @@ GPU settings are session-only and disabled at startup.
 
 `ChatService` owns the send operation: derive a title, persist the user message, invoke the LLM, and periodically save the assistant's partial reply as well as its final text. It serializes writes with draft updates and emits `ChatMessageSaved` / `ChatMessageUpdated` events. It does not know Flutter controllers or the chat UI library.
 
-`ChatWorkspace` delegates commands and maps events to the appropriate conversation controller, including after switching conversations. Deleting an active conversation waits for generation to stop. Leaving chat or sending the app to the background stops generation and releases the engine after pending writes finish.
+`ChatWorkspace` delegates commands and maps events to the appropriate conversation controller, including after switching conversations. Deleting an active conversation waits for generation to stop. Stopping a request while the model is loading ends the request at once; the load itself cannot be interrupted, so `LocalLlmRepository` lets it finish in the background, the next request continues with it, and unloading waits for it. Leaving chat or sending the app to the background stops generation and releases the engine after pending writes finish.
 
 `LlmRepository` defines streamed replies, stopping, and model release. `LocalLlmRepository` opens the locally downloaded GGUF using `llamadart` / `llama.cpp`. The selected model is loaded on the first request and reused while working in chat. A different model file or profile reloads the engine.
 

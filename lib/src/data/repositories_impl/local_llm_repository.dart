@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:llamadart/llamadart.dart';
 
 import 'package:bielik_oneclick_launcher/src/data/datasources/llm_runtime_adapter.dart';
@@ -48,6 +50,41 @@ class LocalLlmRepository implements LlmRepository {
   bool _active = false;
   bool _stopped = false;
 
+  /// The engine load that is still running. A load cannot be interrupted, so
+  /// a stopped request leaves it running: the next request for the same model
+  /// continues with it and [unload] waits for it before releasing memory.
+  Future<void>? _pendingLoad;
+  Completer<void>? _stopSignal;
+
+  Future<void> _load(String path, LlmConfiguration configuration) {
+    final load = () async {
+      _engine = await _loadEngine(
+        path,
+        runtimeAdapter.parameters(configuration),
+      );
+      _loadedPath = path;
+      _loadedConfiguration = configuration;
+    }();
+    _pendingLoad = load;
+    unawaited(
+      load.then((_) {}, onError: (Object _) {}).whenComplete(() {
+        if (identical(_pendingLoad, load)) _pendingLoad = null;
+      }),
+    );
+    return load;
+  }
+
+  /// Waits for [load], but no longer than until [stop] is called.
+  Future<void> _loadUnlessStopped(Future<void> load) async {
+    if (_stopped) return;
+    final signal = _stopSignal = Completer<void>();
+    try {
+      await Future.any([load, signal.future]);
+    } finally {
+      _stopSignal = null;
+    }
+  }
+
   List<LlamaChatMessage> _engineMessages(
     List<ContextMessage> messages,
     String systemPrompt,
@@ -96,6 +133,13 @@ class LocalLlmRepository implements LlmRepository {
       if (!await file.exists() || await file.length() != model.sizeBytes) {
         throw StateError('Najpierw pobierz wybrany model na ekranie głównym.');
       }
+      final running = _pendingLoad;
+      if (running != null) {
+        // Left by a stopped request. If it fails, the load below reports it.
+        onStage(LlmStage.loading);
+        await _loadUnlessStopped(running.then((_) {}, onError: (Object _) {}));
+        if (_stopped) return;
+      }
       if (_loadedPath != file.path ||
           _engine == null ||
           _loadedConfiguration != configuration) {
@@ -105,12 +149,7 @@ class LocalLlmRepository implements LlmRepository {
         _loadedPath = null;
         _contextConversationId = null;
         if (_stopped) return;
-        _engine = await _loadEngine(
-          file.path,
-          runtimeAdapter.parameters(configuration),
-        );
-        _loadedPath = file.path;
-        _loadedConfiguration = configuration;
+        await _loadUnlessStopped(_load(file.path, configuration));
       }
       if (_stopped) return;
       final engine = _engine!;
@@ -207,6 +246,8 @@ class LocalLlmRepository implements LlmRepository {
   @override
   void stop() {
     _stopped = true;
+    final signal = _stopSignal;
+    if (signal != null && !signal.isCompleted) signal.complete();
     _engine?.cancelGeneration();
   }
 
@@ -223,6 +264,9 @@ class LocalLlmRepository implements LlmRepository {
   }
 
   Future<void> _discardEngine() async {
+    try {
+      await _pendingLoad;
+    } catch (_) {}
     final engine = _engine;
     _engine = null;
     _loadedPath = null;
