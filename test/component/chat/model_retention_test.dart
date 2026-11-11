@@ -178,6 +178,92 @@ void main() {
     await close(tester);
   });
 
+  void background(WidgetTester tester) {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+  }
+
+  void foreground(WidgetTester tester) {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+  }
+
+  testWidgets('An open chat left in the background releases the model after '
+      'two idle minutes', (tester) async {
+    await open(tester);
+    background(tester);
+    await tester.pump(const Duration(seconds: 119));
+    expect(llm.unloads, 0);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(llm.unloads, 1);
+    foreground(tester);
+    await close(tester);
+  });
+
+  testWidgets('Returning to an open chat in time keeps the model', (
+    tester,
+  ) async {
+    await open(tester);
+    background(tester);
+    await tester.pump(const Duration(seconds: 60));
+    foreground(tester);
+    await tester.pump(const Duration(minutes: 3));
+    expect(llm.unloads, 0);
+    await close(tester);
+  });
+
+  testWidgets('Losing focus without leaving the app keeps the model', (
+    tester,
+  ) async {
+    await open(tester);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump(const Duration(minutes: 3));
+    expect(llm.unloads, 0);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await close(tester);
+  });
+
+  testWidgets('An answer generated in the background finishes before the '
+      'idle timeout starts', (tester) async {
+    await open(tester);
+    llm.pending = StreamController<String>();
+    await tester.enterText(find.byType(TextField), 'Another question');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.send));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    background(tester);
+    await tester.pump(const Duration(minutes: 3));
+    expect(llm.unloads, 0);
+    llm.pending!.add('Complete');
+    unawaited(llm.pending!.close());
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 119));
+    expect(llm.unloads, 0);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(llm.unloads, 1);
+    foreground(tester);
+    await close(tester);
+  });
+
+  testWidgets('The home screen timeout keeps running after a return from the '
+      'background', (tester) async {
+    await open(tester);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    background(tester);
+    await tester.pump(const Duration(seconds: 30));
+    foreground(tester);
+    await tester.pump(const Duration(seconds: 120));
+    await tester.pump();
+    expect(llm.unloads, 1);
+    await close(tester);
+  });
+
   testWidgets('The idle timeout does not interrupt an active answer', (
     tester,
   ) async {

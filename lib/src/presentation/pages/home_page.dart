@@ -116,10 +116,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      // Entering the chat retains the model; returning to it must do the same.
+      if (_chatOpen) _chatWorkspace.retainModel();
       unawaited(_resources.refresh());
       _statistics?.start();
     } else {
       _statistics?.pause();
+    }
+    if (state == AppLifecycleState.paused) {
+      // An open chat would otherwise keep the model in RAM for as long as the
+      // app stays in the background.
+      _chatWorkspace.releaseModelWhenIdle();
     }
     if (state != AppLifecycleState.resumed) {
       unawaited(_chatWorkspace.flush());
