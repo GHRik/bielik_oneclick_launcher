@@ -4,7 +4,7 @@ On Android, select text in an app and choose **Zapytaj Bielika**. Some apps put 
 
 The launcher opens the first conversation in its list, creates one if necessary, and appends the selection to its draft. It does not send the message or load a model. Press Send when ready. Selecting a conversation or sending a message moves it to the top; the order survives app restarts. Background draft and answer updates do not reorder chats.
 
-Selections are plain text only, with a limit of 65,536 UTF-16 code units. Unsupported, empty, and oversized selections are rejected. Existing drafts are kept.
+Selections are plain text only, with a limit of 65,536 UTF-16 code units. Unsupported, empty, and oversized selections are rejected. Existing drafts are kept. A draft holds at most 262,144 UTF-16 code units; a selection that does not fit in the remaining space is rejected with a message and the draft stays unchanged.
 
 ## Platform boundary
 

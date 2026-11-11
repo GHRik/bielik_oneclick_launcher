@@ -126,13 +126,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
-  void _showImportError() {
+  void _showImportError([
+    String message = 'Nie udało się odebrać tekstu. Spróbuj ponownie.',
+  ]) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Nie udało się odebrać tekstu. Spróbuj ponownie.'),
-      ),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _importText(String text) async {
@@ -145,6 +144,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         return;
       }
       unawaited(_openChat());
+    } on DraftLimitExceeded {
+      _showImportError(
+        'Tekst nie mieści się w szkicu rozmowy. '
+        'Wyślij lub skróć szkic i spróbuj ponownie.',
+      );
     } catch (_) {
       _showImportError();
     }

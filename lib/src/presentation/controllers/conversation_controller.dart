@@ -11,6 +11,7 @@ class ConversationController extends ChangeNotifier {
     required List<ChatMessage> messages,
     required this.onDraftChanged,
     this.onAttachmentChanged,
+    this.onDraftLimitExceeded,
   }) : _conversation = conversation,
        _messages = List.of(messages),
        controller = InMemoryChatController(
@@ -71,10 +72,9 @@ class ConversationController extends ChangeNotifier {
     _pendingSubmission = null;
     await controller.removeMessage(_viewMessage(pending.message));
     final nextDraft = draft.text;
-    draft.text = [
-      pending.draft,
-      nextDraft,
-    ].where((text) => text.isNotEmpty).join('\n\n');
+    draft.text = Conversation.clampDraft(
+      [pending.draft, nextDraft].where((text) => text.isNotEmpty).join('\n\n'),
+    );
     draft.selection = TextSelection.collapsed(offset: draft.text.length);
     if (attachment == null && pending.message.attachment != null) {
       setAttachment(pending.message.attachment);
@@ -88,6 +88,7 @@ class ConversationController extends ChangeNotifier {
   final TextEditingController draft;
   final ValueChanged<String> onDraftChanged;
   final ValueChanged<TextAttachment?>? onAttachmentChanged;
+  final VoidCallback? onDraftLimitExceeded;
   int _attachmentRevision = 0;
   int get attachmentRevision => _attachmentRevision;
   TextAttachment? get attachment => _conversation.draftAttachment;
@@ -133,7 +134,20 @@ class ConversationController extends ChangeNotifier {
   );
 
   void _draftChanged() {
-    if (_suppressDraftChanges || draft.text == _conversation.draft) return;
+    if (_suppressDraftChanges) return;
+    if (draft.text.length > Conversation.maxDraftLength) {
+      // Refuse the edit as a whole, like an import that does not fit, instead
+      // of dropping text the user did not touch. Assigning the previous value
+      // notifies this listener again, which then sees no change.
+      final previous = _conversation.draft;
+      draft.value = TextEditingValue(
+        text: previous,
+        selection: TextSelection.collapsed(offset: previous.length),
+      );
+      onDraftLimitExceeded?.call();
+      return;
+    }
+    if (draft.text == _conversation.draft) return;
     _draftRevision++;
     if (draft.text.trim().isEmpty) _textActionsOffered = false;
     _conversation = _conversation.copyWith(draft: draft.text);
@@ -141,10 +155,12 @@ class ConversationController extends ChangeNotifier {
     onDraftChanged(
       pending == null
           ? draft.text
-          : [
-              pending.draft,
-              draft.text,
-            ].where((text) => text.isNotEmpty).join('\n\n'),
+          : Conversation.clampDraft(
+              [
+                pending.draft,
+                draft.text,
+              ].where((text) => text.isNotEmpty).join('\n\n'),
+            ),
     );
     notifyListeners();
   }

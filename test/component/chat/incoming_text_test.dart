@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/app.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/conversation.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/incoming_text_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/llm_repository.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
@@ -103,6 +104,38 @@ void main() {
       expect(workspace.selected.draft.text, 'Keep');
     });
 
+    test('Rejects text that does not fit in the remaining draft', () async {
+      await workspace.initialize();
+      final draft = 'a' * (Conversation.maxDraftLength - 10);
+      workspace.selected.draft.text = draft;
+      await expectLater(
+        workspace.importText('More than ten characters'),
+        throwsA(isA<DraftLimitExceeded>()),
+      );
+      expect(workspace.selected.draft.text, draft);
+    });
+
+    test('Accepts text that exactly fills the draft', () async {
+      await workspace.initialize();
+      workspace.selected.draft.text = 'a' * (Conversation.maxDraftLength - 6);
+      expect(await workspace.importText('1234'), isTrue);
+      expect(workspace.selected.draft.text.length, Conversation.maxDraftLength);
+    });
+
+    test('Refuses an edit that grows the draft past the limit', () async {
+      await workspace.initialize();
+      final draft = 'a' * Conversation.maxDraftLength;
+      workspace.selected.draft.text = draft;
+      await workspace.flush();
+
+      workspace.selected.draft.text = 'Pasted at the start$draft';
+      await workspace.flush();
+
+      expect(workspace.selected.draft.text, draft);
+      expect(workspace.error, contains('262\u00A0144'));
+      expect((await repository.getConversations()).first.draft, draft);
+    });
+
     test(
       'Reports a database failure without importing into another chat',
       () async {
@@ -133,6 +166,27 @@ void main() {
       );
       await tester.pumpAndSettle();
     }
+
+    testWidgets('Explains that a full draft cannot take more text', (
+      tester,
+    ) async {
+      final conversation = await repository.createConversation();
+      await repository.saveDraft(
+        conversation.id,
+        'a' * Conversation.maxDraftLength,
+      );
+      await openApp(tester);
+      incoming.controller.add('One more selection');
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'Tekst nie mieści się w szkicu rozmowy. '
+          'Wyślij lub skróć szkic i spróbuj ponownie.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.byType(ChatPage), findsNothing);
+    });
 
     testWidgets('Handles text queued before the app is initialized', (
       tester,

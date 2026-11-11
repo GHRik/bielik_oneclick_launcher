@@ -88,7 +88,7 @@ Availability depends on device permissions and drivers. References: [HardwarePro
 
 ## SQLite persistence
 
-`AppDatabase` manages the private `bielik.db` file, shared opening, schema creation, migrations, and closing. Schema version 2 includes `conversations`, `messages`, a message index, and `settings`. Messages reference conversations with `ON DELETE CASCADE`. Conversations store drafts; timestamps use UTC epoch milliseconds. The v1 → v2 migration preserves existing chats, including databases where the settings table already exists.
+`AppDatabase` manages the private `bielik.db` file, shared opening, schema creation, migrations, and closing. Schema version 2 includes `conversations`, `messages`, a message index, and `settings`. Messages reference conversations with `ON DELETE CASCADE`. Conversations store drafts of at most `Conversation.maxDraftLength` UTF-16 code units, and the conversation list reads no more than that from each row, so a row always fits in Android's 2 MB cursor window. Timestamps use UTC epoch milliseconds. The v1 → v2 migration preserves existing chats, including databases where the settings table already exists.
 
 `ChatRepository` is the domain contract. `SqliteChatRepository` maps records to domain objects; `SqliteChatDataSource` executes queries. Presentation does not import SQLite.
 
