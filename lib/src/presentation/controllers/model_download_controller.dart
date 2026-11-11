@@ -17,7 +17,13 @@ class ModelDownloadController extends ChangeNotifier {
   bool _disposed = false;
 
   bool get isRunning => busy;
+
+  /// True only while a model is being downloaded or verified, unlike [busy],
+  /// which also covers deleting a model.
+  bool get downloading => _downloading;
+  bool _downloading = false;
   bool get verifying => _progress?.verifying ?? false;
+  int get receivedBytes => _progress?.receivedBytes ?? 0;
   double get progress => _progress?.fraction ?? 0;
   int get percent => (progress * 100).floor();
   String get speed => ((_progress?.bytesPerSecond ?? 0) / 1000000)
@@ -65,6 +71,7 @@ class ModelDownloadController extends ChangeNotifier {
       return;
     }
     busy = true;
+    _downloading = true;
     visible = true;
     error = null;
     _progress = null;
@@ -82,6 +89,7 @@ class ModelDownloadController extends ChangeNotifier {
       error = 'Nie udało się pobrać modelu. Sprawdź połączenie i wolne miejsce, a następnie spróbuj ponownie.';
       visible = false;
     } finally {
+      _downloading = false;
       busy = false;
       _notify();
     }

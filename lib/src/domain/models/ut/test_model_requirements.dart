@@ -26,6 +26,29 @@ void main() {
       });
     }
 
+    test('Needs space only for the part not downloaded yet', () {
+      final result = ModelRequirements.evaluate(
+        model,
+        availableStorageGb: 1,
+        availableRamGb: 4,
+        downloadedGb: 0.85,
+      );
+
+      expect(result.storage.requiredGb, closeTo(0.85, 1e-9));
+      expect(result.storage.status, RequirementStatus.sufficient);
+    });
+
+    test('Never requires negative storage', () {
+      final result = ModelRequirements.evaluate(
+        model,
+        availableStorageGb: 0,
+        availableRamGb: 4,
+        downloadedGb: 5,
+      );
+
+      expect(result.storage.requiredGb, 0);
+    });
+
     test(
       'Allows downloading without confirmation when requirements are met',
       () {

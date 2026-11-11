@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
@@ -34,12 +36,16 @@ class ModelManagementPanel extends StatefulWidget {
   final Widget? modelOptions;
   final VoidCallback? onSettings;
 
+  static const resourcesRefreshInterval = Duration(seconds: 5);
+  static const resourcesSettleDelay = Duration(seconds: 2);
+
   @override
   State<ModelManagementPanel> createState() => _ModelManagementPanelState();
 }
 
 class _ModelManagementPanelState extends State<ModelManagementPanel> {
-  late final _download = ModelDownloadController(widget.repository);
+  late final _download = ModelDownloadController(widget.repository)
+    ..addListener(_refreshResourcesWhileDownloading);
   late BielikModel _selectedModel = widget.models.first;
   bool _downloadDialogOpen = false;
 
@@ -99,7 +105,32 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
       if (!mounted || confirmed != true) return;
     }
     await _download.start(model);
-    await widget.onResourcesChanged?.call();
+  }
+
+  bool _downloadRunning = false;
+  Timer? _resourcesTimer;
+
+  /// Keeps the free-space reading current while a download writes to storage
+  /// and once it ends, whether it was started here or resumed on selection.
+  void _refreshResourcesWhileDownloading() {
+    final running = _download.downloading;
+    if (running == _downloadRunning) return;
+    _downloadRunning = running;
+    _resourcesTimer?.cancel();
+    if (running) {
+      _resourcesTimer = Timer.periodic(
+        ModelManagementPanel.resourcesRefreshInterval,
+        (_) => unawaited(widget.onResourcesChanged?.call()),
+      );
+    } else {
+      unawaited(widget.onResourcesChanged?.call());
+      // The space of a removed partial file can be released a moment after
+      // the download reports its end, so read once more.
+      _resourcesTimer = Timer(
+        ModelManagementPanel.resourcesSettleDelay,
+        () => unawaited(widget.onResourcesChanged?.call()),
+      );
+    }
   }
 
   void _selectModel(BielikModel? model) {
@@ -138,6 +169,7 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
   @override
   void dispose() {
     _download.dispose();
+    _resourcesTimer?.cancel();
     super.dispose();
   }
 
@@ -201,6 +233,9 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
               availableStorageGb: widget.availableStorageGb,
               availableRamGb: widget.availableRamGb,
               totalRamGb: widget.totalRamGb,
+              downloadedGb: _download.downloading
+                  ? _download.receivedBytes / 1000000000
+                  : 0,
             ),
           ],
           if (_download.visible && !_download.complete) ...[

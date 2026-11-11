@@ -11,12 +11,14 @@ class ModelRequirementsCard extends StatelessWidget {
     this.availableStorageGb,
     this.availableRamGb,
     this.totalRamGb,
+    this.downloadedGb = 0,
   });
 
   final BielikModel model;
   final double? availableStorageGb;
   final double? availableRamGb;
   final double? totalRamGb;
+  final double downloadedGb;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +26,7 @@ class ModelRequirementsCard extends StatelessWidget {
       model,
       availableStorageGb: availableStorageGb,
       availableRamGb: availableRamGb,
+      downloadedGb: downloadedGb,
     );
     return Card(
       margin: EdgeInsets.zero,

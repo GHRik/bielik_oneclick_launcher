@@ -10,9 +10,25 @@ class DeviceResourcesController extends ChangeNotifier {
   DeviceResources resources = const DeviceResources();
   bool _disposed = false;
   Future<void>? _pending;
+  bool _repeat = false;
 
-  Future<void> refresh() =>
-      _pending ??= _read().whenComplete(() => _pending = null);
+  /// A request that arrives during a read repeats the read once it ends, so
+  /// the result is never older than the latest request.
+  Future<void> refresh() {
+    final pending = _pending;
+    if (pending != null) {
+      _repeat = true;
+      return pending;
+    }
+    return _pending = _readLatest().whenComplete(() => _pending = null);
+  }
+
+  Future<void> _readLatest() async {
+    do {
+      _repeat = false;
+      await _read();
+    } while (_repeat && !_disposed);
+  }
 
   Future<void> _read() async {
     try {
