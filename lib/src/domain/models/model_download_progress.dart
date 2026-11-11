@@ -15,3 +15,8 @@ class ModelDownloadProgress {
 }
 
 class ModelDownloadCancelled implements Exception {}
+
+/// The transfer stopped without a request from the user, for example because
+/// the network was lost. The part already saved may remain for a later
+/// download to continue from.
+class ModelDownloadInterrupted implements Exception {}

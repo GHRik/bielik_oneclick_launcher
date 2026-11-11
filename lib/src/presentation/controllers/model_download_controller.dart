@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_download_progress.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_repository.dart';
 
 class ModelDownloadController extends ChangeNotifier {
@@ -13,6 +14,10 @@ class ModelDownloadController extends ChangeNotifier {
   bool complete = false;
   bool visible = false;
   String? error;
+
+  /// Bytes kept from an interrupted download. The next download continues
+  /// from them instead of starting from the beginning.
+  int savedBytes = 0;
   ModelDownloadProgress? _progress;
   bool _disposed = false;
 
@@ -39,6 +44,7 @@ class ModelDownloadController extends ChangeNotifier {
     complete = false;
     visible = false;
     error = null;
+    savedBytes = 0;
     _progress = null;
     _notify();
     try {
@@ -46,6 +52,9 @@ class ModelDownloadController extends ChangeNotifier {
           model.file != null && await _repository.isDownloaded(model.file!);
       if (!complete && model.file != null) {
         pending = await _repository.hasPendingDownload(model.file!);
+        if (!pending) {
+          savedBytes = await _repository.partialDownloadBytes(model.file!);
+        }
       }
     } catch (_) {
       error = 'Nie udało się sprawdzić pobranych modeli.';
@@ -68,6 +77,7 @@ class ModelDownloadController extends ChangeNotifier {
     visible = true;
     error = null;
     _progress = null;
+    savedBytes = 0;
     _notify();
     try {
       await _repository.download(file, (value) {
@@ -75,12 +85,24 @@ class ModelDownloadController extends ChangeNotifier {
         _notify();
       });
       complete = true;
+      savedBytes = 0;
     } on ModelDownloadCancelled {
       visible = false;
+      savedBytes = 0;
       _progress = null;
+    } on ModelDownloadInterrupted {
+      savedBytes = await _savedPart(file);
+      error = savedBytes > 0
+          ? 'Pobieranie zostało przerwane. Pobrana część jest zachowana: '
+                '„Pobierz” dokończy pobieranie. Sprawdź połączenie i wolne '
+                'miejsce.'
+          : 'Pobieranie zostało przerwane. Sprawdź połączenie i wolne '
+                'miejsce, a następnie spróbuj ponownie.';
+      visible = false;
     } catch (_) {
       error = 'Nie udało się pobrać modelu. Sprawdź połączenie i wolne miejsce, a następnie spróbuj ponownie.';
       visible = false;
+      savedBytes = await _savedPart(file);
     } finally {
       busy = false;
       _notify();
@@ -96,6 +118,7 @@ class ModelDownloadController extends ChangeNotifier {
     _notify();
     try {
       await _repository.delete(model.file!);
+      savedBytes = 0;
       complete = false;
       visible = false;
       _progress = null;
@@ -104,6 +127,15 @@ class ModelDownloadController extends ChangeNotifier {
     } finally {
       busy = false;
       _notify();
+    }
+  }
+
+  /// What the repository still holds after a download ended without a model.
+  Future<int> _savedPart(ModelFile file) async {
+    try {
+      return await _repository.partialDownloadBytes(file);
+    } catch (_) {
+      return 0;
     }
   }
 

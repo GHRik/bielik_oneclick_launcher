@@ -9,6 +9,7 @@ import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/download_
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/download_progress_card.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_requirements_card.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/model_selection_card.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/saved_download_notice.dart';
 
 class ModelManagementPanel extends StatefulWidget {
   const ModelManagementPanel({
@@ -59,7 +60,10 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
     final model = _selectedModel;
     final requirements = ModelRequirements.evaluate(
       model,
-      availableStorageGb: widget.availableStorageGb,
+      availableStorageGb: _storageForModel(
+        widget.availableStorageGb,
+        _download.savedBytes,
+      ),
       availableRamGb: widget.availableRamGb,
     );
 
@@ -194,11 +198,29 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
             const SizedBox(height: 12),
             widget.modelOptions!,
           ],
+          if (_download.savedBytes > 0 &&
+              _selectedModel.file != null &&
+              !_download.complete &&
+              !_download.busy &&
+              !_download.checking) ...[
+            const SizedBox(height: 16),
+            SavedDownloadNotice(
+              savedBytes: _download.savedBytes,
+              totalBytes: _selectedModel.file!.sizeBytes,
+              onDiscard: () async {
+                await _download.delete(_selectedModel);
+                await widget.onResourcesChanged?.call();
+              },
+            ),
+          ],
           if (!_download.complete) ...[
             const SizedBox(height: 16),
             ModelRequirementsCard(
               model: _selectedModel,
-              availableStorageGb: widget.availableStorageGb,
+              availableStorageGb: _storageForModel(
+                widget.availableStorageGb,
+                _download.savedBytes,
+              ),
               availableRamGb: widget.availableRamGb,
               totalRamGb: widget.totalRamGb,
             ),
@@ -290,3 +312,10 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
     );
   }
 }
+
+/// Storage that counts for the model: the free space plus the part kept from
+/// an interrupted download, which already holds its share of the model. The
+/// requirements card and the download check use the same value, so they
+/// cannot disagree.
+double? _storageForModel(double? freeGb, int savedBytes) =>
+    freeGb == null ? null : freeGb + savedBytes / 1000000000;
