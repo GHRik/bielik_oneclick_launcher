@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/models/bielik_model.dart';
@@ -42,11 +44,85 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
   late final _download = ModelDownloadController(widget.repository);
   late BielikModel _selectedModel = widget.models.first;
   bool _downloadDialogOpen = false;
+  final _progressKey = GlobalKey();
+  final _downloadActionKey = GlobalKey();
+  final _selectionKey = GlobalKey();
+  final _errorKey = GlobalKey();
+  bool _progressShown = false;
+  bool _errorShown = false;
+  // True from the start: a model that still has to be downloaded shows its
+  // download button as soon as the first check ends.
+  bool _revealDownloadButton = true;
 
   @override
   void initState() {
     super.initState();
+    _download.addListener(_keepDownloadInView);
     _download.select(_selectedModel);
+  }
+
+  /// The panel is taller than most screens, so the download button of the
+  /// selected model, a download card or a download error can appear below the
+  /// visible area. Scroll just far enough to show what the user has to act on.
+  void _keepDownloadInView() {
+    final progressShown = _download.visible && !_download.complete;
+    final errorShown = _download.error != null;
+    if (progressShown && !_progressShown) {
+      _reveal(_progressKey);
+    } else if (errorShown && !_errorShown) {
+      _reveal(_errorKey);
+    } else if (_revealDownloadButton &&
+        !_download.checking &&
+        !_download.complete &&
+        !progressShown) {
+      _reveal(_downloadActionKey, keepModelSelection: true);
+    }
+    if (!_download.checking) _revealDownloadButton = false;
+    _progressShown = progressShown;
+    _errorShown = errorShown;
+  }
+
+  /// Scrolls until the bottom of [key]'s widget is visible. With
+  /// [keepModelSelection] the scroll stops before the model selection card
+  /// would leave the screen: nobody asked for a download yet, so choosing
+  /// another model must stay within reach.
+  void _reveal(GlobalKey key, {bool keepModelSelection = false}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final scrollable = mounted ? Scrollable.maybeOf(context) : null;
+      final viewport = scrollable?.context.findRenderObject();
+      final target = key.currentContext?.findRenderObject();
+      if (scrollable == null ||
+          viewport is! RenderBox ||
+          target is! RenderBox) {
+        return;
+      }
+      // Distance from the bottom edge of the list to the bottom of the target.
+      var distance =
+          target
+              .localToGlobal(Offset(0, target.size.height), ancestor: viewport)
+              .dy -
+          viewport.size.height;
+      final selection = _selectionKey.currentContext?.findRenderObject();
+      if (keepModelSelection && selection is RenderBox) {
+        final room = selection
+            .localToGlobal(Offset.zero, ancestor: viewport)
+            .dy;
+        if (room < distance) distance = room;
+      }
+      final position = scrollable.position;
+      final offset = (position.pixels + distance).clamp(
+        position.minScrollExtent,
+        position.maxScrollExtent,
+      );
+      if (offset <= position.pixels) return;
+      unawaited(
+        position.animateTo(
+          offset,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        ),
+      );
+    });
   }
 
   Future<void> _requestDownload() async {
@@ -106,6 +182,7 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
     if (model == null || _download.busy || _download.checking) return;
     setState(() => _selectedModel = model);
     widget.onModelSelected?.call(model);
+    _revealDownloadButton = true;
     _download.select(model);
   }
 
@@ -132,11 +209,15 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
     );
     if (!mounted || confirmed != true) return;
     await _download.delete(model);
+    if (mounted && !_download.complete) {
+      _reveal(_downloadActionKey, keepModelSelection: true);
+    }
     await widget.onResourcesChanged?.call();
   }
 
   @override
   void dispose() {
+    _download.removeListener(_keepDownloadInView);
     _download.dispose();
     super.dispose();
   }
@@ -161,6 +242,7 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
           ),
           const SizedBox(height: 24),
           ModelSelectionCard(
+            key: _selectionKey,
             models: widget.models,
             selectedModel: _selectedModel,
             downloaded: _download.complete,
@@ -205,7 +287,7 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
           ],
           if (_download.visible && !_download.complete) ...[
             const SizedBox(height: 16),
-            DownloadProgressCard(download: _download),
+            DownloadProgressCard(key: _progressKey, download: _download),
           ],
           if (_download.complete) ...[
             const SizedBox(height: 16),
@@ -248,42 +330,54 @@ class _ModelManagementPanelState extends State<ModelManagementPanel> {
             ),
           ] else ...[
             const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: _download.busy || _download.checking
-                  ? null
-                  : _requestDownload,
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 18,
+            Column(
+              key: _downloadActionKey,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FilledButton.icon(
+                  onPressed: _download.busy || _download.checking
+                      ? null
+                      : _requestDownload,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 18,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  icon: const Icon(Icons.download),
+                  label: Text(
+                    _download.isRunning ? '${_download.percent}%' : 'Pobierz',
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                const SizedBox(height: 8),
+                Text(
+                  'Model pobierasz raz. Później działa lokalnie.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall,
                 ),
-              ),
-              icon: const Icon(Icons.download),
-              label: Text(
-                _download.isRunning ? '${_download.percent}%' : 'Pobierz',
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Model pobierasz raz. Później działa lokalnie.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall,
+              ],
             ),
           ],
           if (_download.error != null) ...[
             const SizedBox(height: 12),
-            Text(
-              _download.error!,
-              style: TextStyle(color: theme.colorScheme.error),
+            Column(
+              key: _errorKey,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  _download.error!,
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+                if (!_download.checking && !_download.busy)
+                  TextButton(
+                    onPressed: () => _download.select(_selectedModel),
+                    child: const Text('Sprawdź ponownie'),
+                  ),
+              ],
             ),
-            if (!_download.checking && !_download.busy)
-              TextButton(
-                onPressed: () => _download.select(_selectedModel),
-                child: const Text('Sprawdź ponownie'),
-              ),
           ],
         ],
       ),
