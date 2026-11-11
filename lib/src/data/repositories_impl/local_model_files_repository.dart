@@ -6,6 +6,7 @@ import 'package:flutter_downloader/flutter_downloader.dart';
 
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/model_file_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/model_download_datasource.dart';
+import 'package:bielik_oneclick_launcher/src/data/datasources/notification_permission_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_download_progress.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/model_files_repository.dart';
@@ -14,11 +15,13 @@ class LocalModelFilesRepository implements ModelFilesRepository {
   LocalModelFilesRepository(
     this._files, {
     ModelDownloadDataSource? downloads,
+    this.notifications,
     this.pollInterval = const Duration(seconds: 1),
   }) : _downloads = downloads ?? FlutterModelDownloadDataSource();
 
   final ModelFileDataSource _files;
   final ModelDownloadDataSource _downloads;
+  final NotificationPermissionDataSource? notifications;
   final Duration pollInterval;
   bool _busy = false;
   bool _cancelled = false;
@@ -65,6 +68,9 @@ class LocalModelFilesRepository implements ModelFilesRepository {
     var removePartial = false;
     File? partial;
     try {
+      // The download runs in the background; its notification is the only
+      // progress shown outside the app.
+      await notifications?.request();
       final destination = await _files.file(model);
       partial = File('${destination.path}.part');
       final tasks = await _tasks(model, destination);

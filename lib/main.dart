@@ -29,6 +29,7 @@ import 'package:bielik_oneclick_launcher/src/domain/services/generation_metrics.
 import 'package:bielik_oneclick_launcher/src/data/datasources/device_resources_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_device_resources_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/model_file_datasource.dart';
+import 'package:bielik_oneclick_launcher/src/data/datasources/notification_permission_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/sqlite_chat_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/model_download_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_model_files_repository.dart';
@@ -92,7 +93,13 @@ Future<void> main() async {
       },
       deviceResourcesRepository: resources,
       chatRepository: SqliteChatRepository(SqliteChatDataSource(database)),
-      modelFilesRepository: LocalModelFilesRepository(ModelFileDataSource()),
+      modelFilesRepository: LocalModelFilesRepository(
+        ModelFileDataSource(),
+        notifications:
+            !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+            ? const NotificationPermissionDataSource()
+            : null,
+      ),
       llmRepository: ComputeRoutingLlmRepository(
         createGpu: () => LocalLlmRepository(
           ModelFileDataSource(),

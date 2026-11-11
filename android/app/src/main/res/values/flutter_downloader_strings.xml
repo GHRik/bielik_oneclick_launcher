@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Polish texts for the notification of the download plugin, which only has English ones. -->
+<resources>
+    <string name="flutter_downloader_notification_started">pobieranie rozpoczęte</string>
+    <string name="flutter_downloader_notification_in_progress">pobieranie w toku</string>
+    <string name="flutter_downloader_notification_canceled">pobieranie anulowane</string>
+    <string name="flutter_downloader_notification_failed">pobieranie przerwane</string>
+    <string name="flutter_downloader_notification_complete">pobieranie zakończone</string>
+    <string name="flutter_downloader_notification_paused">pobieranie wstrzymane</string>
+    <string name="flutter_downloader_notification_channel_name">Pobieranie modeli</string>
+    <string name="flutter_downloader_notification_channel_description">Postęp pobierania modeli Bielika</string>
+</resources>

@@ -36,5 +36,17 @@ public class MainActivity extends FlutterActivity {
             getApplicationContext(),
             flutterEngine.getDartExecutor().getBinaryMessenger()
         );
+        notificationPermission = new NotificationPermissionChannel(
+            this,
+            flutterEngine.getDartExecutor().getBinaryMessenger()
+        );
+    }
+
+    private NotificationPermissionChannel notificationPermission;
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (notificationPermission != null && notificationPermission.onResult(requestCode, grantResults)) return;
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 }
