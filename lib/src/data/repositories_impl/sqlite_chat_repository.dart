@@ -13,7 +13,7 @@ class SqliteChatRepository implements ChatRepository {
   Conversation _conversation(Map<String, Object?> row) => Conversation(
     id: row['id']! as int,
     title: row['title']! as String,
-    draft: row['draft']! as String,
+    draft: Conversation.clampDraft(row['draft']! as String),
     draftAttachment: TextAttachmentCodec.decode(row['draft_attachment']),
     createdAt: DateTime.fromMillisecondsSinceEpoch(
       row['created_at']! as int,
@@ -39,7 +39,9 @@ class SqliteChatRepository implements ChatRepository {
 
   @override
   Future<List<Conversation>> getConversations() async =>
-      (await dataSource.getConversations()).map(_conversation).toList();
+      (await dataSource.getConversations(
+        maxDraftLength: Conversation.maxDraftLength,
+      )).map(_conversation).toList();
 
   @override
   Future<Conversation> createConversation() async => _conversation(
@@ -79,7 +81,7 @@ class SqliteChatRepository implements ChatRepository {
 
   @override
   Future<void> saveDraft(int conversationId, String draft) =>
-      dataSource.saveDraft(conversationId, draft);
+      dataSource.saveDraft(conversationId, Conversation.clampDraft(draft));
 
   @override
   Future<void> saveDraftAttachment(

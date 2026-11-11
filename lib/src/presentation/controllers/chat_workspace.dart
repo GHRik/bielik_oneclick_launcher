@@ -22,6 +22,11 @@ import 'package:bielik_oneclick_launcher/src/domain/services/chat_context_policy
 import 'package:bielik_oneclick_launcher/src/domain/services/chat_service.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/conversation_controller.dart';
 
+/// Thrown when imported text does not fit in the remaining draft space.
+class DraftLimitExceeded implements Exception {
+  const DraftLimitExceeded();
+}
+
 class ChatWorkspace extends ChangeNotifier {
   ChatWorkspace(
     this.repository, {
@@ -250,6 +255,12 @@ class ChatWorkspace extends ChangeNotifier {
           }, errorMessage: 'Nie udało się zapisać załącznika.'),
         );
       },
+      onDraftLimitExceeded: () {
+        _error =
+            'Szkic może mieć najwyżej 262\u00A0144 znaki. '
+            'Ten tekst się nie zmieścił, więc szkic pozostał bez zmian.';
+        _notify();
+      },
       onDraftChanged: (draft) {
         unawaited(
           _enqueue(() async {
@@ -270,8 +281,13 @@ class ChatWorkspace extends ChangeNotifier {
     await flush();
     if (_disposed || !ready || _conversations.isEmpty) return false;
     final target = _conversations.first;
-    selectConversation(target);
     final previous = target.draft.text;
+    final separator = previous.isEmpty ? 0 : 2;
+    if (previous.length + separator + text.length >
+        Conversation.maxDraftLength) {
+      throw const DraftLimitExceeded();
+    }
+    selectConversation(target);
     target.draft.value = TextEditingValue(
       text: previous.isEmpty ? text : '$previous\n\n$text',
       selection: TextSelection.collapsed(

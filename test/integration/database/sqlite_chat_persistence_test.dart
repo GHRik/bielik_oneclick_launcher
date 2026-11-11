@@ -10,6 +10,7 @@ import 'package:path/path.dart' as path;
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/app_database.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/sqlite_chat_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/sqlite_chat_repository.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/conversation.dart';
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/chat_workspace.dart';
 
 void main() {
@@ -47,6 +48,40 @@ void main() {
       await repository.markConversationUsed(first.id);
       await reopen();
       expect((await repository.getConversations()).first.id, first.id);
+    });
+
+    test('Loads conversations when a stored draft exceeds the limit', () async {
+      final conversation = await repository.createConversation();
+      final oversized = 'ż' * (Conversation.maxDraftLength + 1000);
+      await SqliteChatDataSource(database)
+          .saveDraft(conversation.id, oversized);
+      await reopen();
+      expect(
+        (await repository.getConversations()).single.draft,
+        'ż' * Conversation.maxDraftLength,
+      );
+    });
+
+    test('Does not store a draft longer than the limit', () async {
+      final conversation = await repository.createConversation();
+      await repository.saveDraft(
+        conversation.id,
+        'a' * (Conversation.maxDraftLength + 1),
+      );
+      final rows = await SqliteChatDataSource(database)
+          .getConversations(maxDraftLength: Conversation.maxDraftLength * 2);
+      expect(
+        (rows.single['draft']! as String).length,
+        Conversation.maxDraftLength,
+      );
+    });
+
+    test('Reads no more than the draft limit from an oversized row', () async {
+      final conversation = await repository.createConversation();
+      await repository.saveDraft(conversation.id, '😀' * 200);
+      final rows = await SqliteChatDataSource(database)
+          .getConversations(maxDraftLength: 150);
+      expect(rows.single['draft'], '😀' * 150);
     });
 
     test('Saving a background draft does not change usage order', () async {

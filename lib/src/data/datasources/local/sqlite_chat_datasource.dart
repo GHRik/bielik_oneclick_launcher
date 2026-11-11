@@ -7,11 +7,17 @@ class SqliteChatDataSource {
 
   final AppDatabase database;
 
-  Future<List<Map<String, Object?>>> getConversations() async {
+  /// Reads at most [maxDraftLength] characters of each draft, so that a row
+  /// saved before the draft limit existed still fits in a cursor window.
+  Future<List<Map<String, Object?>>> getConversations({
+    required int maxDraftLength,
+  }) async {
     final connection = await database.open();
-    return connection.query(
-      'conversations',
-      orderBy: 'last_used_at DESC, id DESC',
+    return connection.rawQuery(
+      'SELECT id, title, substr(draft, 1, ?) AS draft, created_at, '
+      'updated_at, last_used_at, draft_attachment FROM conversations '
+      'ORDER BY last_used_at DESC, id DESC',
+      [maxDraftLength],
     );
   }
 

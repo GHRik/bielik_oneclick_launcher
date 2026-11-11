@@ -38,6 +38,8 @@ import 'package:bielik_oneclick_launcher/src/data/repositories_impl/ut/test_loca
     as suite6;
 import 'package:bielik_oneclick_launcher/src/domain/models/ut/test_chat_message.dart'
     as suite7;
+import 'package:bielik_oneclick_launcher/src/domain/models/ut/test_conversation.dart'
+    as conversation;
 import 'package:bielik_oneclick_launcher/src/domain/models/ut/test_device_resources.dart'
     as suite8;
 import 'package:bielik_oneclick_launcher/src/domain/models/ut/test_llm_configuration.dart'
@@ -50,6 +52,8 @@ import 'package:bielik_oneclick_launcher/src/domain/services/ut/test_chat_contex
     as suite12;
 import 'package:bielik_oneclick_launcher/src/domain/services/ut/test_chat_service.dart'
     as suite13;
+import 'package:bielik_oneclick_launcher/src/presentation/controllers/ut/test_conversation_controller.dart'
+    as conversation_controller;
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/ut/test_device_resources_controller.dart'
     as suite14;
 import 'package:bielik_oneclick_launcher/src/presentation/controllers/ut/test_llm_settings_draft.dart'
@@ -108,12 +112,17 @@ void main() {
     suite6.main,
   );
   group('src/domain/models/chat_message.dart', suite7.main);
+  group('src/domain/models/conversation.dart', conversation.main);
   group('src/domain/models/device_resources.dart', suite8.main);
   group('src/domain/models/llm_configuration.dart', suite9.main);
   group('src/domain/models/model_requirements.dart', suite10.main);
   group('src/domain/models/resource_requirement.dart', suite11.main);
   group('src/domain/services/chat_context_policy.dart', suite12.main);
   group('src/domain/services/chat_service.dart', suite13.main);
+  group(
+    'src/presentation/controllers/conversation_controller.dart',
+    conversation_controller.main,
+  );
   group(
     'src/presentation/controllers/device_resources_controller.dart',
     suite14.main,
