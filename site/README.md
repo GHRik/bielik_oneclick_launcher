@@ -34,7 +34,7 @@ Screenshots sit beside descriptions on desktop and above them on phones. Red SVG
 | --- | --- |
 | `zapytaj-bielika` | **Twój tekst. Odpowiedź Bielika.** — select text, choose “Streść”, read the response |
 | `tlumacz-tekst` | **Ten sam tekst. Inny język.** — choose “Przetłumacz”, select a language, check the result |
-| `pliki-txt` | **Dodaj TXT i zapytaj o treść.** — add a file, open or translate it, check the translation |
+| `pliki-txt` | **Dodaj plik TXT i zapytaj Bielika o jego treść.** — add a file, open or translate it, check the translation |
 | `aktualizacje-aplikacji` | **Nowa wersja bez szukania APK.** — check for an update, download/install it, see the changed version |
 
 The text-selection menu depends on the source app. Dictation depends on the phone's speech service and may need internet access. The page explicitly asks visitors to verify generated translations against their sources. APK updates require internet and Android installation confirmation.
