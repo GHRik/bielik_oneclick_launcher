@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/app_version.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/android_app_info.dart';
@@ -20,6 +21,25 @@ class _Play implements PlayUpdateRepository {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('Play builds retain updates when installer metadata is unavailable', () {
+    const version = AppVersion(name: '1.0.15', build: 123);
+    expect(version.usesGooglePlayUpdates(apkUpdatesEnabled: false), isTrue);
+    expect(version.usesGooglePlayUpdates(apkUpdatesEnabled: true), isFalse);
+    const installedByPlay = AppVersion(
+      name: '1.0.15',
+      build: 123,
+      installedFromGooglePlay: true,
+    );
+    expect(
+      installedByPlay.usesGooglePlayUpdates(apkUpdatesEnabled: true),
+      isTrue,
+    );
+    expect(
+      installedByPlay.usesGooglePlayUpdates(apkUpdatesEnabled: false),
+      isTrue,
+    );
+  });
 
   test(
     'Installer metadata selects Play only for a positive native result',

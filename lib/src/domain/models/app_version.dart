@@ -7,4 +7,7 @@ class AppVersion {
   final String name;
   final int build;
   final bool installedFromGooglePlay;
+
+  bool usesGooglePlayUpdates({required bool apkUpdatesEnabled}) =>
+      installedFromGooglePlay || !apkUpdatesEnabled;
 }
