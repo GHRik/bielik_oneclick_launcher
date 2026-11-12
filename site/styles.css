@@ -181,6 +181,11 @@ h2{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:34px;letter-sp
 .screenshot-zoom-content .annotated-screen{overflow:hidden;border:3px solid var(--strong-line);border-radius:18px}
 .screenshot-zoom-content .annotated-screen img{width:100%;border:0;border-radius:0}
 body.screenshot-zoom-open{overflow:hidden}
+.text-preview-trigger{padding:0;border:0;background:none;color:inherit;font-family:inherit;cursor:pointer}
+.text-preview{width:min(560px,calc(100% - 32px));max-height:85dvh;margin:auto;padding:24px;border:1px solid var(--strong-line);border-radius:18px;background:var(--surface);color:var(--ink);overflow:auto}
+.text-preview::backdrop{background:#000b}
+.text-preview h2{font-size:24px}
+.text-preview p{margin:20px 0;line-height:1.7;white-space:pre-wrap}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .roadmap{border-top:1px solid var(--line);padding-block:36px}
 .roadmap p{max-width:700px;margin-top:14px;color:var(--muted);font-size:13px}

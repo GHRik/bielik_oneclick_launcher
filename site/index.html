@@ -18,6 +18,7 @@
   <script src="release-info.js?v=archive-stable-only" defer></script>
   <script src="carousel.js?v=viewport-controls" defer></script>
   <script src="screenshot-zoom.js" defer></script>
+  <script src="text-preview.js" defer></script>
   <script src="google-play-links.js" defer></script>
   <script src="generation-preview.js?v=inline-controls" defer></script>
 </head>
@@ -179,7 +180,7 @@
         <figure><figcaption><span>02</span> Otwórz lub przetłumacz</figcaption><span class="annotated-screen"><img src="assets/txt-attached-android.png?v=current-opencl" width="1272" height="2772" loading="lazy" alt="Plik bielik-plan.txt w czacie, przycisk tłumaczenia i klikalna nazwa pliku"><svg class="screen-annotation" viewBox="0 0 1272 2772" aria-hidden="true"><ellipse cx="300" cy="2095" rx="205" ry="65"/><ellipse cx="330" cy="2295" rx="285" ry="65"/></svg></span></figure>
         <figure><figcaption><span>03</span> Sprawdź tłumaczenie</figcaption><img src="assets/txt-translated-android.png?v=current-opencl" width="1272" height="2772" loading="lazy" alt="Rzeczywista odpowiedź Bielika po przetłumaczeniu angielskiego załącznika TXT na polski"></figure>
       </div>
-      <p class="capture-note">Plik demonstracyjny: bielik-plan.txt · 172 B · UTF-8 · GPU OpenCL · tryb samolotowy. Wynik tłumaczenia wymaga sprawdzenia ze źródłem.</p>
+      <p class="capture-note">Plik demonstracyjny: <button class="text-link text-preview-trigger" type="button" aria-haspopup="dialog" aria-controls="txt-preview">bielik-plan.txt</button> · 165 B · UTF-8 · GPU OpenCL · tryb samolotowy. Wynik tłumaczenia wymaga sprawdzenia ze źródłem.</p>
     </section>
 
     <section class="ask-flow wrap" id="aktualizacje-aplikacji" aria-labelledby="update-flow-title">
@@ -299,7 +300,7 @@
       </div>
       <p class="download-note">Dostępne w Google Play w ramach testów zamkniętych. Najpierw dołącz do grupy testerów.</p>
       <p class="release-info" id="release-info" aria-live="polite"><a href="https://github.com/GHRik/bielik_oneclick_launcher/releases/latest">Sprawdź datę i wersję wydania</a></p>
-      <p class="download-note">Bezpośrednie pobieranie najnowszego stabilnego wydania · Android ARM64.<br>Model pobierasz osobno: <a href="https://huggingface.co/speakleash/Bielik-1.5B-v3.0-Instruct" target="_blank" rel="noopener noreferrer">1.5B</a> ≈ 1,7 GB, <a href="https://huggingface.co/speakleash/Bielik-4.5B-v3.0-Instruct" target="_blank" rel="noopener noreferrer">4.5B</a> ≈ 5,06 GB.</p>
+      <p class="download-note">Bezpośrednie pobieranie najnowszego stabilnego wydania · Android ARM64.<br>Model pobierasz osobno: <a href="https://huggingface.co/speakleash/Bielik-1.5B-v3.0-Instruct" target="_blank" rel="noopener noreferrer">1.5B</a> ≈ 1,7 GB, <a href="https://huggingface.co/speakleash/Bielik-4.5B-v3.0-Instruct" target="_blank" rel="noopener noreferrer">4.5B</a> ≈ 5,06 GB miejsca na dysku.</p>
       <p class="capture-note">Ekrany z OnePlus 15 · Android 16 · CPU i GPU OpenCL. Sekcje streszczania i tłumaczenia pokazują klatki z nagrań w trybie samolotowym.</p>
     </section>
 
@@ -351,6 +352,12 @@
       </div>
     </section>
   </main>
+
+  <dialog class="text-preview" id="txt-preview" aria-labelledby="txt-preview-title">
+    <h2 id="txt-preview-title">bielik-plan.txt</h2>
+    <p>The community garden opens on Saturday at ten. Bring gloves and drinking water. The library provides tools and seedlings. If it rains, the meeting moves to next day.</p>
+    <button class="button button-outline" type="button" data-close-preview autofocus>Zamknij</button>
+  </dialog>
 
   <footer class="site-footer wrap">
     <a class="brand" href="./"><img src="assets/mark.svg" width="28" height="28" alt=""><span>Bielik<span class="brand-sub">ONECLICK</span></span></a>
