@@ -158,15 +158,20 @@ h2{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:34px;letter-sp
 #mozliwosci .carousel-dots::-webkit-scrollbar{display:none}
 .carousel-dots button{display:grid;place-items:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:0;background:transparent;cursor:pointer}
 #mozliwosci .carousel-dots button{width:36px;height:36px;min-width:36px;min-height:36px;flex-shrink:0;scroll-snap-align:center}
-.carousel-dots button{--slide-dot:#b8c8a0}
-.carousel-dots button:nth-child(3n+2){--slide-dot:#dec28e}
-.carousel-dots button:nth-child(3n){--slide-dot:#92bfcd}
-.carousel-dots span{display:block;width:9px;height:9px;border-radius:50%;background:var(--slide-dot);opacity:.65}
-.carousel-dots [aria-current="true"] span{opacity:1;scale:1.3;box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--slide-dot)}
-:root[data-theme="light"] .carousel-dots button{--slide-dot:#526d3c}
-:root[data-theme="light"] .carousel-dots button:nth-child(3n+2){--slide-dot:#9b591e}
-:root[data-theme="light"] .carousel-dots button:nth-child(3n){--slide-dot:#336b82}
-:root[data-theme="contrast"] .carousel-dots button{--slide-dot:#fff}
+.carousel-dots{--dot-start:#68785b;--dot-end:#d9e5c9}
+.carousel-dots button{--dot-step:0%;--slide-dot:color-mix(in srgb,var(--dot-end) var(--dot-step),var(--dot-start))}
+.carousel-dots button:nth-child(2){--dot-step:12.5%}
+.carousel-dots button:nth-child(3){--dot-step:25%}
+.carousel-dots button:nth-child(4){--dot-step:37.5%}
+.carousel-dots button:nth-child(5){--dot-step:50%}
+.carousel-dots button:nth-child(6){--dot-step:62.5%}
+.carousel-dots button:nth-child(7){--dot-step:75%}
+.carousel-dots button:nth-child(8){--dot-step:87.5%}
+.carousel-dots button:nth-child(9){--dot-step:100%}
+.carousel-dots span{display:block;width:9px;height:9px;border-radius:50%;background:var(--slide-dot)}
+.carousel-dots [aria-current="true"] span{scale:1.3;box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--slide-dot)}
+:root[data-theme="light"] .carousel-dots{--dot-start:#3c5232;--dot-end:#7f965f}
+:root[data-theme="contrast"] .carousel-dots{--dot-start:#fff;--dot-end:#fff}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .roadmap{border-top:1px solid var(--line);padding-block:36px}
 .roadmap p{max-width:700px;margin-top:14px;color:var(--muted);font-size:13px}
