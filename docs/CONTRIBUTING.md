@@ -173,4 +173,4 @@ To publish a downloadable test APK, open **Actions → Release APK → Run workf
 
 ## Runtime notes (CPU / GPU)
 
-CPU is the default. **OpenCL** on GPU has been tested on OnePlus 15 and Pixel 8 Pro. GPU inference does **not** work on Samsung Galaxy S24+. **Vulkan** has not been tested. GPU settings apply only for the current app session. Hardware statistics depend on what the device exposes.
+CPU is the default. **OpenCL** on GPU has been tested on OnePlus 15 (CPH2747) and Pixel 8 Pro. GPU inference does **not** work on Samsung Galaxy S24+. **Vulkan** has not been tested. GPU settings apply only for the current app session. Hardware statistics depend on what the device exposes.

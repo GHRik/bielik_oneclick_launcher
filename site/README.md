@@ -1,65 +1,90 @@
 # Bielik OneClick landing page
 
-A static Polish landing page in `index.html` and `styles.css`. Open `index.html` in a browser to preview it; no dependencies or build step are required. Keep the public page copy in Polish.
+A static landing page in `index.html` and `styles.css`. Open `index.html` in a browser; no build step is required. Documentation is in English; visitor-facing content is in Polish.
+
+## Introduction and themes
+
+The introduction presents one-click installation, local AI features, and offline chat after downloading a model. Its download link scrolls to the download section; the GitHub link opens the repository. A tilted phone plays `assets/chat-live.mp4`, with `chat-live-poster.jpg` as its poster. Feature tiles link to the text-selection, translation, TXT, update, and demo sections. The update tile explains that downloaded models and conversations are kept.
+
+The dark palette uses warm charcoal, olive surfaces, sage accents, and cream text. Fraunces headings and Plus Jakarta Sans body text load from Google Fonts, with local fallbacks. Header buttons select light, dark, or high-contrast themes. `theme.js` saves the choice in local storage; screenshots and videos keep their original colors. Motion respects reduced-motion preferences. `generation-preview.js` controls the inline video and pauses it when it is not visible.
 
 ## Feature carousel
 
-Four slides pair a real screenshot with a plain feature description: chat, model downloads, statistics, and settings. `carousel.js` advances every seven seconds while visible. A horizontal scroll-snap slider supports touch swipes and trackpad scrolling alongside arrows, dots, and keyboard navigation; manual selection pauses rotation. Only the selected slide is interactive. All slides share the tallest slide's height, with aligned screenshot and caption rows on phones. The track scrolls horizontally only, while vertical gestures scroll the page rather than the content inside a slide. Screenshots are up to 300px wide on desktop and 260px on phones. Hover, keyboard focus, and a hidden tab suspend rotation. Round 48px arrow and pause/resume icon buttons sit above a separate row of 44px dot targets, and reduced-motion preferences disable automatic rotation initially. Without JavaScript, all feature descriptions remain visible. Screenshots sit beside descriptions on desktop and above them on phones.
+The HTML contains nine slides:
 
-## Visual palette
-
-The Organic Tech variant uses warm charcoal `#151613`, olive surfaces `#1C211A`, muted sage accents `#9EAF87`, and cream text. The light theme retains its warm terracotta accents. Fraunces headings and Plus Jakarta Sans body text load from Google Fonts with local serif/sans-serif fallbacks; technical data uses system monospace. The centered introduction uses a three-line heading (Bielik, Edge-AI, One Click). A larger phone preview, tilted 4° clockwise, sits over a muted terminal, with subtle feather-like vector lines behind it. Motion respects reduced-motion preferences.
-
-## Color themes
-
-Three round header buttons (sun, moon, half-filled circle) select light, dark (Organic Tech), and high-contrast themes. Accessible names, tooltips, and pressed states identify each option. `theme.js` applies the saved choice before the stylesheet loads and stores changes in local storage. Without a saved choice, dark is used unless the visitor requests increased contrast. Storage failures do not prevent switching themes. Screenshots and embedded YouTube content retain their own colors.
-
-## Page navigation
-
-The introduction has one download button and a demo link. Installation steps appear as a horizontal timeline in the download section instead of repeating navigation in the introduction.
-
-## Content
-
-The page presents the current Android app: local chat, model download and resource checks, live statistics, and configurable LLM parameters. GPU support on the landing page reflects device-tested OpenCL (see repository docs); do not claim universal GPU support.
-
-The roadmap sits below the YouTube demo. An icon row marks Android and CPU as available with checkmarks, GPU with a laboratory flask (OpenCL verified on select phones; see [CONTRIBUTING.md](../docs/CONTRIBUTING.md#runtime-notes-cpu--gpu)), and iOS as ongoing. The future platform scope is limited to iOS with GPU acceleration. Desktop support and in-app model importing are not advertised as planned features.
-
-Feature captions use short phrases. The model section names both bundled models and links to [CONTRIBUTING.md](../docs/CONTRIBUTING.md#adding-models). Adding a model means editing `lib/configuration/bielik_models.dart` and rebuilding the APK, not importing a file through the UI.
-
-Attribution near the top and bottom credits SpeakLeash (Spichlerz) and ACK Cyfronet AGH, identifies OneClick as an independent launcher, and links to the official model cards and licenses.
-
-The favicon and page brand mark use the launcher's original eagle artwork, not the official Bielik logo. Source artwork and Android icon variants are documented in [assets/branding](../assets/branding/README.md).
-
-## Real device screenshots
-
-| File | Screen |
+| Slide ID | Feature |
 | --- | --- |
-| `assets/chat-android.png` | Actual Bielik 1.5B CPU response in chat |
-| `assets/models-android.png` | Model selection, download controls, RAM and storage readings |
-| `assets/statistics-android.png` | Live resource charts from the device |
-| `assets/settings-android.png` | Context, response, and performance settings |
+| `slide-ask` | Zapytaj Bielika |
+| `slide-dictation` | Podyktuj i przetłumacz |
+| `slide-actions` | Szybkie akcje |
+| `slide-txt` | Załączniki TXT |
+| `slide-chat` | Czat z Bielikiem |
+| `slide-stats` | Statystyki urządzenia i modelu |
+| `slide-models` | Pobieranie i wybór modelu |
+| `slide-settings` | Konfiguracja modelu |
+| `slide-updates` | Aktualizacje w aplikacji |
 
-These are direct captures from a CPH2747 running Android 16, using a profile build of the app. The conversation uses a synthetic prompt. Screen contents are not reconstructed or retouched; the phone frames and background decorations are CSS.
+`carousel.js` supports horizontal swipes, trackpad scrolling, arrow buttons, dots, and keyboard arrows. There is no autoplay or play/pause button. Only the selected slide is interactive; without JavaScript, the descriptions remain available. Desktop arrows sit beside the dots below the slide; mobile arrows overlay the screen area. Dot colors progress through the page palette, and the active dot has a ring.
 
-To refresh the captures, run the current app on an Android device, open the relevant screen, and capture it as PNG. Keep the full portrait screenshot and update the HTML dimensions if its resolution differs from 1272 × 2772. Review every capture for private content before publishing. Update the device caption when using a different phone.
+Screenshots sit beside descriptions on desktop and above them on phones. Red SVG overlays mark the relevant controls. `screenshot-zoom.js` opens a screenshot and its annotations in a modal dialog when clicked. Close it with its button, Escape, or the backdrop.
 
-The carousel uses static screenshots. The introduction plays `assets/chat-live.mp4`: a short, silent edit of a real Android screen recording captured on 8 November 2026. It shows entering a question, sending it, the “Bielik pisze…” indicator, and the streamed response. Idle gaps between input actions are cut, and the footage is sped up to 1.25× for a shorter preview (about nine seconds), with no reconstructed messages or simulated typing. The release build has no DEBUG ribbon, and the crop excludes system bars. H.264 encoding at 392 × 760 and 25 fps keeps it smaller than a GIF. `chat-live-poster.jpg` provides a still frame. `generation-preview.js` loops playback only while visible, pauses in background tabs, respects reduced-motion preferences, and lets visitors click the video or press Enter/Space while it is focused to play or pause. There is no caption or separate playback button beneath the recording. All asset paths are relative for GitHub Pages repository hosting.
+## Detailed walkthroughs
 
-## Video demo
+| Section ID | Heading and contents |
+| --- | --- |
+| `zapytaj-bielika` | **Twój tekst. Odpowiedź Bielika.** — select text, choose “Streść”, read the response |
+| `tlumacz-tekst` | **Ten sam tekst. Inny język.** — choose “Przetłumacz”, select a language, check the result |
+| `pliki-txt` | **Dodaj TXT i zapytaj o treść.** — add a file, open or translate it, check the translation |
+| `aktualizacje-aplikacji` | **Nowa wersja bez szukania APK.** — check for an update, download/install it, see the changed version |
 
-The demo section embeds YouTube Shorts `5ruxjgcFAZc` (chat demo) and `RHUtO30IqOo` (airplane-mode test) in responsive 9:16 players. They sit side by side on larger screens and stack on phones, above the roadmap. Both use `youtube-nocookie.com`, load lazily, and do not autoplay. Playback starts with the visitor's Play click; each film has a separate YouTube link if embedding is blocked. Keep the iframe referrer policy so YouTube receives the embedding origin.
+The text-selection menu depends on the source app. Dictation depends on the phone's speech service and may need internet access. The page explicitly asks visitors to verify generated translations against their sources. APK updates require internet and Android installation confirmation.
 
-## Downloads
+## Captures and preview assets
 
-The header and hero download buttons scroll to the download section. Only that section's APK button links directly to `/releases/latest/download/bielik-arm64.apk`. The release workflow keeps this asset name fixed, marks `master` builds as Latest, and leaves other branches as prereleases. The two prominent “Rozwijaj z nami!” buttons open the source repository. Models are downloaded separately inside the app.
+The page identifies the capture device as **OnePlus 15 (CPH2747)** running Android. It includes OpenCL recording frames, direct app captures, and an explicitly labelled dictation UI preview.
 
-`release-info.js` fetches the latest stable release from GitHub's public API and displays its Android version code and publication date in Polish under the APK button. This updates without redeploying Pages. If the request fails or is rate-limited, a link to release details remains visible and downloading still works.
+- `ask-selection-opencl.png`, `quick-actions-opencl.png`, `summary-opencl.png`, and `statistics-opencl.png` illustrate text selection, quick actions, chat, and statistics.
+- `translate-language-opencl.png` and `translated-opencl.png` illustrate language choice and translation.
+- `dictation-translate-android.png` is labelled “Podgląd interfejsu”; numbered annotations indicate the microphone and translation action.
+- `txt-add-android.png`, `txt-attached-android.png`, and `txt-translated-android.png` show the TXT flow.
+- `update-before-android.png`, `update-available-android.png`, and `update-after-android.png` show an actual update.
+- `models-android.png` and `settings-android.png` show model management and configuration.
+
+Keep screenshots authentic, review them for private content, and match image dimensions and SVG view boxes when replacing them. Do not describe the labelled UI preview as a device recording. Phone frames and decorations are CSS; hero excerpts crop existing screenshots.
+
+## YouTube demos
+
+The demo section embeds these films via `youtube-nocookie.com`:
+
+| YouTube ID | Heading |
+| --- | --- |
+| `u4ovz4G72to` | Streszczanie — offline · GPU OpenCL |
+| `GNGXWQAcr3Q` | Tłumaczenie — offline · GPU OpenCL |
+| `3f2A8yVDN88` | Przegląd aplikacji — tryb samolotowy |
+| `wXv1ux307sk` | Krótki czat — tryb samolotowy |
+
+Players load lazily, do not autoplay, and include direct YouTube links. Keep their referrer policy so YouTube receives the embedding origin.
+
+## Roadmap and other sections
+
+**Plan rozwoju** appears after the demos. PDF support, iOS, and NPU acceleration are marked “W trakcie”. GPU acceleration currently carries the “50/50” status and the documented device-specific OpenCL results: OnePlus 15 and Pixel 8 Pro work, Samsung Galaxy S24+ does not; Vulkan is untested. This is not a claim of universal GPU compatibility.
+
+**Rozwijaj z nami** links to the model contribution guide, the GitHub repository, and the internal-testing invitation. **O mnie** introduces Damian Panasiuk with a portrait and LinkedIn link. Attribution identifies the launcher as independent and credits the model creators. The footer links to the Polish [privacy policy](privacy.html), including Google Play internal-testing data and contact details.
+
+## Downloads, internal testing, and release notes
+
+The primary APK link remains GitHub's stable `/releases/latest/download/bielik-arm64.apk` URL. Models are downloaded separately inside the app.
+
+A secondary **Dołącz do testów wewnętrznych Google Play!** button appears directly below the APK button and in **Rozwijaj z nami**. Testers join through the [Google Group](https://groups.google.com/g/bielik-oneclick-testers), configured as the tester list for the internal-testing track in Play Console. The instructions use the tester's Play Store Google account and describe installing from Google Play; the confirmation step links to https://play.google.com/apps/internaltest/4701673118246857685. The original prefilled e-mail to `damian.panasiuk.console@gmail.com` remains only as a fallback, alongside the plain address. The primary APK download remains available.
+
+`release-info.js` fetches version, publication date, and stable release availability from GitHub. Polish patch notes come from `release-notes.pl.json`, using an exact tag or version key. **Co nowego?** shows the latest stable release; **Archiwalne wersje APK** lists older stable APKs, excluding the current release, drafts, and prereleases. Translations require a Pages deployment; release metadata updates independently.
+
+The APK workflow always creates a prerelease. Promotion to Latest is manual; see [RELEASING.md](../docs/RELEASING.md). A Pages deployment does not build the Android app or promote a release.
 
 ## Deploy to GitHub Pages
 
-1. Open **Settings → Pages → Build and deployment → Source → GitHub Actions** in the repository.
-2. Push any commit to `master`, or start **Deploy GitHub Pages** manually from Actions.
-3. The workflow runs on every push to `master` and publishes only `site/`. Keep the Pages publishing source set to **GitHub Actions**, not a branch's root directory; the root README is not the landing page.
-4. The default URL is [ghrik.github.io/bielik_oneclick_launcher](https://ghrik.github.io/bielik_oneclick_launcher/), available after a successful deployment.
+1. Set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**.
+2. Push to `master`, or run **Deploy GitHub Pages** manually.
+3. The workflow publishes only `site/` at [ghrik.github.io/bielik_oneclick_launcher](https://ghrik.github.io/bielik_oneclick_launcher/).
 
-Deploying the page does not require rebuilding the Android app.
+Keep private drafts and local preview artifacts outside the published directory.

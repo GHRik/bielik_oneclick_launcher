@@ -6,6 +6,14 @@ Open **Actions → Release APK → Run workflow**, select the branch, optionally
 
 Testers can download the APK from that prerelease's assets. Prereleases are publicly visible in Releases, but the README and GitHub Pages download links continue to point to the latest stable release. The landing page's version, date and APK links come from GitHub Releases. Its Polish patch notes are stored separately in `site/release-notes.pl.json`, keyed by the exact release tag. Its archive lists stable releases with an ARM64 APK and excludes drafts and prereleases. Older release descriptions and APKs remain accessible.
 
+Before promoting a prerelease to **Latest**, run manual E2E tests on a physical Android phone:
+
+```sh
+dart run test/e2e/run_android_e2e.dart --scenario all
+```
+
+This is a deliberate release gate: the tests require a real device and download a roughly 1.7 GB model, so they do not run in CI. See the [Android E2E guide](../test/e2e/README.md) for setup and reports. Test the chosen prerelease APK on the phone as well; the E2E runner builds an isolated test app.
+
 After testing, edit the chosen release on GitHub, remove its prerelease flag, and mark it as **Latest**. Alternatively:
 
 ```sh
@@ -17,6 +25,8 @@ Promoting the existing release keeps the exact APK that was tested; no rebuild o
 Download `bielik-arm64.apk` directly from [the latest stable release](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk), or use **Releases → Assets**. Keep the asset name unchanged: the landing page uses GitHub's permanent latest-asset URL. Each release also includes its SHA-256 checksum, `BUILD.txt`, `SIGNING.txt`, and the MIT license. An artifact copy is retained for 30 days. The ARM64 debug build workflow is a separate CI check; use Release APK for distribution.
 
 ## Build an AAB for Google Play
+
+Testers join through the [Google Group](https://groups.google.com/g/bielik-oneclick-testers), configured as the tester list for the internal-testing track in Play Console.
 
 Open **Actions → Release Google Play AAB → Run workflow** on `master`. Leave `source_release` as `latest` (or empty) to build from the latest stable APK. To select another release, enter its exact existing tag, for example `v1.0.6-build.12.1`. This is the source release, not a name for the new AAB. Stable releases and published APK prereleases are supported. The release must include `bielik-arm64.apk` and `BUILD.txt`. A missing tag produces an error with a list of available releases.
 

@@ -1,8 +1,8 @@
 name: bielik_oneclick_launcher
-description: "Aplication to install Edge-AI Bielik in one-click and use it in chat."
+description: "Application for installing Bielik models in one click and chatting locally on Android."
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.15+216634409
 
 environment:
   sdk: ^3.13.7
