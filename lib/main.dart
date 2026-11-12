@@ -58,11 +58,6 @@ Future<void> main() async {
   final appVersion = !kIsWeb && defaultTargetPlatform == TargetPlatform.android
       ? await AndroidAppInfo.version()
       : null;
-  final apkUpdatesEnabled =
-      kDebugMode || const bool.fromEnvironment('BIELIK_APK_UPDATES');
-  final usePlayUpdates =
-      appVersion?.usesGooglePlayUpdates(apkUpdatesEnabled: apkUpdatesEnabled) ??
-      false;
   runApp(
     MyApp(
       appVersion: appVersion,
@@ -71,11 +66,13 @@ Future<void> main() async {
         await promptRepository.save(prompt);
         additionalPrompt = prompt;
       },
-      playUpdateRepository: usePlayUpdates
+      playUpdateRepository: appVersion?.installedFromGooglePlay == true
           ? GooglePlayUpdateRepository()
           : null,
       appUpdateRepository:
-          appVersion != null && !usePlayUpdates && apkUpdatesEnabled
+          appVersion != null &&
+              !appVersion.installedFromGooglePlay &&
+              (kDebugMode || const bool.fromEnvironment('BIELIK_APK_UPDATES'))
           ? GithubAppUpdateRepository()
           : null,
       appExitRepository:
