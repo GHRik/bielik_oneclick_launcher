@@ -4,7 +4,7 @@ A static landing page in `index.html` and `styles.css`. Open `index.html` in a b
 
 ## Introduction and themes
 
-The introduction presents one-click installation, local AI features, and offline chat after downloading a model. Its primary Google Play button includes the Play icon and scrolls to the closed-testing instructions; the GitHub link opens the repository. A tilted phone plays `assets/chat-live.mp4`, with `chat-live-poster.jpg` as its poster. Feature tiles link to the text-selection, translation, TXT, update, and demo sections. The update tile explains that downloaded models and conversations are kept.
+The introduction presents one-click installation, local AI features, and offline chat after downloading a model. The hero shows both installation choices: a primary Google Play button with the Play icon that scrolls to the closed-testing instructions, and a visible outlined APK download button. The GitHub link opens the repository. A tilted phone plays `assets/chat-live.mp4`, with `chat-live-poster.jpg` as its poster. Feature tiles link to the text-selection, translation, TXT, update, and demo sections. The update tile explains that downloaded models and conversations are kept.
 
 The dark palette uses warm charcoal, olive surfaces, sage accents, and cream text. Fraunces headings and Plus Jakarta Sans body text load from Google Fonts, with local fallbacks. Header buttons select light, dark, or high-contrast themes. `theme.js` saves the choice in local storage; screenshots and videos keep their original colors. Motion respects reduced-motion preferences. `generation-preview.js` controls the inline video and pauses it when it is not visible.
 
