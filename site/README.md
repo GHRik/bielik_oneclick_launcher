@@ -69,13 +69,11 @@ Players load lazily, do not autoplay, and include direct YouTube links. Keep the
 
 **Plan rozwoju** appears after the demos. PDF support, iOS, and NPU acceleration are marked “W trakcie”. GPU acceleration currently carries the “50/50” status and the documented device-specific OpenCL results: OnePlus 15 and Pixel 8 Pro work, Samsung Galaxy S24+ does not; Vulkan is untested. This is not a claim of universal GPU compatibility.
 
-**Rozwijaj z nami** links to the model contribution guide, the GitHub repository, and the internal-testing invitation. **O mnie** introduces Damian Panasiuk with a portrait and LinkedIn link. Attribution identifies the launcher as independent and credits the model creators. The footer links to the Polish [privacy policy](privacy.html), including Google Play internal-testing data and contact details.
+**Rozwijaj z nami** links to the model contribution guide, the GitHub repository. **O mnie** introduces Damian Panasiuk with a portrait and LinkedIn link. Attribution identifies the launcher as independent and credits the model creators. The footer links to the Polish [privacy policy](privacy.html), including Google Play internal-testing data and contact details.
 
-## Downloads, internal testing, and release notes
+## Downloads and release notes
 
 The primary APK link remains GitHub's stable `/releases/latest/download/bielik-arm64.apk` URL. Models are downloaded separately inside the app.
-
-A secondary **Dołącz do testów wewnętrznych Google Play!** button appears directly below the APK button and in **Rozwijaj z nami**. Testers join through the [Google Group](https://groups.google.com/g/bielik-oneclick-testers), configured as the tester list for the internal-testing track in Play Console. The instructions use the tester's Play Store Google account and describe installing from Google Play; the confirmation step links to https://play.google.com/apps/internaltest/4701673118246857685. The original prefilled e-mail to `damian.panasiuk.console@gmail.com` remains only as a fallback, alongside the plain address. The primary APK download remains available.
 
 `release-info.js` fetches version, publication date, and stable release availability from GitHub. Polish patch notes come from `release-notes.pl.json`, using an exact tag or version key. **Co nowego?** shows the latest stable release; **Archiwalne wersje APK** lists older stable APKs, excluding the current release, drafts, and prereleases. Translations require a Pages deployment; release metadata updates independently.
 
