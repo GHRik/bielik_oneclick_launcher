@@ -4,7 +4,7 @@ A static landing page in `index.html` and `styles.css`. Open `index.html` in a b
 
 ## Introduction and themes
 
-The introduction presents one-click installation, local AI features, and offline chat after downloading a model. Its download link scrolls to the download section; the GitHub link opens the repository. A tilted phone plays `assets/chat-live.mp4`, with `chat-live-poster.jpg` as its poster. Feature tiles link to the text-selection, translation, TXT, update, and demo sections. The update tile explains that downloaded models and conversations are kept.
+The introduction presents one-click installation, local AI features, and offline chat after downloading a model. Its primary Google Play button includes the Play icon and scrolls to the closed-testing instructions; the GitHub link opens the repository. A tilted phone plays `assets/chat-live.mp4`, with `chat-live-poster.jpg` as its poster. Feature tiles link to the text-selection, translation, TXT, update, and demo sections. The update tile explains that downloaded models and conversations are kept.
 
 The dark palette uses warm charcoal, olive surfaces, sage accents, and cream text. Fraunces headings and Plus Jakarta Sans body text load from Google Fonts, with local fallbacks. Header buttons select light, dark, or high-contrast themes. `theme.js` saves the choice in local storage; screenshots and videos keep their original colors. Motion respects reduced-motion preferences. `generation-preview.js` controls the inline video and pauses it when it is not visible.
 
@@ -73,7 +73,7 @@ Players load lazily, do not autoplay, and include direct YouTube links. Keep the
 
 ## Downloads and release notes
 
-The primary APK link remains GitHub's stable `/releases/latest/download/bielik-arm64.apk` URL. Models are downloaded separately inside the app.
+Google Play closed-test enrollment is the primary, filled action in the hero and download section, with a Play icon and an explicit testing label. APK download is a secondary outlined button; its GitHub stable `/releases/latest/download/bielik-arm64.apk` URL is unchanged. Models are downloaded separately inside the app.
 
 `release-info.js` fetches version, publication date, and stable release availability from GitHub. Polish patch notes come from `release-notes.pl.json`, using an exact tag or version key. **Co nowego?** shows the latest stable release; **Archiwalne wersje APK** lists older stable APKs, excluding the current release, drafts, and prereleases. Translations require a Pages deployment; release metadata updates independently.
 
