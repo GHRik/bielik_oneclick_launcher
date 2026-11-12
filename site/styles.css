@@ -219,6 +219,7 @@ body.screenshot-zoom-open{overflow:hidden}
 .download-steps li:last-child::before{right:50%}
 .download-steps span{position:relative;display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--strong-line);border-radius:50%;color:var(--accent);background:var(--paper);font:12px ui-monospace,Consolas,monospace}
 .download-actions{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:16px}
+.download-actions + .download-actions{margin-top:20px}
 .release-info{font:11px/1.8 ui-monospace,Consolas,monospace;color:var(--muted);margin-top:18px;overflow-wrap:anywhere}
 .release-info a{text-decoration:underline}
 .download-note,.capture-note{font-size:10px;color:var(--muted);margin-top:16px;line-height:1.9}
