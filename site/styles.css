@@ -203,6 +203,8 @@ body.screenshot-zoom-open{overflow:hidden}
 .demo-frame{width:min(400px,100%);padding:clamp(16px,3vw,24px);margin:0 auto 24px;align-self:center;background:var(--surface);border:1px solid var(--line);border-radius:22px}
 .demo-player{width:100%;aspect-ratio:9/16;overflow:hidden;background:var(--paper);border-radius:12px}
 .demo-player iframe{display:block;width:100%;height:100%;border:0}
+.closed-testing-invite{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:100%;margin:16px auto}
+.closed-testing-invite .download-note{max-width:60ch;margin:0;overflow-wrap:anywhere}
 .download-section{text-align:center;padding-block:44px 64px;border-top:1px solid var(--line)}
 .download-section h2{margin-block:14px 26px}
 .download-steps{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;max-width:660px;margin:0 auto 30px;padding:0;font-size:12px}

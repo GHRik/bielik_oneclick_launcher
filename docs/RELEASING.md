@@ -6,6 +6,14 @@ Open **Actions → Release APK → Run workflow**, select the branch, optionally
 
 Testers can download the APK from that prerelease's assets. Prereleases are publicly visible in Releases, but the README and GitHub Pages download links continue to point to the latest stable release. The landing page's version, date and APK links come from GitHub Releases. Its Polish patch notes are stored separately in `site/release-notes.pl.json`, keyed by the exact release tag. Its archive lists stable releases with an ARM64 APK and excludes drafts and prereleases. Older release descriptions and APKs remain accessible.
 
+Before promoting a prerelease to **Latest**, run manual E2E tests on a physical Android phone:
+
+```sh
+dart run test/e2e/run_android_e2e.dart --scenario all
+```
+
+This is a deliberate release gate: the tests require a real device and download a roughly 1.7 GB model, so they do not run in CI. See the [Android E2E guide](../test/e2e/README.md) for setup and reports. Test the chosen prerelease APK on the phone as well; the E2E runner builds an isolated test app.
+
 After testing, edit the chosen release on GitHub, remove its prerelease flag, and mark it as **Latest**. Alternatively:
 
 ```sh

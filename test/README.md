@@ -83,7 +83,13 @@ java -cp .agent-staging/native-tests bielik.ai.bielik_oneclick_launcher.GpuSysfs
 
 ## Android E2E and CI
 
-See the [E2E quick start](e2e/README.md) for device requirements, commands, and reports. E2E tests are manual and are not connected to GitHub Actions.
+Before promoting a GitHub prerelease to **Latest**, run manual E2E tests on a physical Android phone from the repository root:
+
+```sh
+dart run test/e2e/run_android_e2e.dart --scenario all
+```
+
+Keeping these tests outside CI is deliberate: they require a real device and download a roughly 1.7 GB model. See the [E2E quick start](e2e/README.md) for setup and reports and the [release process](../docs/RELEASING.md#publish-a-build) for promotion. Also test the chosen prerelease APK on the phone: the runner builds an isolated E2E app rather than installing that release asset.
 
 CI has separate workflows for unit, component, integration, and architecture tests. The integration workflow also runs the Java adapter test in its own job. Test JSON reports and logs are uploaded as artifacts for 14 days.
 
