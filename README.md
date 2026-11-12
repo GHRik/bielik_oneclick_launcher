@@ -11,7 +11,7 @@ Run **Bielik** on your Android phone — download a GGUF in the app, chat offlin
 
 [![Dołącz do testów wewnętrznych Google Play!](https://img.shields.io/badge/Do%C5%82%C4%85cz_do_test%C3%B3w_wewn%C4%99trznych_Google_Play%21-34A853?style=for-the-badge&logo=googleplay&logoColor=white)](https://groups.google.com/g/bielik-oneclick-testers)
 
-Internal testing on Google Play — public release planned for December 2026. APK installation remains available.
+Internal testing on Google Play. APK installation remains available.
 
 1. Join the [tester group](https://groups.google.com/g/bielik-oneclick-testers) using the Google account you use in the Play Store.
 2. [Confirm participation in the internal test](https://play.google.com/apps/internaltest/4701673118246857685).
