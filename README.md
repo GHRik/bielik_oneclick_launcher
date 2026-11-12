@@ -4,17 +4,18 @@ Run **Bielik** on your Android phone — download a GGUF in the app, chat offlin
 
 | | |
 | --- | --- |
-| **[Download APK (ARM64)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk)** [![Version](https://img.shields.io/github/v/release/GHRik/bielik_oneclick_launcher?sort=date&label=version)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) [![Release date](https://img.shields.io/github/release-date/GHRik/bielik_oneclick_launcher?label=released)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) | [![Dołącz do zamkniętych testów Google Play!](https://img.shields.io/badge/Do%C5%82%C4%85cz_do_zamkni%C4%99tych_test%C3%B3w_Google_Play%21-34A853?style=for-the-badge&logo=googleplay&logoColor=white)](https://groups.google.com/g/bielik-oneclick-testers) · [All releases](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) |
+| **[Download APK (ARM64)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk)** [![Version](https://img.shields.io/github/v/release/GHRik/bielik_oneclick_launcher?sort=date&label=version)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) [![Release date](https://img.shields.io/github/release-date/GHRik/bielik_oneclick_launcher?label=released)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) | [![Dołącz do testów wewnętrznych Google Play!](https://img.shields.io/badge/Do%C5%82%C4%85cz_do_test%C3%B3w_wewn%C4%99trznych_Google_Play%21-34A853?style=for-the-badge&logo=googleplay&logoColor=white)](https://groups.google.com/g/bielik-oneclick-testers) · [All releases](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) |
 | [Polish overview](https://ghrik.github.io/bielik_oneclick_launcher/) | [YouTube demo](https://www.youtube.com/shorts/3f2A8yVDN88) |
 
 ## Install
 
-[![Dołącz do zamkniętych testów Google Play!](https://img.shields.io/badge/Do%C5%82%C4%85cz_do_zamkni%C4%99tych_test%C3%B3w_Google_Play%21-34A853?style=for-the-badge&logo=googleplay&logoColor=white)](https://groups.google.com/g/bielik-oneclick-testers)
+[![Dołącz do testów wewnętrznych Google Play!](https://img.shields.io/badge/Do%C5%82%C4%85cz_do_test%C3%B3w_wewn%C4%99trznych_Google_Play%21-34A853?style=for-the-badge&logo=googleplay&logoColor=white)](https://groups.google.com/g/bielik-oneclick-testers)
 
-Closed testing on Google Play — public release planned for December 2026. APK installation remains available.
+Internal testing on Google Play — public release planned for December 2026. APK installation remains available.
 
 1. Join the [tester group](https://groups.google.com/g/bielik-oneclick-testers) using the Google account you use in the Play Store.
-2. Install Bielik OneClick from the Play Store.
+2. [Confirm participation in the internal test](https://play.google.com/apps/internaltest/4701673118246857685).
+3. Install Bielik OneClick from the Play Store.
 
 <sub>Trouble joining? Write: [e-mail](mailto:damian.panasiuk.console@gmail.com?subject=Bielik%20OneClick%20%E2%80%93%20pro%C5%9Bba%20o%20dodanie%20do%20test%C3%B3w%20zamkni%C4%99tych&body=Cze%C5%9B%C4%87%2C%0Achc%C4%99%20do%C5%82%C4%85czy%C4%87%20do%20test%C3%B3w%20zamkni%C4%99tych%20Bielik%20OneClick%20w%20Google%20Play.%0A%0AAdres%20e-mail%20konta%20Google%20u%C5%BCywanego%20w%20Sklepie%20Play%3A%0AModel%20telefonu%3A%0AWersja%20Androida%3A%0A%0AWiem%2C%20%C5%BCe%20m%C3%B3j%20adres%20zostanie%20u%C5%BCyty%20tylko%20do%20dodania%20mnie%20do%20listy%20tester%C3%B3w.). Address: damian.panasiuk.console@gmail.com.</sub>
 
