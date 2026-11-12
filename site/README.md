@@ -24,7 +24,7 @@ The page presents the current Android app: local chat, model download and resour
 
 The roadmap sits below the YouTube demo. An icon row marks Android and CPU as available with checkmarks, GPU as experimental with a laboratory flask, and iOS as ongoing. The future platform scope is limited to iOS with GPU acceleration. Desktop support and in-app model importing are not advertised as planned features.
 
-Feature captions use short phrases. The model section names both bundled models and links to the root README's `#adding-models` instructions. Adding a model means editing `lib/configuration/bielik_models.dart` and rebuilding the APK, not importing a file through the UI.
+Feature captions use short phrases. The model section names both bundled models and links to [CONTRIBUTING.md](../docs/CONTRIBUTING.md#adding-models). Adding a model means editing `lib/configuration/bielik_models.dart` and rebuilding the APK, not importing a file through the UI.
 
 Attribution near the top and bottom credits SpeakLeash (Spichlerz) and ACK Cyfronet AGH, identifies OneClick as an independent launcher, and links to the official model cards and licenses.
 

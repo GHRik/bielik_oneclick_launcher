@@ -1,145 +1,40 @@
 # Bielik OneClick Launcher
 
-| Short description | Bielik Edge AI in one click on your Android phone. |
+Run **Bielik** on your Android phone — download a GGUF in the app, chat offline, tune inference, and watch live stats.
+
+| | |
 | --- | --- |
-| Polish description | [GitHub Pages](https://ghrik.github.io/bielik_oneclick_launcher/) |
-| YouTube demo | [Watch the demo](https://www.youtube.com/shorts/5ruxjgcFAZc) |
-| Latest APK | [Click to download](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk) [![Release APK](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/build-apk.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/build-apk.yml) [![Release date](https://img.shields.io/github/release-date/GHRik/bielik_oneclick_launcher?label=released)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) [![Version](https://img.shields.io/github/v/release/GHRik/bielik_oneclick_launcher?sort=date&label=version)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) |
-| Done | CPU inference, statistics, one-click Bielik model download, chat with Bielik |
-| Experimental | GPU acceleration (Vulkan, OpenCL) |
-| Feel free to | Contribute :) |
+| **[Download APK (ARM64)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk)** | [All releases](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) |
+| [Polish overview](https://ghrik.github.io/bielik_oneclick_launcher/) | [YouTube demo](https://www.youtube.com/shorts/5ruxjgcFAZc) |
 
-| Checks | Status |
-| --- | --- |
-| Build | [![Android Build](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/android-build.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/android-build.yml) |
-| Static analysis & architecture | [![Code Quality](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/code-quality.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/code-quality.yml) [![Architecture](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/architecture.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/architecture.yml) |
-| Tests | [![Unit Tests](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/unit-tests.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/unit-tests.yml) [![Component Tests](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/component-tests.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/component-tests.yml) [![Integration Tests](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/integration-tests.yml/badge.svg?branch=master)](https://github.com/GHRik/bielik_oneclick_launcher/actions/workflows/integration-tests.yml) |
+## Install
 
-A one-click Android launcher for running Bielik language models locally on your phone, with chat, live statistics, and configurable model parameters, including experimental GPU acceleration.
+1. [Download the latest APK](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk) (ARM64).
+2. Install on your phone (allow installs from your browser or file manager if asked).
+3. Open the app → choose a model → download → chat.
 
-- Download and manage Bielik 1.5B and 4.5B GGUF models inside the app.
-- Chat with streamed Markdown replies, including bold text, lists, and code; conversations and message drafts are saved in SQLite.
-- View resource usage, available device temperatures, and model generation statistics.
-- Adjust CPU threads, context size, response length, and sampling parameters.
-- Experiment with GPU acceleration through a separate Vulkan/OpenCL adapter.
+No Flutter or Android Studio required. Weights download inside the app (~1.7 GB for 1.5B, ~5 GB for 4.5B).
 
-CPU is the default. GPU inference is experimental and has not been validated on a device with this implementation; earlier attempts produced corrupted text. GPU settings apply only to the current app session. Hardware statistics depend on what the device exposes.
-
-## License
-
-The launcher code and original project assets are available under the [MIT License](LICENSE): free to use, modify, and distribute, including commercially, while retaining the license and copyright notice. Third-party dependencies and Bielik model weights retain their own licenses and terms.
-
-## Model attribution
-
-Bielik models are developed by **SpeakLeash (Spichlerz)** and **ACK Cyfronet AGH**. This repository provides an independent launcher, not the models themselves. Rights to the models remain with their respective authors and rights holders; use is subject to each model's license and terms.
-
-Official model cards and licenses: [Bielik 1.5B v3.0 Instruct GGUF](https://huggingface.co/speakleash/Bielik-1.5B-v3.0-Instruct-GGUF) and [Bielik 4.5B v3.0 Instruct GGUF](https://huggingface.co/speakleash/Bielik-4.5B-v3.0-Instruct-GGUF).
-
-## Download and install
-
-1. [Download the latest APK](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk), or view the [latest stable release](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest).
-2. Install the APK on your Android phone. Allow installation from your browser or file manager if prompted.
-3. Open the app, select and download a model, then open the chat.
-
-No Flutter or Android Studio installation is needed. Models are downloaded separately inside the app: approximately 1.7 GB for 1.5B and 5.06 GB for 4.5B. Running a model also requires sufficient RAM.
-
-Distributed APKs are ARM64 release builds signed with a stable key. Install a newer release over the existing one to keep conversations, settings, and downloaded models. Older debug APKs may have incompatible signatures; do not uninstall them if you need their local data. See [releases and updates](docs/RELEASING.md).
-
-## Adding models
-
-The app currently offers these models:
-
-| Model | Download | Required free RAM |
+| Model | Download | Free RAM (estimate) |
 | --- | --- | --- |
-| Bielik 1.5B v3.0 Instruct · Q8_0 | About 1.7 GB | 4 GB |
-| Bielik 4.5B v3.0 Instruct · Q8_0 | About 5.06 GB | 8 GB |
+| Bielik 1.5B v3.0 Instruct · Q8_0 | ~1.7 GB | 4 GB |
+| Bielik 4.5B v3.0 Instruct · Q8_0 | ~5.06 GB | 8 GB |
 
-RAM requirements are estimates and depend on the context and runtime settings.
+Install a newer signed release over the old one to keep chats and models. See [releases and updates](docs/RELEASING.md).
 
-To extend the dropdown, edit **[lib/configuration/bielik_models.dart](lib/configuration/bielik_models.dart)** and add another `BielikModel` to `bielikModels`. Copy an existing entry as a template and replace:
+**CPU** inference is the default. **GPU** (Vulkan / OpenCL) is experimental — use CPU in production.
 
-| Field | Value to provide |
-| --- | --- |
-| `name` | Display name in the model selector |
-| `file.name` | Unique local GGUF filename |
-| `file.url` | Direct HTTPS download URL for the GGUF; use a fixed repository revision for stable metadata |
-| `file.sizeBytes` / `file.sha256` | Exact byte size and SHA-256 of that file |
-| `downloadSizeMb` / `diskSpace` | Download size in decimal MB and storage description |
-| `requiredFreeRamGb` / `ram` | Numeric free RAM threshold in decimal GB and a readable estimate |
+## Build & contribute
 
-For example, an entry has this shape; replace every example value with the actual model metadata:
-
-```dart
-BielikModel(
-  name: 'My Bielik · Q8',
-  file: ModelFile(
-    name: 'my-bielik.Q8_0.gguf',
-    url: 'https://huggingface.co/<owner>/<repo>/resolve/<commit>/<file>.gguf',
-    sizeBytes: 1234567890,
-    sha256: '<exact 64-character SHA-256>',
-  ),
-  diskSpace: 'about 1.24 GB',
-  downloadSizeMb: 1234.57,
-  ram: 'at least 4 GB of free RAM',
-  requiredFreeRamGb: 4,
-),
-```
-
-Use a GGUF architecture supported by the bundled `llamadart` / `llama.cpp` runtime. An arbitrary GGUF file is not guaranteed to work. Incorrect size or SHA-256 prevents the download from being accepted.
-
-Rebuild the APK using the [quick start](#quick-start-from-source). The new entry appears automatically and the user downloads its weights inside the app. This changes the catalog in source code; installed APKs do not have a custom-model import screen.
-
-A catalog entry uses the shared model settings. Only if it needs different defaults, add an optional filename-keyed override in [llm_configuration.dart](lib/configuration/llm_configuration.dart). A profile saved in the app's settings takes precedence over file defaults.
-
-## Project layout
-
-```text
-lib/
-├── main.dart              # Startup and dependency injection
-├── configuration/         # Model catalog, LLM defaults, system prompt, database setup
-└── src/
-    ├── app.dart           # Application setup and screen dependencies
-    ├── presentation/      # Pages, widgets, state controllers, sidebars, formatters
-    ├── domain/            # Models, repository contracts, business services
-    └── data/              # Data sources, repository implementations, runtime adapters
-
-android/                   # Android host, resource/statistics channels, build setup
-test/                      # Component, integration, architecture, and manual E2E tests
-site/                      # Polish GitHub Pages landing page
-.github/workflows/         # Separate CI checks, APK releases, Pages deployment
-```
-
-Unit tests live in `ut/` directories beside their production classes under `lib/`. See [testing](test/README.md) and [architecture](ARCHITECTURE.md) for details.
-
-## Quick start from source
-
-Use Flutter **3.47.9** with Dart **3.13.7**, Android SDK, and an Android device with USB debugging enabled.
+Flutter **3.47.9**, Android SDK, USB debugging:
 
 ```sh
 git clone https://github.com/GHRik/bielik_oneclick_launcher.git
-cd bielik_oneclick_launcher
-flutter pub get
-flutter devices
-flutter run -d <android-device-id>
+cd bielik_oneclick_launcher && flutter pub get && flutter run
 ```
 
-To build an ARM64 APK locally:
+Everything else (catalog, layout, CI, adding models): **[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)** · [ARCHITECTURE.md](ARCHITECTURE.md) · [test/README.md](test/README.md)
 
-```sh
-flutter build apk --debug --no-pub --target-platform android-arm64
-```
+## License and models
 
-The APK is written to `build/app/outputs/flutter-apk/app-debug.apk`. Model files are not bundled with it.
-
-## Checks and releases
-
-The badges above link to separate workflows for code quality, unit tests, component tests, integration tests, architecture, Android builds, and APK releases.
-
-Automatic checks run on pull requests to `master` and pushes to `master` when application code, tests, assets, dependencies, or analysis configuration change. Documentation-only and `.github/`-only changes do not trigger these checks. E2E tests remain manual.
-
-To publish a downloadable test APK, open **Actions → Release APK → Run workflow** and select a branch. The workflow publishes a signed release APK, SHA-256 checksum, certificate details, and source commit information to Releases. Signing secrets are configured in the repository; the public certificate fingerprint is pinned in source control. See [release maintenance](docs/RELEASING.md).
-
-- [Test quick start and directory guide](test/README.md)
-- [Manual Android E2E tests](test/e2e/README.md)
-- [Architecture and configuration](ARCHITECTURE.md)
-- [Polish landing page maintenance](site/README.md)
+Launcher: [MIT](LICENSE). **Bielik** weights are by SpeakLeash / ACK Cyfronet AGH — [1.5B](https://huggingface.co/speakleash/Bielik-1.5B-v3.0-Instruct-GGUF), [4.5B](https://huggingface.co/speakleash/Bielik-4.5B-v3.0-Instruct-GGUF).
