@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
+import 'package:bielik_oneclick_launcher/src/domain/models/app_update.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/android_app_info.dart';
@@ -9,8 +12,14 @@ import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/play_upda
 class _Play implements PlayUpdateRepository {
   PlayUpdateStatus status = PlayUpdateStatus.available;
   int updates = 0;
+  bool offline = false;
+  Completer<PlayUpdateStatus>? pending;
   @override
-  Future<PlayUpdateStatus> check() async => status;
+  Future<PlayUpdateStatus> check() async {
+    if (offline) throw const UpdateFailure('Brak internetu');
+    return pending == null ? status : await pending!.future;
+  }
+
   @override
   Future<PlayUpdateResult> update() async {
     updates++;
@@ -98,9 +107,7 @@ void main() {
     );
   });
 
-  testWidgets('Current Play version shows an informational message', (
-    tester,
-  ) async {
+  testWidgets('Current Play version hides the update button', (tester) async {
     final repository = _Play()..status = PlayUpdateStatus.current;
     await tester.pumpWidget(
       MaterialApp(
@@ -108,13 +115,40 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Aktualizuj'));
-    await tester.pumpAndSettle();
-    expect(find.text('Masz aktualną wersję aplikacji.'), findsOneWidget);
+    expect(find.text('Aktualizuj'), findsNothing);
+    expect(find.byType(AlertDialog), findsNothing);
     expect(repository.updates, 0);
-    await tester.tap(find.text('OK'));
-    await tester.pumpAndSettle();
   });
+
+  testWidgets('Pending check does not advertise an update', (tester) async {
+    final repository = _Play()..pending = Completer<PlayUpdateStatus>();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: PlayUpdateButton(repository: repository)),
+      ),
+    );
+    expect(find.text('Sprawdzanie aktualizacji…'), findsOneWidget);
+    expect(find.text('Aktualizuj'), findsNothing);
+    repository.pending!.complete(PlayUpdateStatus.available);
+    await tester.pumpAndSettle();
+    expect(find.text('Aktualizuj'), findsOneWidget);
+  });
+
+  testWidgets(
+    'Failed Play check hides update controls without offering retry',
+    (tester) async {
+      final repository = _Play()..offline = true;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: PlayUpdateButton(repository: repository)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Aktualizuj'), findsNothing);
+      expect(find.byType(TextButton), findsNothing);
+      expect(find.byType(AlertDialog), findsNothing);
+    },
+  );
 
   testWidgets('Play update is manual and cancellation keeps the app usable', (
     tester,

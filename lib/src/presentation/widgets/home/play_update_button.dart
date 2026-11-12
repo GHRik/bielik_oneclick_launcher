@@ -15,6 +15,7 @@ class PlayUpdateButton extends StatefulWidget {
 class _PlayUpdateButtonState extends State<PlayUpdateButton>
     with WidgetsBindingObserver {
   bool _busy = false;
+  PlayUpdateStatus? _status;
 
   @override
   void initState() {
@@ -59,6 +60,9 @@ class _PlayUpdateButtonState extends State<PlayUpdateButton>
     try {
       final status = await widget.repository.check();
       if (!mounted) return;
+      setState(() {
+        _status = status;
+      });
       if (resumeOnly && status != PlayUpdateStatus.interrupted) return;
       if (status == PlayUpdateStatus.current) {
         await _message('Masz aktualną wersję aplikacji.');
@@ -92,8 +96,10 @@ class _PlayUpdateButtonState extends State<PlayUpdateButton>
         if (confirmed && mounted) await widget.repository.update();
       }
     } on UpdateFailure catch (error) {
+      if (mounted) setState(() => _status = null);
       if (!resumeOnly) await _message(error.message);
     } catch (_) {
+      if (mounted) setState(() => _status = null);
       if (!resumeOnly) {
         await _message('Nie udało się sprawdzić aktualizacji w Google Play.');
       }
@@ -103,13 +109,28 @@ class _PlayUpdateButtonState extends State<PlayUpdateButton>
   }
 
   @override
-  Widget build(BuildContext context) => TextButton(
-    onPressed: _busy ? null : () => _check(),
-    style: TextButton.styleFrom(
-      textStyle: Theme.of(context).textTheme.labelSmall,
-      minimumSize: const Size(88, 36),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-    ),
-    child: const Text('Aktualizuj'),
-  );
+  Widget build(BuildContext context) {
+    if (_status == null && _busy) {
+      return Semantics(
+        liveRegion: true,
+        child: Text(
+          'Sprawdzanie aktualizacji…',
+          style: Theme.of(context).textTheme.labelSmall,
+        ),
+      );
+    }
+    if (_status != PlayUpdateStatus.available &&
+        _status != PlayUpdateStatus.interrupted) {
+      return const SizedBox.shrink();
+    }
+    return TextButton(
+      onPressed: _busy ? null : () => _check(),
+      style: TextButton.styleFrom(
+        textStyle: Theme.of(context).textTheme.labelSmall,
+        minimumSize: const Size(88, 36),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
+      child: const Text('Aktualizuj'),
+    );
+  }
 }
