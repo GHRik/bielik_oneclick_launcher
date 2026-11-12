@@ -113,6 +113,8 @@ h1 em{color:var(--display-ink);font-weight:500}
 .slides.slider-ready{position:relative;display:flex;align-items:stretch;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
 .slides.slider-ready::-webkit-scrollbar{display:none}
 .slider-ready .feature-slide{flex:0 0 100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always}
+#mozliwosci.features{min-height:100dvh;min-height:100svh;display:flex;flex-direction:column;box-sizing:border-box;padding-block:clamp(10px,2vh,22px);border-top:1px solid var(--line)}
+#mozliwosci .section-heading{margin-bottom:clamp(6px,1.2vh,14px);flex-shrink:0}
 .features{padding-block:40px 46px;border-top:1px solid var(--line)}
 .section-heading{margin-bottom:26px}
 h2{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:34px;letter-spacing:-.6px;line-height:1.25}
@@ -130,16 +132,33 @@ h2{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:34px;letter-sp
 .model-options li+li{margin-top:14px}
 .model-options strong{display:block;font-size:13px;font-weight:600}
 .model-options span{display:block;color:var(--muted);font:11px/1.8 ui-monospace,Consolas,monospace;margin-top:4px}
+.features-stage{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+#mozliwosci .slides.slider-ready{flex:1 1 auto;min-height:0;align-items:stretch}
+#mozliwosci .slider-ready .feature-slide{height:100%;max-height:100%;overflow:hidden}
+#mozliwosci .feature-slide{align-content:center;gap:clamp(16px,2.5vh,32px);padding:clamp(14px,2vh,28px) clamp(16px,3vw,32px)}
+#mozliwosci .phone-screen{width:min(260px,32vh);max-height:min(46vh,420px);height:auto;object-fit:contain}
+#mozliwosci .slide-copy h3{margin-block:10px 12px;font-size:clamp(22px,2.8vh,34px)}
+#mozliwosci .slide-copy>p:not(.eyebrow){margin-top:8px;line-height:1.65}
+.carousel-arrows-overlay{pointer-events:none;position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding-inline:2px}
+#mozliwosci .carousel-arrows-overlay{max-width:100%}
+@media(min-width:761px){#mozliwosci .carousel-arrows-overlay{width:min(52%,280px)}}
+@media(max-width:760px){#mozliwosci .carousel-arrows-overlay{align-items:flex-start;padding-top:min(28vh,200px);height:min(72vh,520px)}}
+.carousel-arrows-overlay .carousel-arrow{pointer-events:auto;background:color-mix(in srgb,var(--surface) 90%,transparent);box-shadow:0 2px 14px #0003}
 .carousel-controls{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:24px}
+#mozliwosci .carousel-controls{flex-direction:row;align-items:center;justify-content:center;gap:10px;margin-top:clamp(8px,1.2vh,14px);flex-shrink:0;width:100%;max-width:100%}
 .carousel-navigation{display:flex;align-items:center;gap:14px}
-.carousel-arrow,.carousel-pause{display:grid;place-items:center;width:48px;height:48px;min-width:48px;min-height:48px;padding:12px;background:var(--surface);border:1px solid var(--strong-line);border-radius:50%}
+.carousel-arrow,.carousel-pause{display:grid;place-items:center;width:48px;height:48px;min-width:48px;min-height:48px;padding:12px;background:var(--surface);border:1px solid var(--strong-line);border-radius:50%;cursor:pointer}
 .carousel-arrow:hover,.carousel-pause:hover{border-color:var(--accent);color:var(--accent)}
+#mozliwosci .carousel-pause{flex:0 0 auto}
 .carousel-pause span{display:grid;place-items:center}
 .carousel-pause .icon-play{display:none}
 .carousel-pause[data-paused="true"] .icon-pause{display:none}
 .carousel-pause[data-paused="true"] .icon-play{display:grid}
 .carousel-dots{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;max-width:100%}
-.carousel-dots button{display:grid;place-items:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:0;background:transparent}
+#mozliwosci .carousel-dots{flex:1 1 auto;flex-wrap:nowrap;justify-content:flex-start;gap:0;max-width:min(100%,calc(100vw - 120px));overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-inline:4px}
+#mozliwosci .carousel-dots::-webkit-scrollbar{display:none}
+.carousel-dots button{display:grid;place-items:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:0;background:transparent;cursor:pointer}
+#mozliwosci .carousel-dots button{width:36px;height:36px;min-width:36px;min-height:36px;flex-shrink:0;scroll-snap-align:center}
 .carousel-dots span{display:block;width:8px;height:8px;border-radius:50%;background:var(--dot)}
 .carousel-dots [aria-current="true"] span{background:var(--coral);box-shadow:0 0 0 4px color-mix(in srgb,var(--coral) 15%,transparent)}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
