@@ -69,7 +69,7 @@ Players load lazily, do not autoplay, and include direct YouTube links. Keep the
 
 **Plan rozwoju** appears after the demos. PDF support, iOS, and NPU acceleration are marked “W trakcie”. GPU acceleration currently carries the “50/50” status and the documented device-specific OpenCL results: OnePlus 15 and Pixel 8 Pro work, Samsung Galaxy S24+ does not; Vulkan is untested. This is not a claim of universal GPU compatibility.
 
-**Rozwijaj z nami** links to the model contribution guide, the GitHub repository. **O mnie** introduces Damian Panasiuk with a portrait and LinkedIn link. Attribution identifies the launcher as independent and credits the model creators. The footer links to the Polish [privacy policy](privacy.html), including Google Play internal-testing data and contact details.
+**Rozwijaj z nami** links to the model contribution guide and the GitHub repository. Near the bottom, **Testy w Google Play** shows the internal-to-closed testing progression, a prefilled e-mail request for manual internal-test enrollment, and the owner-reported pending Google Play review for closed testing. **O mnie** introduces Damian Panasiuk with a portrait and LinkedIn link. Attribution identifies the launcher as independent and credits the model creators. The footer links to the Polish [privacy policy](privacy.html), including Google Play internal-testing data and contact details.
 
 ## Downloads and release notes
 
