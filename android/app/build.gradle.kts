@@ -16,6 +16,26 @@ val apkUpdates = (project.findProperty("dart-defines") as? String)
     ?.any { String(Base64.getDecoder().decode(it)) == "BIELIK_APK_UPDATES=true" }
     ?: false
 
+// ABIs requested with `flutter build --target-platform` (or chosen by `flutter run`).
+// The Flutter Gradle plugin allows every ABI it supports, so plugin libraries add
+// folders for ABIs that have no Flutter engine in this build. Such an APK installs on
+// devices where it cannot start.
+// Like the plugin, leave the filters alone for `--split-per-abi`, which conflicts with
+// them, and for `-P disable-abi-filtering=true`.
+val abiFilteringDisabled = listOf("split-per-abi", "disable-abi-filtering")
+    .any { project.findProperty(it)?.toString().toBoolean() }
+val targetAbis = (project.findProperty("target-platform") as? String)
+    ?.takeUnless { abiFilteringDisabled }
+    ?.split(",")
+    ?.mapNotNull {
+        mapOf(
+            "android-arm" to "armeabi-v7a",
+            "android-arm64" to "arm64-v8a",
+            "android-x64" to "x86_64",
+        )[it.trim()]
+    }
+    .orEmpty()
+
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
@@ -66,6 +86,12 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         buildConfigField("boolean", "APK_UPDATES", apkUpdates.toString())
+        if (targetAbis.isNotEmpty()) {
+            ndk {
+                abiFilters.clear()
+                abiFilters += targetAbis
+            }
+        }
     }
 
     if (apkUpdates) {
