@@ -33,6 +33,31 @@ void main() {
       expect(readsWhilePending, 1);
     });
 
+    test('Repeats the read for a request made during a read', () async {
+      final repository = _ResourcesRepository();
+      final controller = DeviceResourcesController(repository);
+      addTearDown(controller.dispose);
+
+      final first = controller.refresh();
+      final second = controller.refresh();
+      repository.pending.complete(const DeviceResources(availableRamBytes: 1));
+      await Future.wait([first, second]);
+
+      expect(repository.reads, 2);
+    });
+
+    test('Reads once when no request arrives during the read', () async {
+      final repository = _ResourcesRepository();
+      final controller = DeviceResourcesController(repository);
+      addTearDown(controller.dispose);
+
+      final refresh = controller.refresh();
+      repository.pending.complete(const DeviceResources(availableRamBytes: 1));
+      await refresh;
+
+      expect(repository.reads, 1);
+    });
+
     test('Does not notify listeners after disposal', () async {
       final repository = _ResourcesRepository();
       final controller = DeviceResourcesController(repository);
