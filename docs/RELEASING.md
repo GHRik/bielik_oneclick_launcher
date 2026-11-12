@@ -26,7 +26,7 @@ Download `bielik-arm64.apk` directly from [the latest stable release](https://gi
 
 ## Build an AAB for Google Play
 
-Internal testing uses an email-address list in Play Console; testers are added manually after requesting access by email. Closed testing is awaiting Google Play review. The [Google Group](https://groups.google.com/g/bielik-oneclick-testers) is prepared for the closed-testing track and will be connected only after that review.
+Closed testing is available through the [tester Google Group](https://groups.google.com/g/bielik-oneclick-testers). Join with the Google account used in the Play Store, then [confirm participation](https://play.google.com/apps/testing/bielik.ai) and install the app. Internal testing still uses an email-address list in Play Console, managed manually after email requests.
 
 Open **Actions → Release Google Play AAB → Run workflow** on `master`. Leave `source_release` as `latest` (or empty) to build from the latest stable APK. To select another release, enter its exact existing tag, for example `v1.0.6-build.12.1`. This is the source release, not a name for the new AAB. Stable releases and published APK prereleases are supported. The release must include `bielik-arm64.apk` and `BUILD.txt`. A missing tag produces an error with a list of available releases.
 

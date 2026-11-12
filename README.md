@@ -9,7 +9,7 @@ Run **Bielik** on your Android phone — download a GGUF in the app, chat offlin
 
 ## Install
 
-[Google Play: internal testing is open by e-mail request; closed testing is awaiting Google Play review.](https://ghrik.github.io/bielik_oneclick_launcher/#testy-google-play)
+Google Play closed testing: [join the tester group](https://groups.google.com/g/bielik-oneclick-testers), then [confirm participation and install](https://play.google.com/apps/testing/bielik.ai), using the same Google account as in the Play Store.
 
 1. [Download the latest APK](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk) (ARM64) [![Version](https://img.shields.io/github/v/release/GHRik/bielik_oneclick_launcher?sort=date&label=version)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) [![Release date](https://img.shields.io/github/release-date/GHRik/bielik_oneclick_launcher?label=released)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest)
 2. Install on your phone (allow installs from your browser or file manager if asked).
