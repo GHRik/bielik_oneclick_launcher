@@ -4,6 +4,7 @@ import 'package:llamadart/llamadart.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/github_app_update_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/android_app_info.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:bielik_oneclick_launcher/src/data/repositories_impl/google_play_update_repository.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/android_app_exit_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/app_exit_repository.dart';
 
@@ -65,8 +66,12 @@ Future<void> main() async {
         await promptRepository.save(prompt);
         additionalPrompt = prompt;
       },
+      playUpdateRepository: appVersion?.installedFromGooglePlay == true
+          ? GooglePlayUpdateRepository()
+          : null,
       appUpdateRepository:
           appVersion != null &&
+              !appVersion.installedFromGooglePlay &&
               (kDebugMode || const bool.fromEnvironment('BIELIK_APK_UPDATES'))
           ? GithubAppUpdateRepository()
           : null,
