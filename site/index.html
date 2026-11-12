@@ -131,7 +131,7 @@
       </div>
       </div>
       <div class="carousel-controls" hidden>
-        <button class="carousel-pause" type="button" aria-label="Wstrzymaj automatyczne slajdy"><span class="icon-pause"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg></span><span class="icon-play"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span></button>
+        <button class="carousel-arrow carousel-bottom-arrow" type="button" data-direction="-1" aria-label="Poprzedni slajd"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
         <div class="carousel-dots" role="group" aria-label="Wybierz slajd">
           <button type="button" data-slide="0" aria-label="Zapytaj Bielika" aria-controls="slide-ask" aria-current="true"><span></span></button>
           <button type="button" data-slide="1" aria-label="Podyktuj i przetłumacz" aria-controls="slide-dictation"><span></span></button>
@@ -143,6 +143,7 @@
           <button type="button" data-slide="7" aria-label="Konfiguracja modelu" aria-controls="slide-settings"><span></span></button>
           <button type="button" data-slide="8" aria-label="Aktualizacje w aplikacji" aria-controls="slide-updates"><span></span></button>
         </div>
+        <button class="carousel-arrow carousel-bottom-arrow" type="button" data-direction="1" aria-label="Następny slajd"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>
       </div>
       <span class="sr-only" id="slide-status" aria-live="polite"></span>
     </section>
