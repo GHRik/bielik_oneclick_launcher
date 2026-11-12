@@ -4,12 +4,12 @@ Run **Bielik** on your Android phone — download a GGUF in the app, chat offlin
 
 | | |
 | --- | --- |
-| **[Download APK (ARM64)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk)** | [All releases](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) |
-| [Polish overview](https://ghrik.github.io/bielik_oneclick_launcher/) | [YouTube demo](https://www.youtube.com/shorts/5ruxjgcFAZc) |
+| **[Download APK (ARM64)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk)** [![Version](https://img.shields.io/github/v/release/GHRik/bielik_oneclick_launcher?sort=date&label=version)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) [![Release date](https://img.shields.io/github/release-date/GHRik/bielik_oneclick_launcher?label=released)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) | [All releases](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) |
+| [Polish overview](https://ghrik.github.io/bielik_oneclick_launcher/) | [YouTube demo](https://www.youtube.com/shorts/3f2A8yVDN88) |
 
 ## Install
 
-1. [Download the latest APK](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk) (ARM64).
+1. [Download the latest APK](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest/download/bielik-arm64.apk) (ARM64) [![Version](https://img.shields.io/github/v/release/GHRik/bielik_oneclick_launcher?sort=date&label=version)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest) [![Release date](https://img.shields.io/github/release-date/GHRik/bielik_oneclick_launcher?label=released)](https://github.com/GHRik/bielik_oneclick_launcher/releases/latest)
 2. Install on your phone (allow installs from your browser or file manager if asked).
 3. Open the app → choose a model → download → chat.
 
