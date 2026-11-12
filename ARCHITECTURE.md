@@ -64,13 +64,13 @@ GPU settings are session-only and disabled at startup.
 
 `ChatContextPolicy` merges consecutive messages with the same role and selects the newest turns fitting the context budget. The runtime supplies token counts using the actual model chat template. Defaults are a 2048-token context and a 512-token response limit. The complete stored history is preserved.
 
-### CPU and experimental GPU
+### CPU and GPU
 
 `CpuRuntimeAdapter` explicitly selects `ComputeDevice.cpu`, `GpuBackend.cpu`, and zero GPU layers. `GpuInferenceAdapter` separately maps GPU settings to Vulkan/OpenCL and checks the reported backend and offloaded layers before generation.
 
 `ComputeRoutingLlmRepository` keeps separate CPU and GPU engine instances. GPU is created only on explicit selection; switching mode releases the previous model. A GPU error releases its engine and is surfaced without silently retrying on CPU. No global Vulkan environment variables are changed.
 
-Android bundles CPU, Vulkan, and OpenCL backends. The manifest declares the optional vendor OpenCL library. GPU inference is experimental and has not been validated on a device with this implementation; earlier attempts produced corrupted text. `LlmRuntimeInfo` reports the active runtime to the view. Hardware GPU statistics are independent of inference routing.
+Android bundles CPU, Vulkan, and OpenCL backends. The manifest declares the optional vendor OpenCL library. OpenCL GPU inference has been tested on OnePlus 15 and Pixel 8 Pro; it does not work on Samsung Galaxy S24+. Vulkan has not been tested. `LlmRuntimeInfo` reports the active runtime to the view. Hardware GPU statistics are independent of inference routing.
 
 ## Statistics
 

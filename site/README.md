@@ -20,9 +20,9 @@ The introduction has one download button and a demo link. Installation steps app
 
 ## Content
 
-The page presents the current Android app: local chat, model download and resource checks, live statistics, and configurable LLM parameters. Android GPU inference is labeled experimental.
+The page presents the current Android app: local chat, model download and resource checks, live statistics, and configurable LLM parameters. GPU support on the landing page reflects device-tested OpenCL (see repository docs); do not claim universal GPU support.
 
-The roadmap sits below the YouTube demo. An icon row marks Android and CPU as available with checkmarks, GPU as experimental with a laboratory flask, and iOS as ongoing. The future platform scope is limited to iOS with GPU acceleration. Desktop support and in-app model importing are not advertised as planned features.
+The roadmap sits below the YouTube demo. An icon row marks Android and CPU as available with checkmarks, GPU with a laboratory flask (OpenCL verified on select phones; see [CONTRIBUTING.md](../docs/CONTRIBUTING.md#runtime-notes-cpu--gpu)), and iOS as ongoing. The future platform scope is limited to iOS with GPU acceleration. Desktop support and in-app model importing are not advertised as planned features.
 
 Feature captions use short phrases. The model section names both bundled models and links to [CONTRIBUTING.md](../docs/CONTRIBUTING.md#adding-models). Adding a model means editing `lib/configuration/bielik_models.dart` and rebuilding the APK, not importing a file through the UI.
 

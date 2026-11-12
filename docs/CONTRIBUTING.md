@@ -25,7 +25,7 @@ Before you open a pull request, read the [open issues](https://github.com/GHRik/
 | **Secrets** | Never commit signing keys, tokens, or `.env` credentials. Release signing stays in GitHub Actions secrets. |
 | **User-visible text** | Polish copy for in-app messages and snackbars; English is fine for code, architecture docs, and contributor docs. |
 
-GPU acceleration and some statistics remain **experimental** — do not describe them as fully supported product features without maintainer agreement.
+Keep GPU and device-statistics documentation aligned with [Runtime notes (CPU / GPU)](#runtime-notes-cpu--gpu) when you change inference or related UI copy.
 
 ### Commit messages
 
@@ -51,7 +51,7 @@ Automated CI does **not** run [Android E2E tests](../test/e2e/README.md). They u
 - model download, verification, deletion, or storage or RAM checks;
 - chat, drafts, conversations, or process restart / persistence;
 - Android platform channels, app ID, or native code used by the above;
-- CPU inference wiring that E2E exercises (not experimental GPU-only paths unless you add coverage).
+- CPU inference wiring that E2E exercises (GPU-only paths need separate on-device verification unless you add coverage).
 
 **What we ask — and thank you for.** The maintainer will still run checks before a **released** APK, but it helps a lot if contributors:
 
@@ -173,4 +173,4 @@ To publish a downloadable test APK, open **Actions → Release APK → Run workf
 
 ## Runtime notes (CPU / GPU)
 
-CPU is the default. GPU inference is experimental and has not been validated on a device with this implementation; earlier attempts produced corrupted text. GPU settings apply only to the current app session. Hardware statistics depend on what the device exposes.
+CPU is the default. **OpenCL** on GPU has been tested on OnePlus 15 and Pixel 8 Pro. GPU inference does **not** work on Samsung Galaxy S24+. **Vulkan** has not been tested. GPU settings apply only for the current app session. Hardware statistics depend on what the device exposes.

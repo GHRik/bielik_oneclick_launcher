@@ -22,7 +22,7 @@ No Flutter or Android Studio required. Weights download inside the app (~1.7 GB 
 
 Install a newer signed release over the old one to keep chats and models. See [releases and updates](docs/RELEASING.md).
 
-**CPU** inference is the default. **GPU** (Vulkan / OpenCL) is experimental — use CPU in production.
+**CPU** is the default. **OpenCL** on GPU has been tested on OnePlus 15 and Pixel 8 Pro. GPU inference does **not** work on Samsung Galaxy S24+. **Vulkan** has not been tested.
 
 ## Build & contribute
 
