@@ -11,6 +11,7 @@ class AndroidAppInfo {
       return AppVersion(
         name: data['name'] as String,
         build: data['build'] as int,
+        installedFromGooglePlay: data['installedFromGooglePlay'] == true,
       );
     } on PlatformException {
       return null;

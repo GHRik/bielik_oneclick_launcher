@@ -6,6 +6,8 @@ import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/app_updat
 import 'package:bielik_oneclick_launcher/src/domain/models/app_version.dart';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/play_update_repository.dart';
+import 'package:bielik_oneclick_launcher/src/presentation/widgets/home/play_update_button.dart';
 
 import 'package:bielik_oneclick_launcher/src/domain/repositories/attachment_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/speech_recognition_repository.dart';
@@ -44,6 +46,7 @@ class HomePage extends StatefulWidget {
     this.llmRepository,
     this.appVersion,
     this.appUpdateRepository,
+    this.playUpdateRepository,
     this.deviceResourcesRepository,
     required this.chatRepository,
     required this.statisticSeries,
@@ -61,6 +64,7 @@ class HomePage extends StatefulWidget {
   final LlmRepository? llmRepository;
   final AppVersion? appVersion;
   final AppUpdateRepository? appUpdateRepository;
+  final PlayUpdateRepository? playUpdateRepository;
   final LlmConfiguration llmConfiguration;
   final String additionalSystemPrompt;
   final Future<void> Function(String)? onSaveAdditionalSystemPrompt;
@@ -264,7 +268,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         title: const Text('Bielik'),
         toolbarHeight: widget.appVersion == null
             ? null
-            : widget.appUpdateRepository == null
+            : widget.appUpdateRepository == null &&
+                  widget.playUpdateRepository == null
             ? 80
             : 112,
         actions: [
@@ -287,7 +292,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ),
                   ),
                 ),
-              if (widget.appUpdateRepository != null &&
+              if (widget.playUpdateRepository != null)
+                PlayUpdateButton(repository: widget.playUpdateRepository!)
+              else if (widget.appUpdateRepository != null &&
                   widget.appVersion != null)
                 AppUpdateButton(
                   repository: widget.appUpdateRepository!,

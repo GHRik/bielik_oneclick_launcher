@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:bielik_oneclick_launcher/src/domain/repositories/play_update_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/app_update_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/app_version.dart';
 import 'package:bielik_oneclick_launcher/src/domain/repositories/app_exit_repository.dart';
@@ -38,6 +39,7 @@ class MyApp extends StatefulWidget {
     this.llmRepository,
     this.appVersion,
     this.appUpdateRepository,
+    this.playUpdateRepository,
     this.llmConfiguration = defaultLlmConfiguration,
     this.onSaveLlmConfiguration,
     this.additionalSystemPrompt = '',
@@ -62,6 +64,7 @@ class MyApp extends StatefulWidget {
   final LlmRepository? llmRepository;
   final AppVersion? appVersion;
   final AppUpdateRepository? appUpdateRepository;
+  final PlayUpdateRepository? playUpdateRepository;
   final LlmConfiguration llmConfiguration;
   final String additionalSystemPrompt;
   final Future<void> Function(String)? onSaveAdditionalSystemPrompt;
@@ -108,6 +111,7 @@ class _MyAppState extends State<MyApp> {
             child: HomePage(
               appVersion: widget.appVersion,
               appUpdateRepository: widget.appUpdateRepository,
+              playUpdateRepository: widget.playUpdateRepository,
               deviceResourcesRepository: widget.deviceResourcesRepository,
               chatRepository: widget.chatRepository,
               attachmentRepository: widget.attachmentRepository,
