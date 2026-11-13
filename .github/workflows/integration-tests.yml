@@ -94,6 +94,13 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Test shared text file rules
+        run: |
+          set -o pipefail
+          mkdir -p build/shared-text-tests reports
+          javac -encoding UTF-8 -d build/shared-text-tests android/app/src/main/java/bielik/ai/bielik_oneclick_launcher/SharedTextFile.java test/integration/native/android/SharedTextFileTest.java
+          java -cp build/shared-text-tests bielik.ai.bielik_oneclick_launcher.SharedTextFileTest 2>&1 | tee reports/shared-text-file.log
+
       - name: Compile adapter and test
         run: |
           mkdir -p build/native-tests reports
