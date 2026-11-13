@@ -23,6 +23,82 @@ class _BackgroundRepository extends _ModelFilesRepository {
 }
 
 void main() {
+  group('Interrupted download', () {
+    Future<ModelDownloadController> interrupt(int savedBytes) async {
+      final repository = _InterruptedRepository()..savedBytes = savedBytes;
+      final controller = ModelDownloadController(repository);
+      addTearDown(controller.dispose);
+      await controller.select(bielikModels.first);
+      await controller.start(bielikModels.first);
+      return controller;
+    }
+
+    test('Tells that the saved part will be continued', () async {
+      final controller = await interrupt(400000000);
+
+      expect(controller.savedBytes, 400000000);
+      expect(controller.error, contains('Pobrana część jest zachowana'));
+      expect(controller.visible, isFalse);
+      expect(controller.busy, isFalse);
+    });
+
+    test('Asks to check the connection when nothing was saved', () async {
+      final controller = await interrupt(0);
+
+      expect(controller.savedBytes, 0);
+      expect(controller.error, contains('spróbuj ponownie'));
+    });
+
+    test('Forgets a saved part that a failed download removed', () async {
+      final repository = _FailingRepository()..savedBytes = 400000000;
+      final controller = ModelDownloadController(repository);
+      addTearDown(controller.dispose);
+      await controller.select(bielikModels.first);
+      expect(controller.savedBytes, 400000000);
+
+      await controller.start(bielikModels.first);
+
+      expect(controller.savedBytes, 0);
+      expect(controller.error, contains('Nie udało się pobrać modelu'));
+    });
+
+    test('Finds a part saved before the app was opened', () async {
+      final repository = _ModelFilesRepository()..savedBytes = 123;
+      final controller = ModelDownloadController(repository);
+      addTearDown(controller.dispose);
+
+      await controller.select(bielikModels.first);
+
+      expect(controller.savedBytes, 123);
+      expect(controller.isRunning, isFalse);
+    });
+
+    test('Forgets the saved part after the model is deleted', () async {
+      final repository = _ModelFilesRepository()..savedBytes = 123;
+      final controller = ModelDownloadController(repository);
+      addTearDown(controller.dispose);
+      await controller.select(bielikModels.first);
+
+      await controller.delete(bielikModels.first);
+
+      expect(controller.savedBytes, 0);
+    });
+
+    test('Forgets the saved part once the download completes', () async {
+      final repository = _ModelFilesRepository()..savedBytes = 123;
+      final controller = ModelDownloadController(repository);
+      addTearDown(controller.dispose);
+      await controller.select(bielikModels.first);
+      final download = controller.start(bielikModels.first);
+      await Future<void>.delayed(Duration.zero);
+      repository.finish();
+      await download;
+
+      expect(controller.complete, isTrue);
+      expect(controller.savedBytes, 0);
+    });
+  });
+
   group('Background download lifecycle', () {
     late _BackgroundRepository repository;
     late ModelDownloadController controller;
@@ -60,6 +136,26 @@ void main() {
   });
 }
 
+/// A resumed download that fails verification: the saved part is removed.
+class _FailingRepository extends _ModelFilesRepository {
+  @override
+  Future<void> download(
+    ModelFile model,
+    void Function(ModelDownloadProgress) onProgress,
+  ) async {
+    savedBytes = 0;
+    throw const FormatException('Pobrany plik jest uszkodzony.');
+  }
+}
+
+class _InterruptedRepository extends _ModelFilesRepository {
+  @override
+  Future<void> download(
+    ModelFile model,
+    void Function(ModelDownloadProgress) onProgress,
+  ) async => throw ModelDownloadInterrupted();
+}
+
 class _ModelFilesRepository implements ModelFilesRepository {
   final downloaded = <String>{};
   Completer<void>? _pending;
@@ -71,6 +167,11 @@ class _ModelFilesRepository implements ModelFilesRepository {
 
   @override
   Future<bool> hasPendingDownload(ModelFile model) async => false;
+
+  int savedBytes = 0;
+
+  @override
+  Future<int> partialDownloadBytes(ModelFile model) async => savedBytes;
 
   @override
   Future<void> download(

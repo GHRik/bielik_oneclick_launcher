@@ -54,6 +54,16 @@ class LocalModelFilesRepository implements ModelFilesRepository {
   }
 
   @override
+  Future<int> partialDownloadBytes(ModelFile model) async {
+    final destination = await _files.file(model);
+    if ((await _tasks(model, destination)).any(_recoverable)) return 0;
+    final partial = File('${destination.path}.part');
+    if (!await partial.exists()) return 0;
+    final length = await partial.length();
+    return length <= model.sizeBytes ? length : 0;
+  }
+
+  @override
   Future<void> download(
     ModelFile model,
     void Function(ModelDownloadProgress) onProgress,
@@ -63,6 +73,7 @@ class LocalModelFilesRepository implements ModelFilesRepository {
     _cancelled = false;
     String? taskId;
     var removePartial = false;
+    var removeTask = false;
     File? partial;
     try {
       final destination = await _files.file(model);
@@ -72,41 +83,57 @@ class LocalModelFilesRepository implements ModelFilesRepository {
       if (pending != null) {
         taskId = pending.taskId;
       } else {
+        // Tasks that ended without a model. The part they saved stays: the
+        // plugin continues a transfer whose file already exists.
         for (final task in tasks) {
-          await _downloads.remove(task.taskId);
+          await _downloads.remove(task.taskId, deleteFile: false);
         }
-        if (await partial.exists()) await partial.delete();
+        var saved = await partial.exists() ? await partial.length() : 0;
+        if (saved > model.sizeBytes) {
+          await partial.delete();
+          saved = 0;
+        }
         if (_cancelled) throw ModelDownloadCancelled();
-        taskId = await _downloads.enqueue(
-          url: model.url,
-          directory: destination.parent.path,
-          filename: '${model.name}.part',
-        );
+        // A part of full size only waits for verification.
+        if (saved < model.sizeBytes) {
+          taskId = await _downloads.enqueue(
+            url: model.url,
+            directory: destination.parent.path,
+            filename: '${model.name}.part',
+          );
+        }
       }
+      final keepsPartial =
+          taskId != null && await _downloads.keepPartialFile(taskId);
 
       final watch = Stopwatch()..start();
       var previousBytes = await partial.exists() ? await partial.length() : 0;
       var previousTime = 0;
-      while (true) {
+      while (taskId != null) {
         final task = (await _downloads.loadTasks())
             .where((task) => task.taskId == taskId)
             .firstOrNull;
         if (_cancelled) {
+          // A cancelled task must not look paused to the plugin: it would
+          // leave a "paused" notification for a file that is removed here.
+          if (keepsPartial) {
+            await _downloads.keepPartialFile(taskId, keep: false);
+          }
           await _downloads.cancel(taskId);
           await _waitUntilStopped(taskId);
           removePartial = true;
           throw ModelDownloadCancelled();
         }
         if (task == null) throw StateError('Zadanie pobierania zniknęło.');
-        if (task.status == DownloadTaskStatus.canceled) {
-          removePartial = true;
-          throw ModelDownloadCancelled();
-        }
-        if (task.status == DownloadTaskStatus.failed ||
+        if (task.status == DownloadTaskStatus.canceled ||
+            task.status == DownloadTaskStatus.failed ||
             task.status == DownloadTaskStatus.undefined ||
             task.status == DownloadTaskStatus.paused) {
-          removePartial = true;
-          throw StateError('Pobieranie zostało przerwane.');
+          // Nobody cancelled here, so the network dropped or Android stopped
+          // the work. Keep the saved part when the plugin kept it too.
+          removeTask = true;
+          removePartial = !keepsPartial;
+          throw ModelDownloadInterrupted();
         }
         final received = await partial.exists() ? await partial.length() : 0;
         final elapsed = watch.elapsedMilliseconds;
@@ -135,6 +162,14 @@ class LocalModelFilesRepository implements ModelFilesRepository {
           await partial.length() != model.sizeBytes) {
         throw const FormatException('Nieprawidłowy rozmiar pobranego pliku.');
       }
+      onProgress(
+        ModelDownloadProgress(
+          receivedBytes: model.sizeBytes,
+          totalBytes: model.sizeBytes,
+          bytesPerSecond: 0,
+          verifying: true,
+        ),
+      );
       final digest = await sha256
           .bind(
             partial.openRead().map((chunk) {
@@ -150,9 +185,11 @@ class LocalModelFilesRepository implements ModelFilesRepository {
       await partial.rename(destination.path);
     } finally {
       try {
-        if (removePartial) {
-          if (taskId != null) await _downloads.remove(taskId);
-          if (partial != null && await partial.exists()) await partial.delete();
+        if (taskId != null && (removePartial || removeTask)) {
+          await _downloads.remove(taskId, deleteFile: removePartial);
+        }
+        if (removePartial && partial != null && await partial.exists()) {
+          await partial.delete();
         }
       } finally {
         _busy = false;
@@ -161,8 +198,18 @@ class LocalModelFilesRepository implements ModelFilesRepository {
     }
   }
 
+  /// How long a cancelled task may stay enqueued before it counts as stopped.
+  static const _unstartedTaskGrace = Duration(seconds: 2);
+
+  /// Waits until the plugin reports that [taskId] is no longer active.
+  ///
+  /// A task that Android has not started yet, because it waits for a network
+  /// or for free storage, is cancelled without its worker ever running, so
+  /// nothing changes its status. Waiting for that would end in the timeout
+  /// below and leave a task that reattaches on every start.
   Future<void> _waitUntilStopped(String taskId) async {
-    final deadline = DateTime.now().add(const Duration(seconds: 65));
+    final started = DateTime.now();
+    final deadline = started.add(const Duration(seconds: 65));
     while (true) {
       final task = (await _downloads.loadTasks())
           .where((task) => task.taskId == taskId)
@@ -170,6 +217,10 @@ class LocalModelFilesRepository implements ModelFilesRepository {
       if (task == null ||
           (task.status != DownloadTaskStatus.running &&
               task.status != DownloadTaskStatus.enqueued)) {
+        return;
+      }
+      if (task.status == DownloadTaskStatus.enqueued &&
+          DateTime.now().difference(started) >= _unstartedTaskGrace) {
         return;
       }
       if (DateTime.now().isAfter(deadline)) {

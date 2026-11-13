@@ -16,6 +16,12 @@ class InMemoryModelFilesRepository implements ModelFilesRepository {
   @override
   Future<bool> hasPendingDownload(ModelFile model) async => false;
 
+  /// Bytes reported as kept from an interrupted download.
+  int savedBytes = 0;
+
+  @override
+  Future<int> partialDownloadBytes(ModelFile model) async => savedBytes;
+
   @override
   Future<void> download(
     ModelFile model,
@@ -39,5 +45,8 @@ class InMemoryModelFilesRepository implements ModelFilesRepository {
   }
 
   @override
-  Future<void> delete(ModelFile model) async => downloaded.remove(model.name);
+  Future<void> delete(ModelFile model) async {
+    downloaded.remove(model.name);
+    savedBytes = 0;
+  }
 }
