@@ -40,7 +40,7 @@ GPU settings are session-only and disabled at startup.
 
 ## Model downloads and resource checks
 
-`ModelFilesRepository` defines downloading, cancellation, readiness, and deletion. `FlutterModelDownloadDataSource` delegates transfers to `flutter_downloader`, which persists tasks and uses WorkManager on Android. The plugin is initialized before the UI starts.
+`ModelFilesRepository` defines downloading, cancellation, readiness, and deletion. `FlutterModelDownloadDataSource` delegates transfers to `flutter_downloader`, which persists tasks and uses WorkManager on Android. The plugin is initialized before the UI starts. Before a transfer, `LocalModelFilesRepository` asks for the Android 13+ notification permission through `NotificationPermissionDataSource` (`bielik/notification_permission`), so the plugin's progress notification can appear; a refusal does not stop the download.
 
 `LocalModelFilesRepository` reads task state, measures file growth for speed and ETA, and verifies the exact size and SHA-256 before renaming a `.part` file to its final name. Closing a screen does not cancel the task. Selecting the model again reconnects to a saved task, including a transfer completed while the app was absent. Verification then runs when the app opens. Files remain in the app's private directory; deleting a model also removes associated download tasks.
 

@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bielik_oneclick_launcher/src/data/datasources/local/model_file_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/datasources/model_download_datasource.dart';
+import 'package:bielik_oneclick_launcher/src/data/datasources/notification_permission_datasource.dart';
 import 'package:bielik_oneclick_launcher/src/data/repositories_impl/local_model_files_repository.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_download_progress.dart';
 import 'package:bielik_oneclick_launcher/src/domain/models/model_file.dart';
@@ -70,6 +71,17 @@ class _Downloads implements ModelDownloadDataSource {
   }
 }
 
+class _Notifications extends NotificationPermissionDataSource {
+  _Notifications(this.downloads);
+
+  final _Downloads downloads;
+  final enqueuedBeforeRequest = <int>[];
+
+  @override
+  Future<void> request() async =>
+      enqueuedBeforeRequest.add(downloads.enqueueCount);
+}
+
 void main() {
   late Directory directory;
   late _Downloads downloads;
@@ -125,6 +137,24 @@ void main() {
       expect(task.url, model.url);
       expect(task.filename, 'test.gguf.part');
     });
+
+    test(
+      'Asks for notification permission before the transfer starts',
+      () async {
+        final notifications = _Notifications(downloads);
+        repository = LocalModelFilesRepository(
+          ModelFileDataSource(directory: () async => directory),
+          downloads: downloads,
+          notifications: notifications,
+          pollInterval: const Duration(milliseconds: 1),
+        );
+
+        await completeDownload();
+
+        expect(notifications.enqueuedBeforeRequest, [0]);
+        expect(downloads.enqueueCount, 1);
+      },
+    );
 
     test('Reports verification before completing a download', () async {
       final reports = <ModelDownloadProgress>[];
