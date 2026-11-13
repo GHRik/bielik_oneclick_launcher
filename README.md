@@ -47,3 +47,17 @@ Everything else (catalog, layout, CI, adding models): **[docs/CONTRIBUTING.md](d
 ## License and models
 
 Launcher: [MIT](LICENSE). **Bielik** weights are by SpeakLeash / ACK Cyfronet AGH — [1.5B](https://huggingface.co/speakleash/Bielik-1.5B-v3.0-Instruct-GGUF), [4.5B](https://huggingface.co/speakleash/Bielik-4.5B-v3.0-Instruct-GGUF).
+
+## Citation
+
+If this project has been useful in your work or research, please consider citing it:
+
+```bibtex
+@misc{panasiuk2026bielikoneclick,
+  author       = {Panasiuk, Damian},
+  title        = {{Bielik OneClick Launcher}},
+  year         = {2026},
+  howpublished = {GitHub repository},
+  url          = {https://github.com/GHRik/bielik_oneclick_launcher}
+}
+```
