@@ -10,6 +10,7 @@ Selections are plain text only, with a limit of 65,536 UTF-16 code units. Unsupp
 
 - Android: AskBielikActivity validates PROCESS_TEXT and SEND, then constructs a fresh explicit intent containing only text.
 - IncomingTextChannel handles cold starts and onNewIntent, queues events until Dart subscribes, consumes delivered intents, and restores pending native events across recreation.
+- MainActivity imports its launch intent only on a first creation. Android returns the same intent when it recreates the activity after process death or reopens the task from Recents; importing it again would duplicate the text.
 - PlatformIncomingTextRepository adapts the event channel to IncomingTextRepository.
 - HomePage coordinates navigation; ChatWorkspace imports and persists the draft through ChatRepository.
 
@@ -30,4 +31,4 @@ javac -encoding UTF-8 -d build/text-import-tests android/app/src/main/java/bieli
 java -cp build/text-import-tests bielik.ai.bielik_oneclick_launcher.TextImportRequestTest
 ```
 
-Device acceptance checks: cold-start from selected text, import while a chat is open, repeated imports, preservation of an existing draft, and a restart after saving the imported draft.
+Device acceptance checks: cold-start from selected text, import while a chat is open, repeated imports, preservation of an existing draft, a restart after saving the imported draft, and reopening from Recents after `adb shell am kill <application id>` (the text must appear once).

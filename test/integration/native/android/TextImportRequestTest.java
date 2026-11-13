@@ -24,7 +24,18 @@ public final class TextImportRequestTest {
             "android.intent.action.SEND", "text/plain", "Text", true));
         expect("Text", TextImportRequest.validate(
             TextImportRequest.ACTION, "text/plain", "Text", true));
-        System.out.println("TextImportRequest: 11 scenarios passed.");
+        expectDelivery(true, false, 0);
+        expectDelivery(true, false, 0x10000000 | 0x04000000 | 0x20000000);
+        expectDelivery(false, true, 0);
+        expectDelivery(false, false, TextImportRequest.FLAG_LAUNCHED_FROM_HISTORY);
+        expectDelivery(false, false, 0x10000000 | TextImportRequest.FLAG_LAUNCHED_FROM_HISTORY);
+        expectDelivery(false, true, TextImportRequest.FLAG_LAUNCHED_FROM_HISTORY);
+        System.out.println("TextImportRequest: 17 scenarios passed.");
+    }
+
+    private static void expectDelivery(boolean expected, boolean restored, int flags) {
+        if (TextImportRequest.isNewDelivery(restored, flags) != expected) throw new AssertionError(
+            "Unexpected launch intent delivery result");
     }
 
     private static void expect(String expected, String actual) {

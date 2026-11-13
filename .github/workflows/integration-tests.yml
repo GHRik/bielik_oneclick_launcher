@@ -98,11 +98,17 @@ jobs:
         run: |
           mkdir -p build/native-tests reports
           javac -d build/native-tests android/app/src/main/java/bielik/ai/bielik_oneclick_launcher/GpuSysfsReader.java test/integration/native/android/GpuSysfsReaderTest.java
+          javac -encoding UTF-8 -d build/native-tests android/app/src/main/java/bielik/ai/bielik_oneclick_launcher/TextImportRequest.java test/integration/native/android/TextImportRequestTest.java
 
       - name: Test adapter with synthetic sysfs
         run: |
           set -o pipefail
           java -cp build/native-tests bielik.ai.bielik_oneclick_launcher.GpuSysfsReaderTest 2>&1 | tee reports/android-adapter.log
+
+      - name: Test Ask Bielik text import rules
+        run: |
+          set -o pipefail
+          java -cp build/native-tests bielik.ai.bielik_oneclick_launcher.TextImportRequestTest 2>&1 | tee reports/text-import.log
 
       - name: Upload adapter report
         if: always()

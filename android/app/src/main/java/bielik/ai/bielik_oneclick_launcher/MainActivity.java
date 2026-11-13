@@ -9,7 +9,10 @@ public class MainActivity extends FlutterActivity {
     protected void onCreate(android.os.Bundle state) {
         super.onCreate(state);
         incomingText.restore(state);
-        incomingText.accept(getIntent());
+        android.content.Intent intent = getIntent();
+        if (intent != null && TextImportRequest.isNewDelivery(state != null, intent.getFlags())) {
+            incomingText.accept(intent);
+        }
     }
 
     @Override
